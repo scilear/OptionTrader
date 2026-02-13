@@ -10,7 +10,10 @@ import pandas as pd
 
 from src.core.config import load_config
 from src.core.metrics import compute_iv_points, compute_surface_metrics
+import logging
+
 from src.core.alerts import compute_alerts
+from src.core.trade_ideas import build_trade_ideas
 from src.db.connection import connect
 
 
@@ -25,6 +28,7 @@ def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float]:
 
 
 def compute_for_snapshot(snapshot_id: int) -> None:
+    logger = logging.getLogger("compute")
     config = load_config()
     buckets = config["metrics"]["expiry_buckets_days"]
     window = config["metrics"]["zscore_window_days"]
@@ -35,6 +39,7 @@ def compute_for_snapshot(snapshot_id: int) -> None:
     conn = connect()
     try:
         ts, spot = _load_snapshot(conn, snapshot_id)
+        logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
         regime_row = conn.execute(
             """
             SELECT regime_label FROM regime_state
@@ -51,6 +56,7 @@ def compute_for_snapshot(snapshot_id: int) -> None:
         ).fetchdf()
 
         iv_points = compute_iv_points(quotes, ts, spot, spread_gate_pct)
+        logger.info("iv_points=%s", len(iv_points))
         for point in iv_points:
             conn.execute(
                 """
@@ -72,6 +78,7 @@ def compute_for_snapshot(snapshot_id: int) -> None:
             )
 
         metrics = compute_surface_metrics(iv_points, ts, buckets)
+        logger.info("metrics_rows=%s", len(metrics))
         tier_by_bucket = {m["expiry_bucket"]: m.get("tier") for m in metrics}
         for m in metrics:
             conn.execute(
@@ -111,6 +118,7 @@ def compute_for_snapshot(snapshot_id: int) -> None:
             """
         ).fetchdf()
         alerts = compute_alerts(metric_series, window, threshold, persistence)
+        logger.info("alerts=%s", len(alerts))
         for alert in alerts:
             tier = tier_by_bucket.get(alert["expiry_bucket"])
             if tier is None:
@@ -139,6 +147,28 @@ def compute_for_snapshot(snapshot_id: int) -> None:
                     "{}",
                 ),
             )
+
+            alert_id = conn.execute("SELECT MAX(alert_id) FROM alerts").fetchone()[0]
+            ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"])
+            for idea in ideas:
+                conn.execute(
+                    """
+                    INSERT INTO trade_ideas (
+                        trade_id, alert_id, template, legs, price_mid, price_worst,
+                        greeks, scenarios, risk_flags
+                    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        alert_id,
+                        idea["template"],
+                        idea["legs"],
+                        idea["price_mid"],
+                        idea["price_worst"],
+                        idea["greeks"],
+                        idea["scenarios"],
+                        idea["risk_flags"],
+                    ),
+                )
     finally:
         conn.close()
 

@@ -8,6 +8,7 @@ from src.core.bootstrap import ensure_repo_root_on_path
 ensure_repo_root_on_path()
 
 import pandas as pd
+import logging
 import yfinance as yf
 
 from src.core.config import load_config
@@ -45,6 +46,7 @@ def _valid_expiry(expiry: str, dte_min: int, dte_max: int) -> bool:
 
 
 def run_ingest() -> None:
+    logger = logging.getLogger("ingest")
     config = load_config()
     source = config["data"]["source"]
     if source != "yfinance":
@@ -57,8 +59,10 @@ def run_ingest() -> None:
     spread_gate_pct = config["quality"]["spread_gate_pct"]
 
     timestamp = datetime.now(timezone.utc)
+    logger.info("starting ingest for %s", symbol)
     ticker = yf.Ticker(symbol)
     spot = _get_spot(ticker)
+    logger.info("spot=%s", spot)
 
     init_db()
     conn = connect()
@@ -82,6 +86,7 @@ def run_ingest() -> None:
         for expiry in ticker.options:
             if not capture_all and not _valid_expiry(expiry, dte_min, dte_max):
                 continue
+            logger.info("fetching expiry=%s", expiry)
             chain = ticker.option_chain(expiry)
             for right, df in (("C", chain.calls), ("P", chain.puts)):
                 if df is None or df.empty:
