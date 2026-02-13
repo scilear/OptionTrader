@@ -9,7 +9,7 @@ ensure_repo_root_on_path()
 import pandas as pd
 
 from src.core.config import load_config
-from src.core.metrics import compute_iv_points, compute_surface_metrics
+from src.core.metrics import compute_iv_points, compute_surface_metrics, filter_quotes_by_dte
 import logging
 
 from src.core.alerts import compute_alerts
@@ -45,6 +45,8 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     threshold = config["alerts"]["z_threshold"]
     persistence = config["alerts"]["persistence_snapshots"]
     spread_gate_pct = config["quality"]["spread_gate_pct"]
+    dte_min = config["data"]["dte_min"]
+    dte_max = config["data"]["dte_max"]
 
     conn = connect()
     try:
@@ -66,6 +68,8 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             "SELECT expiry, strike, option_right, bid, ask FROM option_quotes WHERE snapshot_id = ?",
             (snapshot_id,),
         ).fetchdf()
+
+        quotes = filter_quotes_by_dte(quotes, ts, dte_min, dte_max)
 
         iv_points = compute_iv_points(quotes, ts, spot, spread_gate_pct)
         logger.info("iv_points=%s", len(iv_points))
