@@ -1,0 +1,52 @@
+# v1 configuration for Streamlit single-user mode
+
+app:
+  mode: streamlit
+
+data:
+  underlying: SPX
+  symbol: "^SPX"
+  dte_min: 14
+  dte_max: 60
+  snapshot_tags: [eod, open, mid, event]
+  source: yfinance
+
+storage:
+  engine: duckdb  # sqlite or duckdb
+  path: data/optiontrader.duckdb
+
+metrics:
+  delta_points: [0.10, 0.25, 0.50]
+  zscore_window_days: 60
+  expiry_buckets_days: [21, 30, 45]
+
+quality:
+  spread_gate_pct: 0.15
+  allow_zero_bid: false
+  min_valid_points_full: 5
+  min_valid_points_core: 3
+
+alerts:
+  z_threshold: 2.0
+  persistence_snapshots: 2
+  pessimistic_gate: true
+
+regime:
+  vix_pct_calm: 40
+  vix_pct_stress: 80
+  rv20_pct_calm: 40
+  rv20_pct_stress: 80
+  drawdown_calm: 5
+  drawdown_stress: 10
+
+structures:
+  skew_fade:
+    short_put_delta: -0.25
+    long_put_delta: -0.10
+  fly:
+    wing_delta: 0.25
+  calendar:
+    front_dte_min: 14
+    front_dte_max: 30
+    back_dte_min: 30
+    back_dte_max: 60
