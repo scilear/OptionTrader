@@ -14,6 +14,13 @@ class HealthSummary:
     alerts: int
 
 
+@dataclass
+class LatestSnapshotSummary:
+    snapshot_id: int | None
+    ts: str | None
+    alert_count: int
+
+
 def compute_health_summary() -> HealthSummary:
     conn = connect()
     try:
@@ -31,4 +38,28 @@ def compute_health_summary() -> HealthSummary:
         iv_points=int(iv_points or 0),
         metrics=int(metrics or 0),
         alerts=int(alerts or 0),
+    )
+
+
+def latest_snapshot_summary() -> LatestSnapshotSummary:
+    conn = connect()
+    try:
+        row = conn.execute(
+            "SELECT snapshot_id, ts FROM snapshots ORDER BY ts DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return LatestSnapshotSummary(snapshot_id=None, ts=None, alert_count=0)
+
+        snapshot_id, ts = row[0], row[1]
+        alert_count = conn.execute(
+            "SELECT COUNT(*) FROM alerts WHERE snapshot_id = ?",
+            (snapshot_id,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    return LatestSnapshotSummary(
+        snapshot_id=int(snapshot_id),
+        ts=str(ts),
+        alert_count=int(alert_count or 0),
     )
