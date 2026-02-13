@@ -179,6 +179,11 @@ Alert Types:
 - Pessimistic: buy at ask, sell at bid, leg-by-leg
 - Suppress alerts/trades if edge fails under pessimistic pricing
 
+## Logging
+- All entrypoints must emit step-level logs (ingest, compute, pipeline)
+- Log to stdout and file with timestamped structured format
+- Log key counts (snapshots, quotes, iv_points, metrics, alerts)
+
 ## Acceptance Tests
 - AT-01: crossed/zero-bid quotes excluded
 - AT-02: IV solve valid for required tier before alerts

@@ -3,6 +3,10 @@
 app:
   mode: streamlit
 
+logging:
+  level: INFO
+  file: logs/optiontrader.log
+
 data:
   underlying: SPX
   symbol: "^SPX"

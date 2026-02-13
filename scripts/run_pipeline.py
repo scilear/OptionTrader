@@ -11,6 +11,9 @@ from src.core.bootstrap import ensure_repo_root_on_path
 
 ensure_repo_root_on_path()
 
+import logging
+
+from src.core.logging_utils import setup_logging
 from src.db.init_db import init_db
 from src.db.connection import connect
 from src.ingest.ingest_yfinance import run_ingest
@@ -27,12 +30,19 @@ def _latest_snapshot_id() -> int | None:
 
 
 def run_pipeline() -> None:
+    setup_logging()
+    logger = logging.getLogger("pipeline")
+    logger.info("starting pipeline")
     init_db()
+    logger.info("database initialized")
     run_ingest()
+    logger.info("ingest complete")
     snapshot_id = _latest_snapshot_id()
     if snapshot_id is None:
         raise RuntimeError("No snapshot found after ingestion")
+    logger.info("computing metrics for snapshot_id=%s", snapshot_id)
     compute_for_snapshot(snapshot_id)
+    logger.info("pipeline complete")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,12 @@ AC:
 - Zero-bid excluded unless allow_zero_bid (AT-02)
 - Wide spread flagged (AT-03)
 
+### ST-03 Logging for ingestion and compute
+AC:
+- Ingest logs start/end and per-expiry progress
+- Compute logs snapshot id, iv_points, metrics, alerts counts
+- Logs written to file and stdout
+
 ## EPIC-02 IV Solve & Metrics
 
 ### ST-10 IV solver interface
