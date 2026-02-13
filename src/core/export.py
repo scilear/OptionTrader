@@ -28,3 +28,7 @@ def build_trade_export(alert: dict, idea: dict) -> dict:
 
 def export_to_json(payload: dict) -> str:
     return json.dumps(payload, indent=2)
+
+
+def export_df_to_csv(df) -> str:
+    return df.to_csv(index=False)
