@@ -14,6 +14,8 @@ ensure_repo_root_on_path()
 import pandas as pd
 import streamlit as st
 
+import json
+
 from src.db.connection import connect
 
 
@@ -83,6 +85,15 @@ def alert_detail_page():
     )
     st.dataframe(detail, use_container_width=True)
 
+    if not detail.empty:
+        explain_raw = detail.iloc[0]["explain"]
+        try:
+            explain = json.loads(explain_raw) if explain_raw else {}
+        except Exception:
+            explain = {}
+        st.subheader("Explainability")
+        st.json(explain)
+
     ideas = query_df(
         """
         SELECT template, price_mid, price_worst, greeks, risk_flags, legs
@@ -94,6 +105,15 @@ def alert_detail_page():
     if ideas.empty:
         st.info("No trade ideas available yet.")
         return
+    def parse_json(value):
+        try:
+            return json.loads(value) if value else None
+        except Exception:
+            return None
+
+    ideas = ideas.copy()
+    ideas["risk_flags"] = ideas["risk_flags"].apply(parse_json)
+    ideas["legs"] = ideas["legs"].apply(parse_json)
     st.dataframe(ideas, use_container_width=True)
 
 
