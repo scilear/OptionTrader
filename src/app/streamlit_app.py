@@ -206,7 +206,7 @@ def main():
         )
     else:
         st.header("Health")
-        from src.core.health import compute_health_summary
+        from src.core.health import compute_health_summary, latest_snapshot_summary
 
         summary = compute_health_summary()
         st.metric("Snapshots", summary.snapshots)
@@ -214,6 +214,12 @@ def main():
         st.metric("IV points", summary.iv_points)
         st.metric("Metrics", summary.metrics)
         st.metric("Alerts", summary.alerts)
+
+        latest = latest_snapshot_summary()
+        st.subheader("Latest Snapshot")
+        st.text(f"snapshot_id: {latest.snapshot_id}")
+        st.text(f"ts: {latest.ts}")
+        st.text(f"alert_count: {latest.alert_count}")
 
 
 if __name__ == "__main__":
