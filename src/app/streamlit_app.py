@@ -66,6 +66,13 @@ def alerts_page():
     filtered = filtered[(filtered["severity"] >= min_severity) & (filtered["tradability_score"] >= min_tradability)]
 
     st.dataframe(filtered, use_container_width=True)
+    from src.core.export import export_df_to_csv
+    st.download_button(
+        "Download alerts CSV",
+        data=export_df_to_csv(filtered),
+        file_name="alerts.csv",
+        mime="text/csv",
+    )
 
 
 def metrics_page():
@@ -90,6 +97,13 @@ def metrics_page():
 
         data["event_premium"] = event_premium_series(data)
         st.line_chart(data.set_index("ts")[["event_premium"]])
+        from src.core.export import export_df_to_csv
+        st.download_button(
+            "Download metric CSV",
+            data=export_df_to_csv(data[["ts", "event_premium"]]),
+            file_name=f"metric_event_premium_{bucket}.csv",
+            mime="text/csv",
+        )
         return
 
     data = query_df(
@@ -106,6 +120,13 @@ def metrics_page():
         st.info("No metric data available yet.")
         return
     st.line_chart(data.set_index("ts"))
+    from src.core.export import export_df_to_csv
+    st.download_button(
+        "Download metric CSV",
+        data=export_df_to_csv(data),
+        file_name=f"metric_{metric}_{bucket}.csv",
+        mime="text/csv",
+    )
 
 
 def alert_detail_page():
