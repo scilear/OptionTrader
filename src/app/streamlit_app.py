@@ -236,7 +236,7 @@ def main():
         if series.empty:
             st.info("No data available for event study.")
             return
-        from src.core.event_study import compute_event_study
+        from src.core.event_study import compute_event_study, compute_event_study_by_regime
 
         stats = compute_event_study(series, metric, threshold)
         st.metric("Events", stats.events)
@@ -245,6 +245,12 @@ def main():
             "Median reversion days",
             "N/A" if stats.median_reversion_days is None else f"{stats.median_reversion_days:.1f}",
         )
+
+        regime = query_df("SELECT regime_date, regime_label FROM regime_state")
+        by_regime = compute_event_study_by_regime(series, metric, threshold, regime)
+        if not by_regime.empty:
+            st.subheader("By Regime")
+            st.dataframe(by_regime, use_container_width=True)
     else:
         st.header("Health")
         from src.core.health import compute_health_summary, latest_snapshot_summary
