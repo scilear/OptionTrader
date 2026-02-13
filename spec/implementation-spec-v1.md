@@ -131,6 +131,7 @@ Tier None:
 - Persistence: signal must hold across >= 2 snapshots/days
 - Pessimistic gate: alert suppressed if z-score fails under worst-case pricing
 - Regime filter: no skew selling in Stress
+- Tradability score: median spread vs spread gate (0-1)
 
 Alert Types:
 - RR_EXTREME: |Z_RR25| > 2.0

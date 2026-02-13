@@ -10,6 +10,7 @@ import pandas as pd
 
 from src.core.config import load_config
 from src.core.metrics import compute_iv_points, compute_surface_metrics, filter_quotes_by_dte
+from src.core.tradability import compute_tradability_score
 import logging
 
 from src.core.alerts import compute_alerts
@@ -70,6 +71,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         ).fetchdf()
 
         quotes = filter_quotes_by_dte(quotes, ts, dte_min, dte_max)
+        tradability_score = compute_tradability_score(quotes, spread_gate_pct)
 
         iv_points = compute_iv_points(quotes, ts, spot, spread_gate_pct)
         logger.info("iv_points=%s", len(iv_points))
@@ -156,7 +158,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     abs(alert["zscore_mid"]),
                     alert["zscore_mid"],
                     alert["zscore_worst"],
-                    1.0 if tier == "Full" else 0.5,
+                    tradability_score,
                     tier,
                     alert["persistence"],
                     regime_label,
