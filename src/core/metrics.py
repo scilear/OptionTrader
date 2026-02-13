@@ -40,6 +40,18 @@ def filter_quotes_by_dte(
     return quotes.loc[mask].copy()
 
 
+def event_premium_series(series: pd.DataFrame) -> pd.Series:
+    if series.empty or "atm_iv_mid" not in series.columns or "ts" not in series.columns:
+        return pd.Series(dtype=float)
+
+    df = series.sort_values("ts").copy()
+    df["t_years"] = 1 / 12
+    df["var"] = (df["atm_iv_mid"] ** 2) * df["t_years"]
+    df["var_smooth"] = df["var"].rolling(3, min_periods=1).mean()
+    df["event_premium"] = df["var"] - df["var_smooth"]
+    return df["event_premium"]
+
+
 def _forward(spot: float, rate: float, div: float, t_years: float) -> float:
     return spot * math.exp((rate - div) * t_years)
 

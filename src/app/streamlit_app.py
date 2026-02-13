@@ -70,8 +70,28 @@ def alerts_page():
 
 def metrics_page():
     st.header("Metric Explorer")
-    metric = st.selectbox("Metric", ["rr25_mid", "fly25_mid", "term_slope_mid"])
+    metric = st.selectbox("Metric", ["rr25_mid", "fly25_mid", "term_slope_mid", "event_premium"])
     bucket = st.selectbox("Expiry bucket", ["21D", "30D", "45D"])
+    if metric == "event_premium":
+        data = query_df(
+            """
+            SELECT s.ts, m.atm_iv_mid
+            FROM surface_metrics m
+            JOIN snapshots s ON s.snapshot_id = m.snapshot_id
+            WHERE m.expiry_bucket = ?
+            ORDER BY s.ts
+            """,
+            (bucket,),
+        )
+        if data.empty:
+            st.info("No metric data available yet.")
+            return
+        from src.core.metrics import event_premium_series
+
+        data["event_premium"] = event_premium_series(data)
+        st.line_chart(data.set_index("ts")[["event_premium"]])
+        return
+
     data = query_df(
         """
         SELECT s.ts, m.{metric}
