@@ -27,7 +27,17 @@ def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float]:
     return row[0], float(row[1])
 
 
-def compute_for_snapshot(snapshot_id: int) -> None:
+def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
+    conn.execute(
+        "DELETE FROM trade_ideas WHERE alert_id IN (SELECT alert_id FROM alerts WHERE snapshot_id = ?)",
+        (snapshot_id,),
+    )
+    conn.execute("DELETE FROM alerts WHERE snapshot_id = ?", (snapshot_id,))
+    conn.execute("DELETE FROM surface_metrics WHERE snapshot_id = ?", (snapshot_id,))
+    conn.execute("DELETE FROM iv_points WHERE snapshot_id = ?", (snapshot_id,))
+
+
+def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     logger = logging.getLogger("compute")
     config = load_config()
     buckets = config["metrics"]["expiry_buckets_days"]
@@ -39,6 +49,8 @@ def compute_for_snapshot(snapshot_id: int) -> None:
     conn = connect()
     try:
         ts, spot = _load_snapshot(conn, snapshot_id)
+        if purge_existing:
+            _clear_snapshot_outputs(conn, snapshot_id)
         logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
         regime_row = conn.execute(
             """

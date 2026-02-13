@@ -85,7 +85,7 @@ def alert_detail_page():
 
     ideas = query_df(
         """
-        SELECT template, price_mid, price_worst, greeks, risk_flags
+        SELECT template, price_mid, price_worst, greeks, risk_flags, legs
         FROM trade_ideas
         WHERE alert_id = ?
         """,
@@ -99,13 +99,29 @@ def alert_detail_page():
 
 def main():
     st.set_page_config(page_title="OptionTrader", layout="wide")
-    page = st.sidebar.radio("Navigation", ["Alerts", "Metrics", "Alert Detail"])
+    page = st.sidebar.radio("Navigation", ["Alerts", "Metrics", "Alert Detail", "Replay"])
     if page == "Alerts":
         alerts_page()
     elif page == "Metrics":
         metrics_page()
-    else:
+    elif page == "Alert Detail":
         alert_detail_page()
+    else:
+        st.header("Replay")
+        data = query_df(
+            """
+            SELECT s.ts, s.snapshot_id, COUNT(a.alert_id) AS alert_count
+            FROM snapshots s
+            LEFT JOIN alerts a ON a.snapshot_id = s.snapshot_id
+            GROUP BY s.ts, s.snapshot_id
+            ORDER BY s.ts DESC
+            LIMIT 50
+            """
+        )
+        if data.empty:
+            st.info("No replay data available yet.")
+            return
+        st.dataframe(data, use_container_width=True)
 
 
 if __name__ == "__main__":
