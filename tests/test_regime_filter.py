@@ -23,8 +23,18 @@ def test_regime_filter_blocks_rr(monkeypatch):
         "INSERT INTO regime_state VALUES ('2026-02-13', 90, 90, 12, 6, 'Stress')"
     )
 
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
     def fake_connect():
-        return conn
+        return ConnWrapper(conn)
 
     def fake_compute_iv_points(*_args, **_kwargs):
         return []
