@@ -26,6 +26,20 @@ def _t_years(snapshot_ts: datetime, expiry: date) -> float:
     return max(days, 0) / 365.0
 
 
+def filter_quotes_by_dte(
+    quotes: pd.DataFrame,
+    snapshot_ts: datetime,
+    dte_min: int,
+    dte_max: int,
+) -> pd.DataFrame:
+    if quotes.empty:
+        return quotes
+    expiry_dates = pd.to_datetime(quotes["expiry"]).dt.date
+    dte = expiry_dates.apply(lambda d: (d - snapshot_ts.date()).days)
+    mask = (dte >= dte_min) & (dte <= dte_max)
+    return quotes.loc[mask].copy()
+
+
 def _forward(spot: float, rate: float, div: float, t_years: float) -> float:
     return spot * math.exp((rate - div) * t_years)
 
