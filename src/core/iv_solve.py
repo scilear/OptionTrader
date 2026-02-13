@@ -14,8 +14,17 @@ def _norm_cdf(x: float) -> float:
     return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
+def _erf_inv(x: float) -> float:
+    a = 0.147
+    sign = 1 if x >= 0 else -1
+    ln = math.log(1 - x * x)
+    first = 2 / (math.pi * a) + ln / 2
+    second = ln / a
+    return sign * math.sqrt(math.sqrt(first * first - second) - first)
+
+
 def _norm_ppf(p: float) -> float:
-    return math.sqrt(2) * math.erf_inv(2 * p - 1)
+    return math.sqrt(2) * _erf_inv(2 * p - 1)
 
 
 def _bs_price(
