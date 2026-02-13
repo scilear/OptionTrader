@@ -16,6 +16,12 @@ from src.db.connection import connect
 from src.db.init_db import init_db
 
 
+def to_int(value) -> int:
+    if value is None or pd.isna(value):
+        return 0
+    return int(value)
+
+
 def _get_spot(ticker: yf.Ticker) -> float:
     fast_info = getattr(ticker, "fast_info", None)
     if fast_info and fast_info.get("last_price"):
@@ -46,6 +52,7 @@ def run_ingest() -> None:
     symbol = config["data"]["symbol"]
     dte_min = config["data"]["dte_min"]
     dte_max = config["data"]["dte_max"]
+    capture_all = config["data"].get("capture_all_expiries", False)
     allow_zero_bid = config["quality"]["allow_zero_bid"]
     spread_gate_pct = config["quality"]["spread_gate_pct"]
 
@@ -73,7 +80,7 @@ def run_ingest() -> None:
         snapshot_id = conn.execute("SELECT MAX(snapshot_id) FROM snapshots").fetchone()[0]
 
         for expiry in ticker.options:
-            if not _valid_expiry(expiry, dte_min, dte_max):
+            if not capture_all and not _valid_expiry(expiry, dte_min, dte_max):
                 continue
             chain = ticker.option_chain(expiry)
             for right, df in (("C", chain.calls), ("P", chain.puts)):
@@ -90,11 +97,6 @@ def run_ingest() -> None:
                     )
                     if not is_valid:
                         continue
-                    def to_int(value) -> int:
-                        if value is None or pd.isna(value):
-                            return 0
-                        return int(value)
-
                     conn.execute(
                         """
                         INSERT INTO option_quotes (

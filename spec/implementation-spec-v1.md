@@ -44,6 +44,10 @@
 - volume (int)
 - flags (json)
 
+## Ingestion Policy
+- Capture all expiries when configured to support future analysis
+- DTE filtering can be applied downstream in metrics/alerts
+
 ### IV Point (delta grid)
 - snapshot_id (fk)
 - expiry (date)
