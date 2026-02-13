@@ -36,7 +36,8 @@ def alerts_page():
     alerts = query_df(
         """
         SELECT alert_id, alert_type, expiry_bucket, severity, tradability_score,
-               regime_label, confidence_tier, zscore_mid, zscore_worst
+               regime_label, confidence_tier, zscore_mid, zscore_worst,
+               persistence_count
         FROM alerts
         ORDER BY severity DESC
         """
@@ -44,7 +45,27 @@ def alerts_page():
     if alerts.empty:
         st.info("No alerts available yet.")
         return
-    st.dataframe(alerts, use_container_width=True)
+    st.sidebar.subheader("Alert Filters")
+    types = ["All"] + sorted(alerts["alert_type"].unique().tolist())
+    tiers = ["All"] + sorted(alerts["confidence_tier"].unique().tolist())
+    regimes = ["All"] + sorted(alerts["regime_label"].unique().tolist())
+
+    sel_type = st.sidebar.selectbox("Type", types)
+    sel_tier = st.sidebar.selectbox("Tier", tiers)
+    sel_regime = st.sidebar.selectbox("Regime", regimes)
+    min_severity = st.sidebar.slider("Min severity", 0.0, 5.0, 2.0, 0.1)
+    min_tradability = st.sidebar.slider("Min tradability", 0.0, 1.0, 0.0, 0.05)
+
+    filtered = alerts
+    if sel_type != "All":
+        filtered = filtered[filtered["alert_type"] == sel_type]
+    if sel_tier != "All":
+        filtered = filtered[filtered["confidence_tier"] == sel_tier]
+    if sel_regime != "All":
+        filtered = filtered[filtered["regime_label"] == sel_regime]
+    filtered = filtered[(filtered["severity"] >= min_severity) & (filtered["tradability_score"] >= min_tradability)]
+
+    st.dataframe(filtered, use_container_width=True)
 
 
 def metrics_page():
