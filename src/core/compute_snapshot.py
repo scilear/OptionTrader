@@ -11,7 +11,10 @@ import pandas as pd
 from src.core.config import load_config
 from src.core.metrics import compute_iv_points, compute_surface_metrics, filter_quotes_by_dte
 from src.core.tradability import compute_tradability_score
+import json
 import logging
+
+import json
 
 from src.core.alerts import compute_alerts
 from src.core.trade_ideas import build_trade_ideas
@@ -143,6 +146,17 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 continue
             if alert["alert_type"] == "RR_EXTREME" and regime_label == "Stress":
                 continue
+            explain = {
+                "alert_type": alert["alert_type"],
+                "expiry_bucket": alert["expiry_bucket"],
+                "z_threshold": threshold,
+                "zscore_mid": alert["zscore_mid"],
+                "zscore_worst": alert["zscore_worst"],
+                "persistence": alert["persistence"],
+                "regime_label": regime_label,
+                "confidence_tier": tier,
+                "tradability_score": tradability_score,
+            }
             conn.execute(
                 """
                 INSERT INTO alerts (
@@ -162,7 +176,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     tier,
                     alert["persistence"],
                     regime_label,
-                    "{}",
+                    json.dumps(explain),
                 ),
             )
 
