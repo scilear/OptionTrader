@@ -99,14 +99,14 @@ def alert_detail_page():
 
 def main():
     st.set_page_config(page_title="OptionTrader", layout="wide")
-    page = st.sidebar.radio("Navigation", ["Alerts", "Metrics", "Alert Detail", "Replay"])
+    page = st.sidebar.radio("Navigation", ["Alerts", "Metrics", "Alert Detail", "Replay", "Event Study"])
     if page == "Alerts":
         alerts_page()
     elif page == "Metrics":
         metrics_page()
     elif page == "Alert Detail":
         alert_detail_page()
-    else:
+    elif page == "Replay":
         st.header("Replay")
         data = query_df(
             """
@@ -122,6 +122,30 @@ def main():
             st.info("No replay data available yet.")
             return
         st.dataframe(data, use_container_width=True)
+    else:
+        st.header("Event Study")
+        metric = st.selectbox("Metric", ["rr25_mid", "fly25_mid", "term_slope_mid"])
+        threshold = st.slider("Z threshold", min_value=1.5, max_value=3.0, value=2.0, step=0.1)
+        series = query_df(
+            """
+            SELECT s.ts, m.{metric}
+            FROM surface_metrics m
+            JOIN snapshots s ON s.snapshot_id = m.snapshot_id
+            ORDER BY s.ts
+            """.format(metric=metric)
+        )
+        if series.empty:
+            st.info("No data available for event study.")
+            return
+        from src.core.event_study import compute_event_study
+
+        stats = compute_event_study(series, metric, threshold)
+        st.metric("Events", stats.events)
+        st.metric("Hit rate", f"{stats.hit_rate:.2f}")
+        st.metric(
+            "Median reversion days",
+            "N/A" if stats.median_reversion_days is None else f"{stats.median_reversion_days:.1f}",
+        )
 
 
 if __name__ == "__main__":
