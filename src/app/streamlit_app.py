@@ -137,10 +137,27 @@ def alert_detail_page():
     ideas["legs"] = ideas["legs"].apply(parse_json)
     st.dataframe(ideas, use_container_width=True)
 
+    from src.core.export import build_trade_export, export_to_json
+
+    idea_idx = st.number_input("Idea index", min_value=0, max_value=max(len(ideas) - 1, 0), value=0)
+    if not detail.empty and not ideas.empty:
+        alert_row = detail.iloc[0].to_dict()
+        idea_row = ideas.iloc[int(idea_idx)].to_dict()
+        payload = build_trade_export(alert_row, idea_row)
+        st.download_button(
+            "Download trade idea",
+            data=export_to_json(payload),
+            file_name=f"trade_idea_{alert_id}.json",
+            mime="application/json",
+        )
+
 
 def main():
     st.set_page_config(page_title="OptionTrader", layout="wide")
-    page = st.sidebar.radio("Navigation", ["Alerts", "Metrics", "Alert Detail", "Replay", "Event Study"])
+    page = st.sidebar.radio(
+        "Navigation",
+        ["Alerts", "Metrics", "Alert Detail", "Replay", "Event Study", "Health"],
+    )
     if page == "Alerts":
         alerts_page()
     elif page == "Metrics":
@@ -163,7 +180,7 @@ def main():
             st.info("No replay data available yet.")
             return
         st.dataframe(data, use_container_width=True)
-    else:
+    elif page == "Event Study":
         st.header("Event Study")
         metric = st.selectbox("Metric", ["rr25_mid", "fly25_mid", "term_slope_mid"])
         threshold = st.slider("Z threshold", min_value=1.5, max_value=3.0, value=2.0, step=0.1)
@@ -187,6 +204,16 @@ def main():
             "Median reversion days",
             "N/A" if stats.median_reversion_days is None else f"{stats.median_reversion_days:.1f}",
         )
+    else:
+        st.header("Health")
+        from src.core.health import compute_health_summary
+
+        summary = compute_health_summary()
+        st.metric("Snapshots", summary.snapshots)
+        st.metric("Quotes", summary.quotes)
+        st.metric("IV points", summary.iv_points)
+        st.metric("Metrics", summary.metrics)
+        st.metric("Alerts", summary.alerts)
 
 
 if __name__ == "__main__":
