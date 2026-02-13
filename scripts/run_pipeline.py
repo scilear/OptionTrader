@@ -18,6 +18,7 @@ from src.db.init_db import init_db
 from src.db.connection import connect
 from src.ingest.ingest_yfinance import run_ingest
 from src.core.compute_snapshot import compute_for_snapshot
+from src.core.regime import compute_regime_state
 
 
 def _latest_snapshot_id() -> int | None:
@@ -37,6 +38,8 @@ def run_pipeline() -> None:
     logger.info("database initialized")
     run_ingest()
     logger.info("ingest complete")
+    compute_regime_state()
+    logger.info("regime computed")
     snapshot_id = _latest_snapshot_id()
     if snapshot_id is None:
         raise RuntimeError("No snapshot found after ingestion")
