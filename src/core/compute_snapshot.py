@@ -186,7 +186,18 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             iv_mid = {}
             iv_bid = {}
             iv_ask = {}
+
+            expiry_dates = sorted({p.expiry for p in iv_points})
+            target_expiry = None
+            if expiry_dates:
+                target_expiry = min(
+                    expiry_dates,
+                    key=lambda d: abs((d - ts.date()).days - bucket_days),
+                )
+
             for point in iv_points:
+                if target_expiry and point.expiry != target_expiry:
+                    continue
                 if point.delta_bucket == "ATM":
                     continue
                 if point.delta_bucket == "+0.25C":
