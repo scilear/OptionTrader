@@ -63,6 +63,58 @@ def bs_delta(
     return math.exp(-div * t_years) * (_norm_cdf(d1) - 1.0)
 
 
+def strike_from_delta(
+    spot: float,
+    rate: float,
+    div: float,
+    t_years: float,
+    vol: float,
+    target_delta: float,
+    right: str,
+) -> float | None:
+    if t_years <= 0 or vol <= 0:
+        return None
+
+    adj = math.exp(div * t_years)
+    if right == "C":
+        p = target_delta * adj
+    else:
+        p = (target_delta + 1) * adj
+
+    if p <= 0 or p >= 1:
+        return None
+
+    d1 = _norm_ppf(p)
+    fwd = spot * math.exp((rate - div) * t_years)
+    vol_sqrt = vol * math.sqrt(t_years)
+    strike = fwd * math.exp(-(d1 * vol_sqrt) + 0.5 * vol * vol * t_years)
+    return strike
+
+
+def bs_greeks(
+    spot: float,
+    strike: float,
+    rate: float,
+    div: float,
+    t_years: float,
+    vol: float,
+    right: str,
+) -> dict:
+    if t_years <= 0 or vol <= 0:
+        return {"delta": 0.0, "gamma": 0.0, "vega": 0.0}
+
+    fwd = spot * math.exp((rate - div) * t_years)
+    vol_sqrt = vol * math.sqrt(t_years)
+    d1 = (math.log(fwd / strike) + 0.5 * vol * vol * t_years) / vol_sqrt
+    pdf = math.exp(-0.5 * d1 * d1) / math.sqrt(2 * math.pi)
+
+    delta = bs_delta(spot, strike, rate, div, t_years, vol, right)
+    gamma = math.exp(-div * t_years) * pdf / (spot * vol_sqrt)
+    vega = spot * math.exp(-div * t_years) * pdf * math.sqrt(t_years)
+
+    return {"delta": delta, "gamma": gamma, "vega": vega}
+
+
 def solve_iv(
     price: float,
     spot: float,
