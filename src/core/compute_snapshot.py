@@ -17,7 +17,7 @@ import logging
 import json
 
 from src.core.alerts import compute_alerts
-from src.core.trade_ideas import build_trade_ideas
+from src.core.trade_ideas import build_trade_ideas, IdeaContext
 from src.db.connection import connect
 
 
@@ -181,7 +181,41 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             )
 
             alert_id = conn.execute("SELECT MAX(alert_id) FROM alerts").fetchone()[0]
-            ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"])
+            bucket_days = int(alert["expiry_bucket"].replace("D", ""))
+            t_years = bucket_days / 365.0
+            iv_mid = {}
+            iv_bid = {}
+            iv_ask = {}
+            for point in iv_points:
+                if point.delta_bucket == "ATM":
+                    continue
+                if point.delta_bucket == "+0.25C":
+                    iv_mid[0.25] = point.iv_mid
+                    iv_bid[0.25] = point.iv_bid
+                    iv_ask[0.25] = point.iv_ask
+                if point.delta_bucket == "-0.25P":
+                    iv_mid[-0.25] = point.iv_mid
+                    iv_bid[-0.25] = point.iv_bid
+                    iv_ask[-0.25] = point.iv_ask
+                if point.delta_bucket == "+0.10C":
+                    iv_mid[0.10] = point.iv_mid
+                    iv_bid[0.10] = point.iv_bid
+                    iv_ask[0.10] = point.iv_ask
+                if point.delta_bucket == "-0.10P":
+                    iv_mid[-0.10] = point.iv_mid
+                    iv_bid[-0.10] = point.iv_bid
+                    iv_ask[-0.10] = point.iv_ask
+
+            context = IdeaContext(
+                spot=spot,
+                t_years=t_years,
+                rate=0.0,
+                div=0.0,
+                iv_mid=iv_mid,
+                iv_bid=iv_bid,
+                iv_ask=iv_ask,
+            )
+            ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"], context)
             for idea in ideas:
                 conn.execute(
                     """

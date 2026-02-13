@@ -14,6 +14,10 @@ def _norm_cdf(x: float) -> float:
     return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
+def _norm_ppf(p: float) -> float:
+    return math.sqrt(2) * math.erf_inv(2 * p - 1)
+
+
 def _bs_price(
     spot: float,
     strike: float,
