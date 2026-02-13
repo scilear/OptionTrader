@@ -10,6 +10,7 @@ data:
   dte_max: 60
   snapshot_tags: [eod, open, mid, event]
   source: yfinance
+  capture_all_expiries: true
 
 storage:
   engine: duckdb  # sqlite or duckdb
