@@ -1,6 +1,7 @@
 import duckdb
+import pandas as pd
 
-from src.ingest.ingest_yfinance import _next_id
+from src.ingest.ingest_yfinance import _next_id, to_int
 
 
 def test_next_id_increments():
@@ -12,3 +13,9 @@ def test_next_id_increments():
         assert _next_id(conn, "t", "id") == 2
     finally:
         conn.close()
+
+
+def test_nan_to_int_behavior():
+    value = float("nan")
+    assert pd.isna(value)
+    assert to_int(value) == 0
