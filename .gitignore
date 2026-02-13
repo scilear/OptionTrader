@@ -165,6 +165,12 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
+# Local data artifacts
+data/*.duckdb
+data/*.duckdb.wal
+data/*.duckdb.tmp
+data/*.duckdb.wal.*
+
 # Cython debug symbols
 cython_debug/
 
