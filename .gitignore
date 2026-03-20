@@ -170,6 +170,7 @@ data/*.duckdb
 data/*.duckdb.wal
 data/*.duckdb.tmp
 data/*.duckdb.wal.*
+data/test_optiontrader.duckdb
 
 # Cython debug symbols
 cython_debug/
