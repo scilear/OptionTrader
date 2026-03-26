@@ -1,4 +1,5 @@
 duckdb
+ib_insync
 pandas
 pyyaml
 streamlit

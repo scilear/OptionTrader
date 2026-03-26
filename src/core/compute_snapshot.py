@@ -225,6 +225,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 iv_mid=iv_mid,
                 iv_bid=iv_bid,
                 iv_ask=iv_ask,
+                expiry=target_expiry,
             )
             ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"], context)
             for idea in ideas:

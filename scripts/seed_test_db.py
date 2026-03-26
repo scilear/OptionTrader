@@ -109,8 +109,8 @@ def seed(conn: duckdb.DuckDBPyConnection) -> None:
             (
                 alert_id,
                 json.dumps([
-                    {"right": "P", "delta": -0.25, "action": "SELL"},
-                    {"right": "P", "delta": -0.10, "action": "BUY"},
+                    {"right": "P", "delta": -0.25, "action": "SELL", "strike": 4900, "expiry": "2026-03-13"},
+                    {"right": "P", "delta": -0.10, "action": "BUY", "strike": 4750, "expiry": "2026-03-13"},
                 ]),
                 json.dumps({"delta": -0.1, "gamma": 0.01, "vega": 0.2}),
                 json.dumps({}),

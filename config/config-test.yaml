@@ -13,8 +13,15 @@ data:
   dte_min: 14
   dte_max: 60
   snapshot_tags: [eod, open, mid, event]
-  source: yfinance
+  source: yfinance  # test config always uses yfinance; no IB needed for seeded DB
   capture_all_expiries: true
+
+ib:
+  hosts: []  # empty = skip IB, go straight to yfinance
+  port: 7496
+  client_id: 10
+  timeout_seconds: 10
+  strike_pct_range: 0.25
 
 storage:
   engine: duckdb

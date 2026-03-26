@@ -13,8 +13,17 @@ data:
   dte_min: 14
   dte_max: 60
   snapshot_tags: [eod, open, mid, event]
-  source: yfinance
+  source: ib  # ib tries IB hosts then falls back to yfinance; set to yfinance to skip IB entirely
   capture_all_expiries: true
+
+ib:
+  hosts:
+    - wendy.local
+    - hal.local
+  port: 7496
+  client_id: 10
+  timeout_seconds: 10
+  strike_pct_range: 0.25  # ±25% around spot
 
 storage:
   engine: duckdb  # sqlite or duckdb

@@ -16,7 +16,7 @@ import logging
 from src.core.logging_utils import setup_logging
 from src.db.init_db import init_db
 from src.db.connection import connect
-from src.ingest.ingest_yfinance import run_ingest
+from src.ingest.dispatcher import run_ingest
 from src.core.compute_snapshot import compute_for_snapshot
 from src.core.regime import compute_regime_state
 
