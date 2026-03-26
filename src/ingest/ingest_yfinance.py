@@ -48,9 +48,6 @@ def _valid_expiry(expiry: str, dte_min: int, dte_max: int) -> bool:
 def run_ingest() -> None:
     logger = logging.getLogger("ingest")
     config = load_config()
-    source = config["data"]["source"]
-    if source != "yfinance":
-        raise ValueError("config.data.source must be 'yfinance' for this ingest job")
     symbol = config["data"]["symbol"]
     dte_min = config["data"]["dte_min"]
     dte_max = config["data"]["dte_max"]
@@ -76,7 +73,7 @@ def run_ingest() -> None:
                 timestamp,
                 config["data"]["underlying"],
                 spot,
-                source,
+                "yfinance",
                 "mid",
                 None,
             ),

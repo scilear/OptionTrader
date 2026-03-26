@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import date
 
 from src.core.iv_solve import _bs_price, bs_greeks, strike_from_delta
 
@@ -16,6 +17,7 @@ class IdeaContext:
     iv_mid: dict
     iv_bid: dict
     iv_ask: dict
+    expiry: date | None = None
 
 
 def _leg_price(vol: float, context: IdeaContext, right: str, delta: float) -> tuple[float | None, float | None, dict]:
@@ -119,7 +121,8 @@ def build_trade_ideas(alert_type: str, expiry_bucket: str, context: IdeaContext 
                 leg_greeks_mid.append({k: sign * v * qty for k, v in greeks_mid.items()})
                 leg_greeks_worst.append({k: sign * v * qty for k, v in greeks_worst.items()})
 
-                leg["strike"] = strike_mid
+                leg["strike"] = round(strike_mid) if strike_mid is not None else None
+                leg["expiry"] = context.expiry.isoformat() if context.expiry else None
 
         price_mid_total = sum(leg_prices_mid) if leg_prices_mid else None
         price_worst_total = sum(leg_prices_worst) if leg_prices_worst else None

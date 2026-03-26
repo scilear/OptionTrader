@@ -166,6 +166,7 @@ dmypy.json
 .pytype/
 
 # Local data artifacts
+data/cache/
 data/*.duckdb
 data/*.duckdb.wal
 data/*.duckdb.tmp

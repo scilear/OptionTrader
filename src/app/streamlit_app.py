@@ -176,7 +176,29 @@ def alert_detail_page():
     ideas = ideas.copy()
     ideas["risk_flags"] = ideas["risk_flags"].apply(parse_json)
     ideas["legs"] = ideas["legs"].apply(parse_json)
-    st.dataframe(ideas, use_container_width=True)
+
+    display = ideas.drop(columns=["legs", "risk_flags"]).copy()
+    display["risk_flags"] = ideas["risk_flags"].apply(
+        lambda v: ", ".join(v) if isinstance(v, list) else (v or "")
+    )
+    st.dataframe(display, use_container_width=True)
+
+    for i, row in ideas.iterrows():
+        st.subheader(f"Legs — {row['template']}")
+        legs = row["legs"]
+        if isinstance(legs, list):
+            right_map = {"P": "Put", "C": "Call"}
+            rows = [
+                {
+                    "Action": leg.get("action", ""),
+                    "Type": right_map.get(leg.get("right", ""), leg.get("right", "")),
+                    "Strike": int(leg["strike"]) if leg.get("strike") is not None else "—",
+                    "Expiry": leg.get("expiry") or leg.get("tenor") or "—",
+                    "Delta": leg.get("delta", ""),
+                }
+                for leg in legs
+            ]
+            st.dataframe(rows, use_container_width=True)
 
     from src.core.export import build_trade_export, export_to_json
 
