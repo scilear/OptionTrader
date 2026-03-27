@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 1 — SPX Options: Structural Factors That Create Opportunity</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 1 — SPX Options: Structural Factors That Create Opportunity</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 1 — SPX Options: Structural Factors That Create Opportunity</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Understand the structural features of SPX options that make vol surface signals possible and persistent.</li>
+<li>Understand why execution quality is not a secondary concern — it often dominates whether an edge is realizable.</li>
+<li>Build the right mental model before interpreting tool outputs.</li>
+</ul>
+<p>---</p>
+<h2>1) What Makes SPX Options Different</h2>
+<p>SPX options are cash-settled European-exercise options on the S&amp;P 500 index. These are not small details — they shape strategy design in direct ways.</p>
+<p>**Cash settlement** means there is no assignment risk. When an SPX option expires in-the-money, you receive (or pay) the cash value of the intrinsic payoff. You never get assigned stock. This simplifies position management but also means SPX options do not benefit from early-exercise value, which is why European-exercise works cleanly.</p>
+<p>**European exercise** means you cannot exercise early. For strategies built on implied vol signals rather than directional payoffs, this is largely irrelevant — you&#x27;re rarely planning to hold to expiry anyway. But it matters when comparing SPX to SPY or ES options, which have American or futures-style exercise.</p>
+<p>**Weekly and monthly expiries coexist.** SPXW contracts expire every Friday (and sometimes mid-week). Monthly SPX contracts expire on the third Friday. This creates a rich but uneven term structure: front-week expiries can be extremely sensitive to near-term events, while monthly expirations have a smoother vol surface. OptionTrader groups quotes into DTE buckets (21D, 30D, 45D by default) to smooth over this complexity, but understanding it helps interpret term structure anomalies.</p>
+<p>---</p>
+<h2>2) The Structural Factors That Create the Vol Surface&#x27;s Shape</h2>
+<p>Understanding *why* the vol surface has its characteristic shape is the prerequisite for understanding when that shape is distorted.</p>
+<p>**Persistent left skew.** SPX puts are structurally more expensive than equidistant calls. This is not because the market expects a crash — it&#x27;s because large institutional investors own equity portfolios and need to buy put protection. This demand for downside insurance is large, relatively inelastic, and continuous. The option sellers who absorb it demand a premium. The result is a persistent negative risk reversal (RR25 &lt; 0). It has been a stable feature of equity index options for decades. It is not a pricing error; it is compensation for structural risk.</p>
+<p>**Smile curvature.** Both wings tend to be elevated relative to ATM. This reflects the market&#x27;s acknowledgment that actual returns have fat tails — large moves (in either direction) are more probable than a normal distribution would predict. It also reflects uncertainty about future volatility levels: if you don&#x27;t know whether vol will be 15% or 30%, you price options to be safe against both scenarios, which inflates wings relative to a simple ATM estimate.</p>
+<p>**Event-driven term structure.** Near-dated IV spikes around known risk events (FOMC, CPI, earnings seasons). The front of the term structure absorbs this premium; the back remains anchored to longer-run uncertainty. After the event passes, front vol decays rapidly. This creates recurring patterns in term slope behavior that OptionTrader&#x27;s TERM_KINK alert is designed to identify.</p>
+<p>---</p>
+<h2>3) Where Edge Actually Comes From</h2>
+<p>OptionTrader is not a directional tool. It does not forecast whether the S&amp;P will rise or fall. It looks for *relative-value dislocations* within the vol surface — moments when one dimension of the surface is significantly stretched relative to its own recent history.</p>
+<p>The edge candidates are:</p>
+<ul>
+<li>**Skew dislocations** (RR25 extreme): put wing or call wing repriced unusually relative to the other.</li>
+<li>**Convexity dislocations** (FLY25 extreme): both wings priced unusually relative to ATM.</li>
+<li>**Term structure dislocations** (TERM kink): a specific maturity is out of line with its neighbors.</li>
+</ul>
+<p>Crucially, **the edge is not &quot;signal seen.&quot; The edge is &quot;signal survived all friction and process gates.&quot;** A strong z-score in a sparse dataset, or an extreme RR25 when spreads are 20% wide, is not edge — it is an artifact. The multi-gate architecture of OptionTrader (z-score → persistence → worst-case → regime) exists to separate real dislocations from noise.</p>
+<p>---</p>
+<h2>4) Why Execution Quality Dominates</h2>
+<p>Options on SPX are liquid by equity standards, but individual strikes and expiries vary enormously. A 25-delta put in a 30-day expiry on a normal day might be quoted at a 1% spread. A 10-delta put in the front week around a volatile event might have a 10–20% spread. If your strategy requires collecting a vol edge of 2%, a 10% spread renders that edge unreal.</p>
+<p>This is why OptionTrader computes both <code>*_mid</code> and <code>*_worst</code> versions of every metric. Mid is theoretical. Worst-case is what you actually get if every fill is at the adverse side. The worst-case gate in alert logic exists specifically to catch cases where the signal is real at mid but not executable at real prices.</p>
+<p>When a signal&#x27;s z-score on the worst-case metric is as large as the mid-metric z-score, the edge is robust to execution. When worst-case significantly underperforms mid, the dislocation may exist only in the quoted spread, not in the tradeable market.</p>
+<p>---</p>
+<h2>5) The IB/yfinance Source Context</h2>
+<p>OptionTrader ingests from Interactive Brokers (primary) or yfinance (fallback). This distinction matters for interpretation:</p>
+<p>**IB data** is live intraday quote data from real market makers. It reflects current bid/ask and real-time IV. It is higher quality for execution analysis but requires TWS or Gateway to be running.</p>
+<p>**yfinance data** is delayed and based on the last trade or composite quote. Spread quality information is less reliable. Worst-case metrics computed from yfinance data are less trustworthy because the bid/ask may be stale.</p>
+<p>When you see a source transition in the Metric Explorer chart (a color change in the source indicator), treat any apparent signal around that transition with extra skepticism. The shape you see may reflect a data quality change, not a market move.</p>
+<p>---</p>
+<h2>6) Practical Checklist Before Any Analysis</h2>
+<p>Before interpreting any alert or chart move:</p>
+<ol>
+<li>Check source context: is this IB or yfinance data? Was there a source transition near the move?</li>
+<li>Check coverage: are all expected expiry buckets present? (<code>metrics_rows</code>, <code>iv_points</code> in pipeline logs)</li>
+<li>Check cadence: is the chart shape built from many closely-spaced points, or from a few sparse ones? (Chart caption: <code>Points</code>, <code>median gap</code>, <code>max gap</code>)</li>
+<li>Check the worst-case variant: does <code>*_worst</code> confirm the direction and magnitude seen in <code>*_mid</code>?</li>
+</ol>
+<p>If any of these checks fail, the signal is in a research-only state until the data context clarifies.</p>
+<p>---</p>
+<h2>7) Drill</h2>
+<p>Take three historical alerts from OptionTrader and for each one answer:</p>
+<ol>
+<li>What was the data source, and was there any source transition near the alert?</li>
+<li>How many points built the signal window? Was the chart dense or sparse?</li>
+<li>Did the worst-case metric confirm the mid metric signal? By how much?</li>
+<li>Which of these three factors — coverage, cadence, or execution quality — would have been most likely to invalidate this alert if it had failed?</li>
+</ol></div>
+  </div>
+</body>
+</html>

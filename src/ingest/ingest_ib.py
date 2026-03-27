@@ -67,6 +67,7 @@ def _run_ib_ingest(host: str, port: int, config: dict) -> None:
     spread_gate_pct = config["quality"]["spread_gate_pct"]
     ib_cfg = config.get("ib", {})
     strike_pct_range = ib_cfg.get("strike_pct_range", 0.25)
+    max_strikes_per_right = ib_cfg.get("max_strikes_per_right", 40)
     client_id = ib_cfg.get("client_id", 10)
     timeout_secs = ib_cfg.get("timeout_seconds", 10)
 
@@ -80,46 +81,111 @@ def _run_ib_ingest(host: str, port: int, config: dict) -> None:
         logger.info("spot=%s", spot)
 
         chains = ib.reqSecDefOptParams(symbol, "", "IND", underlying.conId)
-        chain = next((c for c in chains if c.exchange == "SMART"), None)
-        if chain is None and chains:
-            chain = chains[0]
-        if chain is None:
+        if not chains:
             raise RuntimeError("No option chain definition returned by IB")
 
-        today = date.today()
-        valid_expiries = [
-            exp for exp in sorted(chain.expirations)
-            if dte_min <= (date(int(exp[:4]), int(exp[4:6]), int(exp[6:8])) - today).days <= dte_max
+        smart_chains = [c for c in chains if c.exchange == "SMART"]
+        preferred = [
+            c
+            for c in smart_chains
+            if str(getattr(c, "tradingClass", "")).upper() in {"SPX", "SPXW"}
         ]
+        active_chains = preferred or smart_chains or chains
+
+        logger.info(
+            "using %s chain defs: %s",
+            len(active_chains),
+            [
+                {
+                    "exchange": c.exchange,
+                    "tradingClass": getattr(c, "tradingClass", None),
+                    "expiries": len(getattr(c, "expirations", []) or []),
+                    "strikes": len(getattr(c, "strikes", []) or []),
+                }
+                for c in active_chains
+            ],
+        )
+
+        today = date.today()
+        valid_expiries = sorted(
+            {
+                exp
+                for chain in active_chains
+                for exp in getattr(chain, "expirations", [])
+                if dte_min
+                <= (date(int(exp[:4]), int(exp[4:6]), int(exp[6:8])) - today).days
+                <= dte_max
+            }
+        )
         if not valid_expiries:
             raise RuntimeError(f"No expiries in DTE range {dte_min}-{dte_max}")
         logger.info("valid_expiries=%s", valid_expiries)
 
         lo = spot * (1 - strike_pct_range)
         hi = spot * (1 + strike_pct_range)
-        valid_strikes = sorted(s for s in chain.strikes if lo <= s <= hi)
-        logger.info("strikes in range: %s", len(valid_strikes))
 
-        contracts = [
-            Option(symbol, exp, strike, right, "SMART", currency="USD")
-            for exp in valid_expiries
-            for strike in valid_strikes
-            for right in ("C", "P")
-        ]
-        logger.info("qualifying %s contracts", len(contracts))
+        discovered_contracts = []
+        for chain in active_chains:
+            trading_class = getattr(chain, "tradingClass", "")
+            chain_expiries = [
+                exp for exp in sorted(chain.expirations) if exp in valid_expiries
+            ]
+            if not chain_expiries:
+                continue
+            logger.info(
+                "discovering contracts tradingClass=%s expiries=%s",
+                trading_class,
+                len(chain_expiries),
+            )
+            for exp in chain_expiries:
+                template = Option(
+                    symbol=symbol,
+                    lastTradeDateOrContractMonth=exp,
+                    strike=0.0,
+                    right="",
+                    exchange="SMART",
+                    currency="USD",
+                    tradingClass=trading_class,
+                    multiplier=getattr(chain, "multiplier", "100") or "100",
+                )
+                details = ib.reqContractDetails(template)
+                by_right: dict[str, list] = {"C": [], "P": []}
+                for detail in details:
+                    contract = detail.contract
+                    if contract.right not in ("C", "P"):
+                        continue
+                    strike = float(contract.strike)
+                    if lo <= strike <= hi:
+                        by_right[contract.right].append(contract)
 
-        # Qualify in batches to avoid overwhelming IB
-        qualified: list = []
-        batch_size = 50
-        for i in range(0, len(contracts), batch_size):
-            batch = ib.qualifyContracts(*contracts[i : i + batch_size])
-            qualified.extend(batch)
-            if i + batch_size < len(contracts):
-                time.sleep(0.1)
+                for right in ("C", "P"):
+                    ranked = sorted(
+                        by_right[right],
+                        key=lambda c: abs(float(c.strike) - spot),
+                    )
+                    discovered_contracts.extend(ranked[:max_strikes_per_right])
 
-        if not qualified:
-            raise RuntimeError("No contracts qualified with IB")
+        if not discovered_contracts:
+            raise RuntimeError("No contracts discovered in strike range")
+
+        unique_contracts = {}
+        for contract in discovered_contracts:
+            key = (
+                contract.conId
+                if getattr(contract, "conId", 0)
+                else (
+                    contract.lastTradeDateOrContractMonth,
+                    contract.strike,
+                    contract.right,
+                    contract.tradingClass,
+                )
+            )
+            unique_contracts[key] = contract
+
+        qualified = list(unique_contracts.values())
         logger.info("requesting market data snapshots for %s contracts", len(qualified))
+
+        batch_size = 50
 
         # Request tickers in batches (IB concurrent data limits)
         all_tickers = []
@@ -140,7 +206,9 @@ def _run_ib_ingest(host: str, port: int, config: dict) -> None:
                 """,
                 (timestamp, symbol, spot, f"ib:{host}", "mid", None),
             )
-            snapshot_id = conn.execute("SELECT MAX(snapshot_id) FROM snapshots").fetchone()[0]
+            snapshot_id = conn.execute(
+                "SELECT MAX(snapshot_id) FROM snapshots"
+            ).fetchone()[0]
             inserted = 0
             for ticker in all_tickers:
                 c = ticker.contract

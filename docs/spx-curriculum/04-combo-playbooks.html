@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 4 - Combo Playbooks (Hypothesis to Structure)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 4 - Combo Playbooks (Hypothesis to Structure)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 4 - Combo Playbooks (Hypothesis to Structure)</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Map validated alerts to structure families with clear rationale.</li>
+<li>Understand when not to map a signal to a live structure.</li>
+<li>Keep strategy complexity proportional to evidence quality.</li>
+</ul>
+<h2>Playbook A - RR Dislocation</h2>
+<h3>Hypothesis</h3>
+<p>Skew asymmetry is temporarily stretched and may normalize.</p>
+<h3>Typical structure family</h3>
+<ul>
+<li>risk-defined skew-sensitive spread (keep leg count minimal).</li>
+</ul>
+<p>Current system template link (<code>src/core/trade_ideas.py</code>):</p>
+<ul>
+<li><code>SkewFade_PutSpread</code></li>
+<li>legs: sell <code>-0.25P</code>, buy <code>-0.10P</code></li>
+</ul>
+<p>Rationale link:</p>
+<ul>
+<li>if put wing is unusually rich vs call wing and thesis is normalization,</li>
+<li>a defined-risk put spread can express partial skew fade while bounding tail exposure.</li>
+</ul>
+<h3>Best context</h3>
+<ul>
+<li>strong mid + worst agreement,</li>
+<li>stable data integrity,</li>
+<li>acceptable spread/tradability,</li>
+<li>no contradictory regime suppression.</li>
+</ul>
+<h3>Failure modes</h3>
+<ul>
+<li>skew keeps steepening in stress,</li>
+<li>persistence collapses quickly (false burst),</li>
+<li>execution friction erodes expected edge.</li>
+</ul>
+<p>Validation process before using this template:</p>
+<ol>
+<li><code>rr25_mid</code> and <code>rr25_worst</code> both extreme in same direction,</li>
+<li>persistence satisfied,</li>
+<li>tradability score acceptable,</li>
+<li>regime/event context does not justify continuing skew expansion.</li>
+</ol>
+<h2>Playbook B - FLY Dislocation</h2>
+<h3>Hypothesis</h3>
+<p>Smile convexity (wings vs ATM) is misaligned and may normalize.</p>
+<h3>Typical structure family</h3>
+<ul>
+<li>fly-oriented defined-risk structure.</li>
+</ul>
+<p>Current system template link (<code>src/core/trade_ideas.py</code>):</p>
+<ul>
+<li><code>Fly_1x2x1</code></li>
+<li>example legs around put wing/ATM put region</li>
+</ul>
+<p>Rationale link:</p>
+<ul>
+<li>if wings are mispriced relative to center, fly-type payoff can target convexity normalization.</li>
+</ul>
+<h3>Best context</h3>
+<ul>
+<li>multi-snapshot persistence,</li>
+<li>no severe spread degradation,</li>
+<li>neighboring buckets provide partial confirmation.</li>
+</ul>
+<h3>Failure modes</h3>
+<ul>
+<li>one-sided acceleration continues,</li>
+<li>event repricing justifies sustained convexity distortion.</li>
+</ul>
+<p>Validation process:</p>
+<ol>
+<li>verify decomposition (<code>W = 0.5*(C25+P25)</code>, <code>A = ATM</code>) and identify wing-led vs center-led move,</li>
+<li>confirm <code>fly25_worst</code> consistency,</li>
+<li>reject if spread quality makes multi-leg execution fragile.</li>
+</ol>
+<h2>Playbook C - TERM Kink</h2>
+<h3>Hypothesis</h3>
+<p>Front-vs-back maturity relation is temporarily distorted.</p>
+<h3>Typical structure family</h3>
+<ul>
+<li>calendar/diagonal family with tight risk controls.</li>
+</ul>
+<p>Current system template link (<code>src/core/trade_ideas.py</code>):</p>
+<ul>
+<li><code>ATM_Calendar</code></li>
+<li>conceptually: short front ATM, long back ATM</li>
+</ul>
+<p>Rationale link:</p>
+<ul>
+<li>if front/back ATM relation is temporarily distorted, calendar logic can express expected slope normalization.</li>
+</ul>
+<h3>Best context</h3>
+<ul>
+<li>coherent maturity-pair behavior,</li>
+<li>no immediate event shock that explains persistent front premium,</li>
+<li>realistic carry/slippage assumptions.</li>
+</ul>
+<h3>Failure modes</h3>
+<ul>
+<li>event-driven term premium remains structurally elevated,</li>
+<li>carry and spread costs dominate expected normalization.</li>
+</ul>
+<p>Validation process:</p>
+<ol>
+<li>verify event context (pre/post-event) before assuming mean reversion,</li>
+<li>confirm <code>term_slope_worst</code> and persistence,</li>
+<li>estimate carry/slippage burden.</li>
+</ol>
+<h2>Structure Selection Rubric</h2>
+<p>Choose the simplest structure that passes all of these:</p>
+<ol>
+<li>expresses the core hypothesis,</li>
+<li>has explicit max loss,</li>
+<li>remains viable under realistic execution,</li>
+<li>can be monitored with clear invalidation criteria.</li>
+</ol>
+<h2>Signal-to-Strategy Mapping Table (Process, not recipe)</h2>
+<table><thead><tr>
+<th>Signal family</th>
+<th>Primary question</th>
+<th>Candidate strategy branch</th>
+<th>What confirms</th>
+<th>What blocks</th>
+</tr></thead><tbody>
+<tr>
+<td>RR_EXTREME</td>
+<td>is skew temporary mispricing or structural stress?</td>
+<td>reversion skew-fade, continuation stance, or no-trade</td>
+<td>worst-case + persistence + tradability + regime coherence</td>
+<td>stress acceleration, weak execution, poor data integrity</td>
+</tr>
+<tr>
+<td>FLY_EXTREME</td>
+<td>is convexity dislocation temporary or event-justified?</td>
+<td>fly normalization, continuation hold-off, or no-trade</td>
+<td>decomposition clarity + worst-case + stable data</td>
+<td>one-point outlier, center-led event repricing, wide spreads</td>
+</tr>
+<tr>
+<td>TERM_KINK</td>
+<td>is front/back mismatch transient or justified by calendar?</td>
+<td>calendar normalization, event-aware delay, or no-trade</td>
+<td>post-event confirmation + worst-case + carry viability</td>
+<td>pre-event risk concentration, persistent justified front premium</td>
+</tr>
+</tbody></table>
+<p>This table is intentionally conditional. It maps reasoning to structures; it does not output automatic trades.</p>
+<h2>Branch Selection Rule (Explicit)</h2>
+<p>For each alert family, choose one branch before choosing a structure:</p>
+<ol>
+<li>**Reversion branch**: dislocation likely temporary and conditions stable.</li>
+<li>**Continuation branch**: distortion likely structural or still accelerating.</li>
+<li>**No-trade branch**: signal exists but integrity/execution/risk gates are weak.</li>
+</ol>
+<p>Only branch 1 should proceed directly to a template trade idea.</p>
+<h2>Drill</h2>
+<p>For each alert family, draft two candidates:</p>
+<ul>
+<li>one conservative structure,</li>
+<li>one advanced structure.</li>
+</ul>
+<p>Then explain why the conservative one should usually be default unless extra evidence exists.</p></div>
+  </div>
+</body>
+</html>

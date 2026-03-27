@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 9 - TERM Kink Event Framework</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 9 - TERM Kink Event Framework</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 9 - TERM Kink Event Framework</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Interpret term-slope alerts in event and non-event regimes.</li>
+<li>Separate justified term repricing from temporary dislocation.</li>
+<li>Apply a structured framework for TERM_KINK decisions.</li>
+</ul>
+<h2>1) Formula and Context</h2>
+<p>For two maturities <code>T_near</code> and <code>T_far</code>:</p>
+<ul>
+<li><code>TERM = sigma_ATM(T_near) - sigma_ATM(T_far)</code></li>
+</ul>
+<p>In the pipeline, <code>term_slope_mid</code> and <code>term_slope_worst</code> are derived between adjacent configured buckets.</p>
+<p>Interpretation:</p>
+<ul>
+<li>higher positive near-far slope can indicate concentrated near-term event premium,</li>
+<li>flattening can indicate event decay or broader regime repricing,</li>
+<li>inversion can signal unusual maturity structure shifts.</li>
+</ul>
+<h2>2) Why Event Context Is Critical</h2>
+<p>Term distortions are often rational around catalysts (macro releases, central bank meetings, earnings clusters for constituents).</p>
+<p>A key mistake is treating every term kink as mean-reversion opportunity.</p>
+<p>Framework principle:</p>
+<ul>
+<li>first ask &quot;is this justified by event timing?&quot;,</li>
+<li>only then ask &quot;is this mispricing likely to normalize?&quot;</li>
+</ul>
+<h2>3) Event vs Non-Event Decision Matrix</h2>
+<table><thead><tr>
+<th>Context</th>
+<th>Signal characteristics</th>
+<th>Default stance</th>
+<th>Escalation condition</th>
+</tr></thead><tbody>
+<tr>
+<td>non-event week</td>
+<td>persistent kink + clean data</td>
+<td>consider normalization thesis</td>
+<td>worst-case + persistence + tradability all pass</td>
+</tr>
+<tr>
+<td>pre-event window</td>
+<td>near term elevated fast</td>
+<td>cautious/watch</td>
+<td>wait for post-event confirmation unless edge is exceptional</td>
+</tr>
+<tr>
+<td>immediate post-event</td>
+<td>decay expected but uncertain speed</td>
+<td>watch first</td>
+<td>trade only if decay pattern confirms across snapshots</td>
+</tr>
+<tr>
+<td>mixed event noise</td>
+<td>unstable oscillation</td>
+<td>research only</td>
+<td>require cleaner cadence and repeated confirmation</td>
+</tr>
+</tbody></table>
+<h2>4) TERM_KINK Process Checklist</h2>
+<ol>
+<li>Confirm slope direction and magnitude in both mid and worst variants.</li>
+<li>Check if front maturity contains known catalyst premium.</li>
+<li>Validate persistence beyond one isolated point.</li>
+<li>Verify data quality and source consistency.</li>
+<li>Assess carry/slippage burden for intended structure.</li>
+<li>Define invalidation before entry.</li>
+</ol>
+<h2>5) Typical Failure Modes</h2>
+<ul>
+<li>entering mean reversion before event risk passes,</li>
+<li>ignoring carry cost in calendar-style structures,</li>
+<li>overconfident interpretation from sparse snapshots,</li>
+<li>misclassifying rational repricing as anomaly.</li>
+</ul>
+<h2>6) TERM Case Framing Template</h2>
+<p>For each TERM alert, write:</p>
+<ul>
+<li>event status: <code>non-event</code> / <code>pre-event</code> / <code>post-event</code> / <code>mixed</code>,</li>
+<li>slope thesis: <code>normalization</code> / <code>continuation</code> / <code>unclear</code>,</li>
+<li>execution burden: <code>low</code> / <code>medium</code> / <code>high</code>,</li>
+<li>decision label: <code>Trade</code> / <code>Watch</code> / <code>Research</code> / <code>Reject</code>,</li>
+<li>invalidation condition.</li>
+</ul>
+<h2>7) Drill</h2>
+<p>Choose 8 historical TERM alerts and split them into event categories.</p>
+<p>For each alert:</p>
+<ol>
+<li>state expected slope path over next snapshots,</li>
+<li>compare expectation with realized behavior,</li>
+<li>log one rule adjustment if expectation failed.</li>
+</ol></div>
+  </div>
+</body>
+</html>

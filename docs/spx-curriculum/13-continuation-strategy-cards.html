@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 13 - Continuation Strategy Cards (Beyond Mean Reversion)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 13 - Continuation Strategy Cards (Beyond Mean Reversion)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 13 - Continuation Strategy Cards (Beyond Mean Reversion)</h1>
+<p>This module documents continuation-oriented decision branches.</p>
+<p>Important:</p>
+<ul>
+<li>Current code templates in <code>src/core/trade_ideas.py</code> are primarily reversion-oriented.</li>
+<li>These cards define process and candidate families; implementation templates can be added next.</li>
+</ul>
+<h2>Why continuation matters</h2>
+<p>Not every distortion should be faded. In stress and event-driven regimes, continuation can be more coherent than reversion.</p>
+<p>Decision principle:</p>
+<ul>
+<li>choose continuation branch when distortion is strengthening with regime/event support and execution remains viable.</li>
+</ul>
+<h2>Card C1 - RR Continuation (Defensive Skew Persistence)</h2>
+<p>Signal context:</p>
+<ul>
+<li>RR becomes more negative with persistence,</li>
+<li>worst-case confirms,</li>
+<li>regime/event context supports sustained downside premium.</li>
+</ul>
+<p>What it expresses:</p>
+<ul>
+<li>skew expansion likely persists short-term.</li>
+</ul>
+<p>Candidate family (to implement/expand):</p>
+<ul>
+<li>defensive bearish defined-risk spreads aligned with persistent downside skew,</li>
+<li>avoid naive skew-fade until stabilization evidence appears.</li>
+</ul>
+<p>Invalidation examples:</p>
+<ul>
+<li>RR stops steepening and reverts with confirmation,</li>
+<li>regime stress indicators cool materially,</li>
+<li>execution quality collapses.</li>
+</ul>
+<h2>Card C2 - FLY Continuation (Convexity Stress Persistence)</h2>
+<p>Signal context:</p>
+<ul>
+<li><code>fly25</code> remains elevated or keeps accelerating,</li>
+<li>worst-case confirms,</li>
+<li>decomposition indicates sustained wing stress.</li>
+</ul>
+<p>What it expresses:</p>
+<ul>
+<li>convexity distortion likely to persist before normalization.</li>
+</ul>
+<p>Candidate family (to implement/expand):</p>
+<ul>
+<li>lower-risk directional/hedged expressions that do not depend on immediate fly normalization,</li>
+<li>avoid large multi-leg mean-reversion structures in unstable execution windows.</li>
+</ul>
+<p>Invalidation examples:</p>
+<ul>
+<li>clear convexity stabilization across adjacent buckets,</li>
+<li>event catalyst passes with rapid decay in distortion,</li>
+<li>spread regime worsens beyond viable execution.</li>
+</ul>
+<h2>Card C3 - TERM Continuation (Event Premium Persistence)</h2>
+<p>Signal context:</p>
+<ul>
+<li>front-vs-back slope remains elevated through pre-event window,</li>
+<li>post-event decay is not yet visible,</li>
+<li>carry costs penalize early normalization bets.</li>
+</ul>
+<p>What it expresses:</p>
+<ul>
+<li>near-term premium remains justified longer than baseline expectation.</li>
+</ul>
+<p>Candidate family (to implement/expand):</p>
+<ul>
+<li>delay normalization structures until post-event confirmation,</li>
+<li>prefer watch/no-trade if carry + slippage dominate.</li>
+</ul>
+<p>Invalidation examples:</p>
+<ul>
+<li>post-event slope normalization with persistence,</li>
+<li>front premium compresses with stable execution,</li>
+<li>new data contradicts event-persistence narrative.</li>
+</ul>
+<h2>Continuation Branch Checklist</h2>
+<p>Use before selecting continuation action:</p>
+<ol>
+<li>distortion direction is persistent,</li>
+<li>worst-case confirms,</li>
+<li>regime/event context supports continuation,</li>
+<li>execution remains viable,</li>
+<li>risk worksheet complete.</li>
+</ol>
+<p>If any key item fails, downgrade to <code>Watch</code> or <code>No-trade</code>.</p>
+<h2>Tool and Workflow Gaps for Continuation</h2>
+<p>Current gaps:</p>
+<ul>
+<li>no continuation-specific templates in trade idea engine,</li>
+<li>no explicit UI branch control tied to strategy menu,</li>
+<li>no continuation-vs-reversion outcome analytics panel.</li>
+</ul>
+<p>Suggested next implementation:</p>
+<ol>
+<li>add branch selector persistence in app and export payload,</li>
+<li>add continuation template prototypes,</li>
+<li>add branch performance dashboard.</li>
+</ol></div>
+  </div>
+</body>
+</html>

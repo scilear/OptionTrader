@@ -24,6 +24,7 @@ ib:
   client_id: 10
   timeout_seconds: 10
   strike_pct_range: 0.25  # ±25% around spot
+  max_strikes_per_right: 40  # nearest-to-spot calls/puts per expiry
 
 storage:
   engine: duckdb  # sqlite or duckdb

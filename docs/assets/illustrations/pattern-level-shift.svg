@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-label="Level shift pattern">
+  <rect width="960" height="300" fill="#fbfbf8"/>
+  <line x1="60" y1="250" x2="920" y2="250" stroke="#888" stroke-width="1"/>
+  <line x1="60" y1="40" x2="60" y2="250" stroke="#888" stroke-width="1"/>
+  <polyline fill="none" stroke="#c7432b" stroke-width="4" points="80,205 150,203 220,206 290,204 360,205 430,130 500,128 570,130 640,129 710,127 780,128 850,129 900,130"/>
+  <line x1="430" y1="130" x2="430" y2="250" stroke="#c7432b" stroke-dasharray="5 5" stroke-width="2"/>
+  <text x="70" y="30" font-family="Arial, sans-serif" font-size="18" fill="#222">Pattern E: Sudden level shift that holds</text>
+  <text x="450" y="272" font-family="Arial, sans-serif" font-size="13" fill="#444">new baseline</text>
+  <text x="80" y="278" font-family="Arial, sans-serif" font-size="14" fill="#333">time</text>
+  <text x="20" y="52" font-family="Arial, sans-serif" font-size="14" fill="#333">value</text>
+</svg>

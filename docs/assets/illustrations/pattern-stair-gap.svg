@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-label="Stair-step with gaps pattern">
+  <rect width="960" height="300" fill="#fbfbf8"/>
+  <line x1="60" y1="250" x2="920" y2="250" stroke="#888" stroke-width="1"/>
+  <line x1="60" y1="40" x2="60" y2="250" stroke="#888" stroke-width="1"/>
+  <polyline fill="none" stroke="#1f8a46" stroke-width="4" points="80,220 170,220 240,188 320,188 410,150 510,150 620,110 760,110 860,95"/>
+  <line x1="170" y1="220" x2="240" y2="188" stroke="#1f8a46" stroke-dasharray="6 6" stroke-width="2"/>
+  <line x1="320" y1="188" x2="410" y2="150" stroke="#1f8a46" stroke-dasharray="6 6" stroke-width="2"/>
+  <line x1="510" y1="150" x2="620" y2="110" stroke="#1f8a46" stroke-dasharray="6 6" stroke-width="2"/>
+  <text x="70" y="30" font-family="Arial, sans-serif" font-size="18" fill="#222">Pattern B: Stair-step moves with large sampling gaps</text>
+  <text x="80" y="278" font-family="Arial, sans-serif" font-size="14" fill="#333">time</text>
+  <text x="20" y="52" font-family="Arial, sans-serif" font-size="14" fill="#333">value</text>
+</svg>

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 3 - Alert-to-Trade Process (Rationale-First)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 3 - Alert-to-Trade Process (Rationale-First)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 3 - Alert-to-Trade Process (Rationale-First)</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Convert signal observations into explicit decisions.</li>
+<li>Make reasoning auditable and repeatable.</li>
+<li>Reduce emotional and narrative-driven trade errors.</li>
+</ul>
+<h2>The Five-Gate Decision Process</h2>
+<p>Before using the gates, define the unit of analysis:</p>
+<ul>
+<li>one alert,</li>
+<li>one bucket,</li>
+<li>one snapshot window (current + recent confirmations).</li>
+</ul>
+<p>Each gate should be supported by explicit evidence, not intuition labels.</p>
+<p>Current default parameters (from <code>config/config-v1.yaml</code>):</p>
+<ul>
+<li><code>alerts.z_threshold = 2.0</code></li>
+<li><code>alerts.persistence_snapshots = 2</code></li>
+<li><code>quality.spread_gate_pct = 0.15</code></li>
+<li><code>metrics.expiry_buckets_days = [21, 30, 45]</code></li>
+</ul>
+<p>This means the default signal gate is not discretionary: by construction, the alert already passed a 2-sigma + persistence condition.</p>
+<h3>Gate 1 - Signal Quality</h3>
+<p>Questions:</p>
+<ul>
+<li>Which metric family is driving the alert?</li>
+<li>Are both <code>zscore_mid</code> and <code>zscore_worst</code> supportive?</li>
+<li>Is persistence requirement met?</li>
+</ul>
+<p>How to determine <code>pass</code>:</p>
+<ul>
+<li>alert is linked to one clear family (<code>RR_EXTREME</code>, <code>FLY_EXTREME</code>, <code>TERM_KINK</code>),</li>
+<li><code>zscore_mid</code> exceeds configured threshold,</li>
+<li><code>zscore_worst</code> also exceeds threshold in same directional sense,</li>
+<li>persistence count meets configured requirement.</li>
+</ul>
+<p>Code-level logic reference:</p>
+<ul>
+<li>alert construction: <code>src/core/alerts.py</code></li>
+<li>insertion and additional filtering: <code>src/core/compute_snapshot.py</code></li>
+</ul>
+<p>Practical note:</p>
+<ul>
+<li>If an alert is present in <code>alerts</code> table, Signal gate is usually pre-passed.</li>
+<li>Your task is to verify whether the signal remains trustworthy after data/regime/execution/risk gates.</li>
+</ul>
+<p>What <code>fail</code> means:</p>
+<ul>
+<li>disagreement between mid and worst,</li>
+<li>or threshold/persistence not satisfied.</li>
+</ul>
+<p>If no -&gt; do not proceed.</p>
+<h3>Gate 2 - Data Integrity</h3>
+<p>Questions:</p>
+<ul>
+<li>Is coverage complete for expected buckets?</li>
+<li>Is cadence stable enough to infer pattern shape?</li>
+<li>Did source switch around the signal window?</li>
+</ul>
+<p>How to determine <code>pass</code>:</p>
+<ul>
+<li>expected bucket metrics are present (no missing key bucket for evaluation),</li>
+<li>cadence is interpretable (<code>Points</code>, <code>median gap</code>, <code>max gap</code> not dominated by large discontinuities),</li>
+<li>no suspicious ingest artifacts around the signal,</li>
+<li>source transitions are either absent or clearly explained.</li>
+</ul>
+<p>Concrete evidence fields to inspect:</p>
+<ul>
+<li>from logs: <code>iv_points=...</code>, <code>metrics_rows=...</code></li>
+<li>from chart caption: <code>Points</code>, <code>median gap</code>, <code>max gap</code></li>
+<li>from chart coloring: <code>source</code></li>
+</ul>
+<p>What <code>fail</code> means:</p>
+<ul>
+<li>sparse/intermittent points that can create false shapes,</li>
+<li>coverage drop (e.g., weak <code>iv_points</code> / missing metric rows),</li>
+<li>unresolved ingest anomalies.</li>
+</ul>
+<p>If uncertain -&gt; downgrade to <code>Watch</code> or <code>Research</code>.</p>
+<h3>Gate 3 - Regime and Event Context</h3>
+<p>Questions:</p>
+<ul>
+<li>Is this likely mean-reversion context or continuation context?</li>
+<li>Are there near-term catalysts that can justify persistent distortion?</li>
+<li>Does current regime suppress this alert family?</li>
+</ul>
+<p>How to determine <code>pass</code>:</p>
+<ul>
+<li>current regime does not conflict with alert family policy,</li>
+<li>event calendar does not provide a stronger competing explanation,</li>
+<li>chosen thesis (reversion or continuation) matches observed context.</li>
+</ul>
+<p>Concrete evidence fields:</p>
+<ul>
+<li><code>regime_label</code> in alert detail,</li>
+<li>event calendar notes in your journal,</li>
+<li>alert family policy checks (for example, <code>RR_EXTREME</code> may be suppressed in stress context in current compute logic).</li>
+</ul>
+<p>What <code>neutral</code> means:</p>
+<ul>
+<li>regime does not strongly confirm or reject thesis,</li>
+<li>but no explicit contradiction exists.</li>
+</ul>
+<p>What <code>fail</code> means:</p>
+<ul>
+<li>regime/event context directly contradicts thesis,</li>
+<li>or policy suppresses that alert family in current regime.</li>
+</ul>
+<p>If context conflicts with thesis -&gt; reject or delay.</p>
+<h3>Gate 4 - Execution Realism</h3>
+<p>Questions:</p>
+<ul>
+<li>Is tradability score acceptable?</li>
+<li>Are spread conditions consistent with your structure?</li>
+<li>Is slippage likely to dominate expected edge?</li>
+</ul>
+<p>How to determine <code>pass</code>:</p>
+<ul>
+<li>tradability score is inside your allowed range,</li>
+<li>quoted spreads are acceptable for intended combo,</li>
+<li>estimated friction leaves positive expected edge.</li>
+</ul>
+<p>How tradability is currently computed in code (<code>src/core/tradability.py</code>):</p>
+<ul>
+<li>compute median relative spread across valid quotes,</li>
+<li><code>tradability_score = 1 - min(1, median_spread / spread_gate_pct)</code>.</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>score near <code>1.0</code>: spreads are tight relative to your gate,</li>
+<li>score near <code>0.0</code>: spreads are wide; execution risk high.</li>
+</ul>
+<p>What <code>fail</code> means:</p>
+<ul>
+<li>spreads/slippage likely consume most of theoretical edge,</li>
+<li>or intended structure is not realistically fillable.</li>
+</ul>
+<p>If execution is weak -&gt; keep as research candidate only.</p>
+<h3>Gate 5 - Risk Definition</h3>
+<p>Questions:</p>
+<ul>
+<li>Is max loss known before entry?</li>
+<li>Is invalidation condition explicit?</li>
+<li>Is position size compatible with portfolio exposure?</li>
+</ul>
+<p>How to determine <code>pass</code>:</p>
+<ul>
+<li>maximum loss is explicitly defined,</li>
+<li>invalidation condition is specific and testable,</li>
+<li>position sizing respects portfolio and correlation limits,</li>
+<li>planned action on invalidation is pre-committed.</li>
+</ul>
+<p>Minimum required risk fields in your decision log:</p>
+<ul>
+<li>max loss,</li>
+<li>invalidation trigger,</li>
+<li>size rule,</li>
+<li>action on invalidation.</li>
+</ul>
+<p>What <code>fail</code> means:</p>
+<ul>
+<li>undefined downside,</li>
+<li>vague invalidation,</li>
+<li>or size inconsistent with risk limits.</li>
+</ul>
+<p>If risk is not explicit -&gt; no trade.</p>
+<h2>Decision Labels (Required)</h2>
+<p>Every candidate must end with one label:</p>
+<ul>
+<li><code>Trade now</code></li>
+<li><code>Watch for confirmation</code></li>
+<li><code>Research only</code></li>
+<li><code>Reject</code></li>
+</ul>
+<p>Reasoning must be written in one paragraph minimum.</p>
+<h2>Gate Evidence Card (Required)</h2>
+<p>Use this compact structure in logs:</p>
+<ul>
+<li><code>Signal gate</code>: pass/fail + evidence (<code>zscore_mid</code>, <code>zscore_worst</code>, persistence)</li>
+<li><code>Data gate</code>: pass/fail + evidence (coverage, cadence, source)</li>
+<li><code>Regime gate</code>: pass/neutral/fail + evidence (regime label, event context)</li>
+<li><code>Execution gate</code>: pass/fail + evidence (tradability, spread/slippage)</li>
+<li><code>Risk gate</code>: pass/fail + evidence (max loss, invalidation, size)</li>
+</ul>
+<p>Do not write gate status without evidence.</p>
+<h2>From Gate Results to Decision (Deterministic Mapping)</h2>
+<p>Use this mapping to avoid fuzzy conclusions:</p>
+<ul>
+<li>**Trade now**:</li>
+<li>Signal pass, Data pass, Execution pass, Risk pass,</li>
+<li>Regime is pass or neutral with explicit rationale.</li>
+<li>**Watch for confirmation**:</li>
+<li>Signal pass,</li>
+<li>one non-critical gate uncertain (usually Regime neutral or minor Data uncertainty),</li>
+<li>no hard fail in Execution/Risk.</li>
+<li>**Research only**:</li>
+<li>Signal pass but Execution fails or Data uncertainty is material.</li>
+<li>**Reject**:</li>
+<li>Signal fail, or Risk fail, or strong Regime contradiction.</li>
+</ul>
+<p>Hard-stop rule:</p>
+<ul>
+<li>Any **Risk fail** -&gt; <code>Reject</code> regardless of other gates.</li>
+</ul>
+<h2>Why This Process Works</h2>
+<ul>
+<li>It forces separation between observation and action.</li>
+<li>It prevents single-metric overreaction.</li>
+<li>It creates evidence for post-trade review and process improvement.</li>
+</ul>
+<h2>Drill</h2>
+<p>Take 10 alerts and produce a one-page decision log containing:</p>
+<ul>
+<li>gate outcomes,</li>
+<li>final label,</li>
+<li>invalidation condition,</li>
+<li>one sentence on what could make the decision change.</li>
+</ul></div>
+  </div>
+</body>
+</html>

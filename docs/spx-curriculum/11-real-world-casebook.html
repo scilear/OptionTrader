@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 11 - Real-World Casebook (From This Dataset)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 11 - Real-World Casebook (From This Dataset)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 11 - Real-World Casebook (From This Dataset)</h1>
+<p>This module uses actual snapshots from <code>data/optiontrader.duckdb</code>.</p>
+<p>Important context:</p>
+<ul>
+<li>At the time of writing, <code>alerts</code> table is empty for the current dataset window.</li>
+<li>Cases below are built from observed metric extremes and ingestion quality markers.</li>
+<li>Goal is to train decision/reflexion process, not to imply guaranteed outcomes.</li>
+</ul>
+<h2>Case 1 - RR 30D shock then normalization (reversion candidate)</h2>
+<p>Observed data:</p>
+<ul>
+<li>metric: <code>rr25_mid</code>, bucket <code>30D</code></li>
+<li>snapshot <code>11</code> (<code>2026-03-26 10:55:19</code>, source <code>yfinance</code>)</li>
+<li>value <code>-0.1190</code>, historical z approx <code>-2.27</code></li>
+<li>following snapshots:</li>
+<li><code>13</code>: <code>-0.0341</code> (source <code>ib</code>)</li>
+<li><code>14</code>: <code>-0.0342</code> (source <code>ib</code>)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>extreme downside skew reading followed by normalization.</li>
+</ul>
+<p>Decision branch:</p>
+<ul>
+<li>**Reversion branch** is plausible.</li>
+</ul>
+<p>Strategy mapping:</p>
+<ul>
+<li>candidate family: RR skew-fade (<code>SkewFade_PutSpread</code>) with strict risk fields.</li>
+</ul>
+<p>Validation rationale:</p>
+<ul>
+<li>confirm worst-case RR and persistence,</li>
+<li>confirm execution quality before entry,</li>
+<li>document invalidation in case skew re-expands.</li>
+</ul>
+<h2>Case 2 - TERM 30D one-snapshot spike at source switch (artifact risk)</h2>
+<p>Observed data:</p>
+<ul>
+<li>metric: <code>term_slope_mid</code>, bucket <code>30D</code></li>
+<li>snapshot <code>16</code> (<code>2026-03-27 07:39:03</code>, source <code>yfinance</code>)</li>
+<li>value <code>0.0710</code>, historical z approx <code>+2.81</code></li>
+<li>adjacent snapshots:</li>
+<li><code>15</code> (IB): <code>0.0029</code></li>
+<li><code>17</code> (IB): <code>-0.0011</code></li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>large isolated spike occurred between IB snapshots, during temporary source change.</li>
+</ul>
+<p>Decision branch:</p>
+<ul>
+<li>**No-trade branch** preferred (data/context uncertainty too high).</li>
+</ul>
+<p>Strategy mapping:</p>
+<ul>
+<li>do **not** directly map to calendar trade from this point alone.</li>
+</ul>
+<p>Validation rationale:</p>
+<ul>
+<li>data integrity gate weak (isolated jump + source transition),</li>
+<li>insufficient evidence for persistent term dislocation.</li>
+</ul>
+<h2>Case 3 - RR 21D sign flip after source transition (continuation/repricing risk)</h2>
+<p>Observed data:</p>
+<ul>
+<li>metric: <code>rr25_mid</code>, bucket <code>21D</code></li>
+<li><code>15</code> (IB): <code>-0.0436</code></li>
+<li><code>16</code> (yfinance): <code>-0.0386</code></li>
+<li><code>17</code> (IB): <code>+0.0244</code> (historical z approx <code>+2.46</code>)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>rapid sign flip from negative to positive RR can indicate call-side repricing,</li>
+<li>but context includes source transition and close spacing.</li>
+</ul>
+<p>Decision branch:</p>
+<ul>
+<li>**Watch/continuation branch** is more coherent than automatic reversion.</li>
+</ul>
+<p>Strategy mapping:</p>
+<ul>
+<li>avoid immediate skew-fade assumption,</li>
+<li>wait for additional confirmations on stable source/cadence.</li>
+</ul>
+<p>Validation rationale:</p>
+<ul>
+<li>branch uncertainty is high; forcing mean reversion is not justified.</li>
+</ul>
+<h2>Case 4 - Ingestion quality break (hard no-trade)</h2>
+<p>Observed data:</p>
+<ul>
+<li>snapshot <code>12</code> (<code>ib</code>)</li>
+<li><code>iv_points=10</code></li>
+<li><code>metrics_rows=2</code> (missing one configured bucket)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>coverage degraded materially relative to healthy snapshots (<code>metrics_rows=3</code>).</li>
+</ul>
+<p>Decision branch:</p>
+<ul>
+<li>**No-trade branch** (hard block).</li>
+</ul>
+<p>Strategy mapping:</p>
+<ul>
+<li>no mapping until ingestion quality is restored.</li>
+</ul>
+<p>Validation rationale:</p>
+<ul>
+<li>data gate fails directly; any strategy decision is unreliable.</li>
+</ul>
+<h2>Cross-Case Lessons</h2>
+<ol>
+<li>Not all extremes are reversion opportunities.</li>
+<li>Isolated spikes near source/cadence disruptions are often non-tradable.</li>
+<li>Branch selection (<code>reversion</code> / <code>continuation</code> / <code>no-trade</code>) must happen before template selection.</li>
+<li>Data-quality failures should hard-block trade preparation.</li>
+</ol>
+<h2>Practical Workflow (Use in App)</h2>
+<ol>
+<li>Use <code>Metric Explorer</code> to identify candidate distortion and inspect cadence/source.</li>
+<li>Use <code>Alert Detail</code> decision summary gates for signal/data/regime/execution/risk evidence.</li>
+<li>Fill <code>Decision Worksheet</code> (thesis + rationale + invalidation + max loss + size).</li>
+<li>Export trade idea only when worksheet gate passes.</li>
+</ol></div>
+  </div>
+</body>
+</html>

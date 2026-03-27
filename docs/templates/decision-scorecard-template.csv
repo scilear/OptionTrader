@@ -1,0 +1,1 @@
+timestamp,alert_type,bucket,source_context,coverage_context,zscore_mid,zscore_worst,persistence_passed,tradability_score,regime_label,signal_strength,worst_case_robustness,execution_quality,regime_alignment,payoff_clarity,process_discipline,total_score,decision_label,structure_candidate,max_loss,invalidation_condition,outcome,lesson,rule_update
