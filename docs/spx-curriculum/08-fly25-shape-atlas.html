@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 8 - FLY25 Shape Atlas</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 8 - FLY25 Shape Atlas</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 8 - FLY25 Shape Atlas</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Understand what FLY25 measures beyond a formula.</li>
+<li>Recognize recurring FLY shape regimes and false positives.</li>
+<li>Use a rationale process for convexity-oriented combo decisions.</li>
+</ul>
+<h2>1) Formula and Meaning</h2>
+<p>For maturity <code>T</code>:</p>
+<ul>
+<li><code>FLY25(T) = 0.5 * (sigma(+0.25, T) + sigma(-0.25, T)) - sigma(ATM, T)</code></li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>positive FLY25: wings are expensive versus ATM,</li>
+<li>negative FLY25: ATM is rich versus wings.</li>
+</ul>
+<p>In OptionTrader:</p>
+<ul>
+<li>midpoint signal: <code>fly25_mid</code></li>
+<li>pessimistic signal: <code>fly25_worst</code></li>
+</ul>
+<h2>2) Shape Atlas (Pattern -&gt; Story -&gt; Risk)</h2>
+<h3>Shape A - Stable slightly positive plateau</h3>
+<ul>
+<li>Story: persistent wing premium in calm-to-normal conditions.</li>
+<li>Risk: low standalone edge; often not enough for live trade.</li>
+</ul>
+<h3>Shape B - Sudden positive spike then partial reversion</h3>
+<ul>
+<li>Story: temporary tail-demand shock or local wing repricing.</li>
+<li>Risk: one-point outlier risk; verify persistence.</li>
+</ul>
+<h3>Shape C - Multi-snapshot positive acceleration</h3>
+<ul>
+<li>Story: building convexity stress.</li>
+<li>Risk: early mean-reversion entries can be punished.</li>
+</ul>
+<h3>Shape D - Cross below baseline then hold negative</h3>
+<ul>
+<li>Story: center (ATM) repriced up relative to wings, or wing premium decay.</li>
+<li>Risk: regime transition; old assumptions may fail.</li>
+</ul>
+<h3>Shape E - High-frequency alternation around zero</h3>
+<ul>
+<li>Story: microstructure noise or unstable inputs.</li>
+<li>Risk: elevated false-positive probability.</li>
+</ul>
+<h2>3) FLY Decomposition Logic</h2>
+<p>Given:</p>
+<ul>
+<li><code>W = 0.5 * (C25 + P25)</code> (average wings),</li>
+<li><code>A = ATM</code>.</li>
+</ul>
+<p>Then:</p>
+<ul>
+<li><code>FLY = W - A</code>.</li>
+</ul>
+<p>Interpretation split:</p>
+<ul>
+<li><code>W</code> up with <code>A</code> stable -&gt; wing-driven stress,</li>
+<li><code>A</code> up with <code>W</code> stable -&gt; center-driven repricing,</li>
+<li>both move -&gt; compare magnitudes before deciding thesis.</li>
+</ul>
+<p>Process rule:</p>
+<ul>
+<li>identify whether the distortion is wing-led or center-led before selecting structure.</li>
+</ul>
+<h2>4) No-Magic-Number FLY Decision Process</h2>
+<ol>
+<li>Is current FLY extreme vs its own recent history?</li>
+<li>Does <code>fly25_worst</code> confirm direction and significance?</li>
+<li>Is persistence satisfied?</li>
+<li>Are cadence/coverage/source clean?</li>
+<li>Does regime context support normalization thesis?</li>
+</ol>
+<p>If any core gate fails, downgrade to <code>Watch</code> or <code>Research</code>.</p>
+<h2>5) Mapping FLY to Combo Thinking</h2>
+<p>When considering a fly-oriented expression:</p>
+<ul>
+<li>ensure max-loss is explicit,</li>
+<li>avoid overfitting strike selection to one snapshot,</li>
+<li>require clear invalidation trigger (signal decay or execution deterioration).</li>
+</ul>
+<h2>6) Worked Micro-Examples</h2>
+<p>Example 1:</p>
+<ul>
+<li><code>C25=0.24</code>, <code>P25=0.28</code>, <code>ATM=0.23</code></li>
+<li><code>FLY=0.5*(0.24+0.28)-0.23=0.03</code></li>
+<li>reading: wings materially rich vs center.</li>
+</ul>
+<p>Example 2:</p>
+<ul>
+<li><code>C25=0.20</code>, <code>P25=0.23</code>, <code>ATM=0.24</code></li>
+<li><code>FLY=0.5*(0.20+0.23)-0.24=-0.025</code></li>
+<li>reading: center rich vs wings.</li>
+</ul>
+<h2>7) Drill</h2>
+<p>Pick 10 historical <code>FLY_EXTREME</code> alerts and classify each as:</p>
+<ul>
+<li>wing-driven,</li>
+<li>center-driven,</li>
+<li>mixed,</li>
+<li>unclear due to data integrity.</li>
+</ul>
+<p>For each, assign decision label and one invalidation condition.</p></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workflow Gap Backlog (Decision Automation)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Workflow Gap Backlog (Decision Automation)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Workflow Gap Backlog (Decision Automation)</h1>
+<p>This backlog tracks product gaps discovered while writing the curriculum.</p>
+<h2>Goal</h2>
+<p>Move from &quot;signal display&quot; to &quot;decision/reflexion assistant&quot; with auditable rationale.</p>
+<h2>Priority 1 - Decision Summary in Alert Detail</h2>
+<ul>
+<li>Problem: gate evidence is fragmented across charts and detail tables.</li>
+<li>Proposed feature:</li>
+<li>auto-calculate Signal/Data/Regime/Execution/Risk gate status,</li>
+<li>display evidence values beside each gate,</li>
+<li>output suggested decision label.</li>
+<li>Outcome target: reduce subjective inconsistency between analysts.</li>
+</ul>
+<h2>Priority 2 - Thesis Capture</h2>
+<ul>
+<li>Problem: users jump from alert to structure without explicit thesis.</li>
+<li>Proposed feature:</li>
+<li>required thesis selector (<code>reversion</code> / <code>continuation</code> / <code>no-trade</code>),</li>
+<li>required rationale text field,</li>
+<li>persist thesis with alert decision artifact.</li>
+<li>Outcome target: improve post-mortem explainability.</li>
+</ul>
+<h2>Priority 3 - Strategy Mapping Explainability</h2>
+<ul>
+<li>Problem: template appears without clear why/how fit.</li>
+<li>Proposed feature:</li>
+<li>show mapping explanation per alert family,</li>
+<li>display blockers that should prevent template use,</li>
+<li>include confidence badge.</li>
+<li>Outcome target: avoid blind template usage.</li>
+</ul>
+<h2>Priority 4 - Risk Worksheet Gate</h2>
+<ul>
+<li>Problem: trade ideas can be exported before explicit risk definition.</li>
+<li>Proposed feature:</li>
+<li>require max loss, invalidation, and size inputs,</li>
+<li>block export if fields missing.</li>
+<li>Outcome target: harden risk discipline.</li>
+</ul>
+<h2>Priority 5 - Validation Dashboard</h2>
+<ul>
+<li>Problem: no direct feedback loop on decision quality.</li>
+<li>Proposed feature:</li>
+<li>track decision label outcomes over time,</li>
+<li>monitor false-positive and missed-opportunity rates,</li>
+<li>review by alert family/regime.</li>
+<li>Outcome target: evidence-driven process improvement.</li>
+</ul>
+<h2>Priority 6 - Real-World Casebook</h2>
+<ul>
+<li>Problem: educational modules can still feel abstract without concrete historical examples.</li>
+<li>Proposed feature:</li>
+<li>add curated case library with timestamped snapshots,</li>
+<li>include signal decomposition, gate evidence, chosen branch (reversion/continuation/no-trade),</li>
+<li>include outcome review and lesson.</li>
+<li>Outcome target: teach decision quality with realistic context, not toy scenarios.</li>
+</ul>
+<p>Status:</p>
+<ul>
+<li>Initial version delivered in <code>docs/spx-curriculum/11-real-world-casebook.md</code>.</li>
+<li>Next step is to automate case generation directly from saved alert outcomes.</li>
+</ul></div>
+  </div>
+</body>
+</html>

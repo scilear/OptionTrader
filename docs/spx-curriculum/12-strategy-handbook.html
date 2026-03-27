@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 12 - Strategy Handbook (Detailed)</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 12 - Strategy Handbook (Detailed)</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 12 - Strategy Handbook (Detailed)</h1>
+<p>This module is the dedicated strategy reference.</p>
+<p>It explains:</p>
+<ul>
+<li>what each strategy is expressing,</li>
+<li>when it should (and should not) be used,</li>
+<li>how to validate setup quality,</li>
+<li>how to manage risk and invalidation.</li>
+</ul>
+<p>The structures below map to current system templates in <code>src/core/trade_ideas.py</code>.</p>
+<h2>1) Strategy Card: SkewFade_PutSpread (RR)</h2>
+<p>Template mapping:</p>
+<ul>
+<li>alert family: <code>RR_EXTREME</code></li>
+<li>legs: sell <code>-0.25P</code>, buy <code>-0.10P</code></li>
+</ul>
+<h3>What this strategy expresses</h3>
+<ul>
+<li>A view that downside skew is temporarily too rich and may normalize.</li>
+<li>Defined-risk expression of skew normalization on put wing.</li>
+</ul>
+<h3>Market regime fit</h3>
+<ul>
+<li>Better fit: post-shock stabilization, improving execution conditions.</li>
+<li>Poor fit: accelerating stress where skew steepening is structural.</li>
+</ul>
+<h3>Entry validation (must all pass)</h3>
+<ol>
+<li><code>rr25_mid</code> extreme vs own history.</li>
+<li><code>rr25_worst</code> confirms direction and significance.</li>
+<li>Persistence passes configured requirement.</li>
+<li>Data integrity is clean (coverage/cadence/source).</li>
+<li>Regime/event context does not favor continued stress acceleration.</li>
+</ol>
+<h3>Risk profile intuition</h3>
+<ul>
+<li>Short downside convexity relative to a long lower strike hedge.</li>
+<li>Benefits if skew richening partially mean-reverts.</li>
+<li>Can lose if downside repricing accelerates beyond expected path.</li>
+</ul>
+<h3>Invalidation examples</h3>
+<ul>
+<li>RR continues steepening with persistence.</li>
+<li>execution quality deteriorates (tradability/spreads worsen).</li>
+<li>regime shifts toward stronger stress continuation.</li>
+</ul>
+<h3>Management notes</h3>
+<ul>
+<li>keep size modest in uncertain regimes,</li>
+<li>avoid adding complexity before setup confirms,</li>
+<li>review near-term catalysts before holding through events.</li>
+</ul>
+<h3>This is not</h3>
+<ul>
+<li>a directional crash bet,</li>
+<li>a strategy for unresolved data integrity windows.</li>
+</ul>
+<h2>2) Strategy Card: Fly_1x2x1 (FLY)</h2>
+<p>Template mapping:</p>
+<ul>
+<li>alert family: <code>FLY_EXTREME</code></li>
+<li>legs: buy <code>-0.25P</code>, sell <code>-0.50P</code> x2, buy <code>-0.10P</code></li>
+</ul>
+<h3>What this strategy expresses</h3>
+<ul>
+<li>A convexity normalization view: wing-center relation is distorted.</li>
+<li>Structured expression of smile shape adjustment.</li>
+</ul>
+<h3>Market regime fit</h3>
+<ul>
+<li>Better fit: non-chaotic repricing where convexity dislocation is clear.</li>
+<li>Poor fit: unstable event windows with spread instability.</li>
+</ul>
+<h3>Entry validation (must all pass)</h3>
+<ol>
+<li><code>fly25_mid</code> extreme relative to own distribution.</li>
+<li><code>fly25_worst</code> confirms.</li>
+<li>Decomposition clarity: wing-led vs center-led move understood.</li>
+<li>Persistence and integrity checks pass.</li>
+<li>Execution quality supports multi-leg structure.</li>
+</ol>
+<h3>Risk profile intuition</h3>
+<ul>
+<li>Strong shape dependence and pin/path sensitivity.</li>
+<li>Multi-leg execution friction can materially alter realized edge.</li>
+</ul>
+<h3>Invalidation examples</h3>
+<ul>
+<li>convexity distortion keeps expanding without stabilization,</li>
+<li>adjacent buckets contradict thesis,</li>
+<li>slippage/spreads consume expected edge.</li>
+</ul>
+<h3>Management notes</h3>
+<ul>
+<li>require stronger execution quality than simpler spreads,</li>
+<li>avoid in thin/erratic conditions,</li>
+<li>predefine response if central strike pin dynamics dominate.</li>
+</ul>
+<h3>This is not</h3>
+<ul>
+<li>a default strategy for every <code>FLY_EXTREME</code> print,</li>
+<li>a good fit for weak tradability regimes.</li>
+</ul>
+<h2>3) Strategy Card: ATM_Calendar (TERM)</h2>
+<p>Template mapping:</p>
+<ul>
+<li>alert family: <code>TERM_KINK</code></li>
+<li>concept: short front ATM call, long back ATM call</li>
+</ul>
+<h3>What this strategy expresses</h3>
+<ul>
+<li>A view that near-vs-far term mismatch will normalize.</li>
+<li>Term-structure expression rather than pure directional expression.</li>
+</ul>
+<h3>Market regime fit</h3>
+<ul>
+<li>Better fit: post-event normalization or non-event maturity mispricing.</li>
+<li>Poor fit: pre-event windows with justified near-term premium.</li>
+</ul>
+<h3>Entry validation (must all pass)</h3>
+<ol>
+<li><code>term_slope_mid</code> extreme vs own history.</li>
+<li><code>term_slope_worst</code> confirms.</li>
+<li>Event context reviewed (pre/post-event classification).</li>
+<li>Persistence/integrity pass.</li>
+<li>Carry + slippage burden acceptable.</li>
+</ol>
+<h3>Risk profile intuition</h3>
+<ul>
+<li>Sensitive to time decay differential and realized path.</li>
+<li>Can underperform if term premium remains justified longer than expected.</li>
+</ul>
+<h3>Invalidation examples</h3>
+<ul>
+<li>event repricing remains persistent post-event,</li>
+<li>slope keeps moving against thesis with persistence,</li>
+<li>carry burden dominates expected normalization.</li>
+</ul>
+<h3>Management notes</h3>
+<ul>
+<li>avoid forcing pre-event mean reversion,</li>
+<li>favor post-event confirmation when possible,</li>
+<li>define exit rules for unresolved normalization.</li>
+</ul>
+<h3>This is not</h3>
+<ul>
+<li>a universal response to every term kink,</li>
+<li>a replacement for event-aware risk planning.</li>
+</ul>
+<h2>4) Branching: Not All Signals Become Trades</h2>
+<p>Before selecting a strategy card, choose branch:</p>
+<ol>
+<li>**Reversion branch** -&gt; strategy candidate may be valid.</li>
+<li>**Continuation branch** -&gt; strategy may be delayed/reframed.</li>
+<li>**No-trade branch** -&gt; document and stand down.</li>
+</ol>
+<p>The branch decision is part of edge. Not trading is often the correct decision.</p>
+<h2>5) Validation-to-Execution Checklist</h2>
+<p>Use this sequence for every candidate:</p>
+<ol>
+<li>signal validity,</li>
+<li>data validity,</li>
+<li>regime/event validity,</li>
+<li>execution viability,</li>
+<li>risk worksheet completion,</li>
+<li>final label.</li>
+</ol>
+<p>If any hard gate fails, do not export execution plan.</p>
+<h2>6) Suggested Future Expansion</h2>
+<p>Add strategy cards for:</p>
+<ul>
+<li>explicit continuation strategies (not only reversion templates),</li>
+<li>event-hedged versions of term structures,</li>
+<li>low-liquidity fallback structures.</li>
+</ul></div>
+  </div>
+</body>
+</html>

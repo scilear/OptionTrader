@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPX Option Combo Trading Curriculum — Navigation Hub</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>SPX Option Combo Trading Curriculum — Navigation Hub</h1>
+      <div>
+        <a href="spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="spx-curriculum/README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>SPX Option Combo Trading Curriculum — Navigation Hub</h1>
+<p>This hub links to the modular curriculum in <code>docs/spx-curriculum/</code>. Start here for orientation; go to the module files for actual learning content.</p>
+<h2>Who This Is For</h2>
+<ul>
+<li>Traders who understand basic options but want a systematic, signal-driven SPX process.</li>
+<li>Analysts moving from statistical signals to executable trade decisions.</li>
+<li>Anyone who needs a shared framework for reviewing and post-morteming decisions made with OptionTrader.</li>
+</ul>
+<h2>Prerequisites</h2>
+<ul>
+<li>Basic options vocabulary: calls, puts, spreads, expiry, moneyness.</li>
+<li>Comfort reading time series charts.</li>
+<li>Willingness to keep a written decision log.</li>
+</ul>
+<h2>Learning Path</h2>
+<p>The curriculum is organized in four phases. Complete them in order. Do not skip to combo playbooks before you understand what the metrics actually measure and why.</p>
+<h3>Phase 1 — Foundations (why these markets, why these metrics)</h3>
+<p>These modules build the conceptual model before any tool usage. If you skip them, you will pattern-match alerts without understanding what they represent.</p>
+<table><thead><tr>
+<th>Module</th>
+<th>File</th>
+<th>What you will understand</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><a href="spx-curriculum/01-market-foundations.html">01-market-foundations.md</a></td>
+<td>Why SPX vol surface has persistent shape; where edge actually comes from; why execution quality is not secondary</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="spx-curriculum/02-surface-metrics-deep-dive.html">02-surface-metrics-deep-dive.md</a></td>
+<td>Why RR25/FLY25/TERM are the right decomposition; what each captures economically; why delta-based, why 25Δ, why z-scores not absolute thresholds; why worst-case gate matters</td>
+</tr>
+</tbody></table>
+<h3>Phase 2 — Reading the Tool</h3>
+<p>These modules bridge from the concepts to what OptionTrader actually shows you.</p>
+<table><thead><tr>
+<th>Module</th>
+<th>File</th>
+<th>What you will understand</th>
+</tr></thead><tbody>
+<tr>
+<td>3</td>
+<td><a href="spx-curriculum/03-alert-to-trade-process.html">03-alert-to-trade-process.md</a></td>
+<td>The five-gate decision process; how to trace an alert through signal → data → regime → execution → risk gates</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="spx-curriculum/04-combo-playbooks.html">04-combo-playbooks.md</a></td>
+<td>Mapping validated alerts to structure families; when *not* to map; branch selection before structure</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="spx-curriculum/05-risk-execution-and-review.html">05-risk-execution-and-review.md</a></td>
+<td>Position-level and process-level risk rules; post-trade review loops</td>
+</tr>
+</tbody></table>
+<h3>Phase 3 — Metric Workbooks (numerical practice)</h3>
+<p>Deep-dive workbooks for each metric family. Work through these once you have finished Phase 1 and 2.</p>
+<table><thead><tr>
+<th>Module</th>
+<th>File</th>
+<th>Content</th>
+</tr></thead><tbody>
+<tr>
+<td>7</td>
+<td><a href="spx-curriculum/07-rr25-numerical-workbook.html">07-rr25-numerical-workbook.md</a></td>
+<td>RR25 numerical scenarios; end-to-end tool workflow; decision archetypes</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="spx-curriculum/08-fly25-shape-atlas.html">08-fly25-shape-atlas.md</a></td>
+<td>FLY25 shape atlas; wing-led vs center-led decomposition</td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="spx-curriculum/09-term-kink-event-framework.html">09-term-kink-event-framework.md</a></td>
+<td>TERM kink identification; event calendar interaction</td>
+</tr>
+</tbody></table>
+<h3>Phase 4 — Practice and Case Studies</h3>
+<table><thead><tr>
+<th>Module</th>
+<th>File</th>
+<th>Content</th>
+</tr></thead><tbody>
+<tr>
+<td>6</td>
+<td><a href="spx-curriculum/06-case-studies-and-drills.html">06-case-studies-and-drills.md</a></td>
+<td>Structured drills against real alerts</td>
+</tr>
+<tr>
+<td>10</td>
+<td><a href="spx-curriculum/10-decision-assistant-blueprint.html">10-decision-assistant-blueprint.md</a></td>
+<td>Blueprint for consistent decision capture</td>
+</tr>
+<tr>
+<td>11</td>
+<td><a href="spx-curriculum/11-real-world-casebook.html">11-real-world-casebook.md</a></td>
+<td>Annotated real-market examples</td>
+</tr>
+<tr>
+<td>12</td>
+<td><a href="spx-curriculum/12-strategy-handbook.html">12-strategy-handbook.md</a></td>
+<td>Reference handbook for all structure templates</td>
+</tr>
+<tr>
+<td>13</td>
+<td><a href="spx-curriculum/13-continuation-strategy-cards.html">13-continuation-strategy-cards.md</a></td>
+<td>Quick-reference cards for each signal family</td>
+</tr>
+</tbody></table>
+<h2>Companion Documents</h2>
+<ul>
+<li>**Pattern recognition playbook** (chart shape triage + data-quality decision tree): <a href="optiontrader-pattern-playbook.html">optiontrader-pattern-playbook.md</a></li>
+<li>**QuantConnect validator guide**: <a href="quantconnect-validator.html">quantconnect-validator.md</a></li>
+<li>**Decision scorecard templates**: <code>docs/templates/decision-scorecard-template.md</code> / <code>.csv</code></li>
+</ul>
+<h2>Study Method</h2>
+<p>For each module:</p>
+<ol>
+<li>Read the whole module before using the tool.</li>
+<li>Do the drill exercise before moving on.</li>
+<li>Write one short takeaway in your decision journal.</li>
+</ol>
+<p>Progress rule: do not move to live structure selection until your last 20 documented decisions show consistent use of all five gates.</p>
+<h2>Track Checkpoints</h2>
+<p>**Beginner** (Phase 1 complete):</p>
+<ul>
+<li>Can explain what RR25, FLY25, and TERM capture economically (not just their formulas).</li>
+<li>Can explain why SPX skew is persistently negative and what that means for signals.</li>
+<li>Can correctly classify 10 historical alerts by metric family.</li>
+</ul>
+<p>**Intermediate** (Phase 2 complete):</p>
+<ul>
+<li>Can run the full five-gate process on a live alert and produce a written gate evidence card.</li>
+<li>Has at least three documented high-quality rejections (where no-trade was the right call).</li>
+</ul>
+<p>**Advanced** (Phases 3 and 4 in progress):</p>
+<ul>
+<li>Can decompose RR25 moves into wing-led vs spread-led.</li>
+<li>Produces monthly pattern-performance reviews.</li>
+<li>Has updated at least one decision rule from review evidence.</li>
+</ul></div>
+  </div>
+</body>
+</html>

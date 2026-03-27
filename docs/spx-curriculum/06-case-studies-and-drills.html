@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 6 - Case Studies and Drills</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 6 - Case Studies and Drills</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 6 - Case Studies and Drills</h1>
+<p>Use this module as a practical lab. Each case emphasizes reasoning quality over outcome chasing.</p>
+<h2>Case A - RR spike with clean data and strong worst confirmation</h2>
+<h3>Observation</h3>
+<ul>
+<li><code>RR_EXTREME</code> appears with persistence.</li>
+<li><code>rr25_mid</code> and <code>rr25_worst</code> both confirm.</li>
+<li>coverage and cadence are stable.</li>
+</ul>
+<h3>Decision process</h3>
+<ul>
+<li>Signal gate: pass because <code>zscore_mid</code> and <code>zscore_worst</code> both exceed threshold and persistence is met.</li>
+<li>Data gate: pass because bucket coverage is complete, cadence is interpretable, and no unresolved ingest anomaly is present.</li>
+<li>Regime gate: pass/neutral because regime does not suppress RR signal and no near-term event contradiction dominates thesis.</li>
+<li>Execution gate: pass because tradability/spread conditions remain inside allowed limits for intended structure.</li>
+<li>Risk gate: pass because max loss, invalidation trigger, and size constraints are explicitly defined.</li>
+</ul>
+<h3>Example decision</h3>
+<ul>
+<li>label: <code>Trade now</code> (risk-defined structure).</li>
+<li>invalidation: persistence fails on next evaluation or execution quality worsens.</li>
+</ul>
+<h3>Evidence card example (format)</h3>
+<ul>
+<li><code>Signal</code>: <code>zscore_mid=...</code>, <code>zscore_worst=...</code>, <code>persistence=...</code> -&gt; pass</li>
+<li><code>Data</code>: <code>metrics_rows=...</code>, <code>iv_points=...</code>, <code>max_gap=...</code>, <code>source=...</code> -&gt; pass</li>
+<li><code>Regime</code>: <code>regime_label=...</code>, <code>event_context=...</code> -&gt; neutral/pass</li>
+<li><code>Execution</code>: <code>tradability_score=...</code>, spread check -&gt; pass</li>
+<li><code>Risk</code>: <code>max_loss=...</code>, invalidation defined, size rule satisfied -&gt; pass</li>
+</ul>
+<h3>Discussion prompt</h3>
+<ul>
+<li>What evidence would downgrade this to <code>Watch</code>?</li>
+</ul>
+<h2>Case B - FLY extreme with poor spread conditions</h2>
+<h3>Observation</h3>
+<ul>
+<li>strong convexity dislocation signal,</li>
+<li>weak tradability/spread quality.</li>
+</ul>
+<h3>Example decision</h3>
+<ul>
+<li>label: <code>Research only</code>.</li>
+<li>rationale: edge not executable despite statistical signal.</li>
+</ul>
+<p>Evidence focus:</p>
+<ul>
+<li>strong signal evidence alone is not sufficient,</li>
+<li>failure is in execution gate (spread/slippage burden),</li>
+<li>decision remains non-live until execution evidence improves.</li>
+</ul>
+<h3>Discussion prompt</h3>
+<ul>
+<li>What specific execution improvement would justify promotion to <code>Watch</code> or <code>Trade</code>?</li>
+</ul>
+<h2>Case C - TERM kink during event cluster</h2>
+<h3>Observation</h3>
+<ul>
+<li>term distortion appears meaningful,</li>
+<li>near-term macro event risk elevated.</li>
+</ul>
+<h3>Example decision</h3>
+<ul>
+<li>label: <code>Watch for confirmation</code>.</li>
+<li>rationale: event repricing may be rational and persistent.</li>
+</ul>
+<p>Evidence focus:</p>
+<ul>
+<li>signal may pass,</li>
+<li>regime/event gate is only neutral at best pre-event,</li>
+<li>wait for post-event confirmation before promoting to trade.</li>
+</ul>
+<h3>Discussion prompt</h3>
+<ul>
+<li>Which post-event signals confirm true dislocation vs justified term repricing?</li>
+</ul>
+<h2>Drill Pack</h2>
+<p>For each new week:</p>
+<ol>
+<li>Select 5 alerts.</li>
+<li>Fill the scorecard template for each.</li>
+<li>Compare your labels with realized outcomes one week later.</li>
+<li>Identify one process upgrade from mismatch cases.</li>
+</ol>
+<p>Template paths:</p>
+<ul>
+<li><code>docs/templates/decision-scorecard-template.md</code></li>
+<li><code>docs/templates/decision-scorecard-template.csv</code></li>
+</ul></div>
+  </div>
+</body>
+</html>

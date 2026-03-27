@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptionTrader Teaching Guide: Data, Metrics, Alerts, and Graph Patterns</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>OptionTrader Teaching Guide: Data, Metrics, Alerts, and Graph Patterns</h1>
+      <div>
+        <a href="spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="spx-curriculum/README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>OptionTrader Teaching Guide: Data, Metrics, Alerts, and Graph Patterns</h1>
+<p>This guide is a practical training document for understanding how OptionTrader turns option quotes into alerts, how to read graphs correctly, and how to recognize patterns that are signal-worthy versus data-quality artifacts.</p>
+<p>Use this as a living playbook and add new case studies over time.</p>
+<p>Companion HTML version (interactive navigation + glossary links):</p>
+<ul>
+<li><a href="optiontrader-pattern-playbook.html">Open the HTML playbook</a></li>
+</ul>
+<p>Trading curriculum (learning path for SPX option combos + tool usage):</p>
+<ul>
+<li><a href="spx-combo-trading-curriculum.html">Open SPX combo curriculum</a></li>
+<li><a href="spx-combo-trading-curriculum.html">Open SPX combo curriculum (HTML)</a></li>
+</ul>
+<h2>Quick Navigation</h2>
+<ul>
+<li><a href="#1-mental-model-of-the-tool">1) Mental Model of the Tool</a></li>
+<li><a href="#2-core-concepts-and-definitions">2) Core Concepts and Definitions</a></li>
+<li><a href="#3-reading-graphs-correctly">3) Reading Graphs Correctly</a></li>
+<li><a href="#4-pattern-library-what-you-see-vs-what-it-usually-means">4) Pattern Library</a></li>
+<li><a href="#5-alert-specific-shape-heuristics">5) Alert-Specific Shape Heuristics</a></li>
+<li><a href="#6-data-quality-vs-market-signal-decision-tree">6) Data-Quality vs Market-Signal Decision Tree</a></li>
+<li><a href="#7-practical-scenarios-and-recommended-actions">7) Practical Scenarios and Recommended Actions</a></li>
+<li><a href="#8-building-this-knowledge-base-over-time">8) Build the Knowledge Base</a></li>
+<li><a href="#9-reference-files">9) Reference Files</a></li>
+<li><a href="#10-quick-checklist-for-analysts">10) Quick Checklist for Analysts</a></li>
+<li><a href="#pattern-gallery-illustrations">Pattern Gallery (Illustrations)</a></li>
+<li><a href="#screenshot-slots">Screenshot Slots</a></li>
+<li><a href="#glossary">Glossary</a></li>
+</ul>
+<h2>1) Mental Model of the Tool</h2>
+<p>OptionTrader runs in four layers:</p>
+<ol>
+<li>**Ingest** (<code>IB</code> primary, <code>yfinance</code> fallback) captures snapshot quote data.</li>
+<li>**Compute** reconstructs IV points and surface metrics per expiry bucket.</li>
+<li>**Alerting** scores current values vs recent history (z-score + persistence + worst-case checks).</li>
+<li>**UI/Review** visualizes metric history and alert details for decision-making.</li>
+</ol>
+<p>When diagnosing weird chart shapes, always determine first if the issue is:</p>
+<ul>
+<li>**sampling/cadence**,</li>
+<li>**ingest coverage**, or</li>
+<li>a true **market regime move**.</li>
+</ul>
+<h2>2) Core Concepts and Definitions</h2>
+<h3>2.1 Expiry Buckets</h3>
+<p>OptionTrader does not analyze every expiry individually. It groups available expirations into DTE buckets (default: 21D, 30D, 45D — configured in <code>config/config-v1.yaml</code> under <code>metrics.expiry_buckets_days</code>). For each bucket, the pipeline selects the closest real expiry in DTE space.</p>
+<p>This bucketing is what makes the metrics time-comparable. Because bucket targets are fixed, the <code>rr25_30D</code> series you see in the Metric Explorer always refers to the &quot;~30-day expiry&quot; dimension, even as the actual contract rolls forward over time.</p>
+<h3>2.2 IV Points Used for Surface Construction</h3>
+<p>For each selected expiry, the pipeline solves implied vol at five delta points:</p>
+<ul>
+<li><code>ATM</code> (50-delta, vol level)</li>
+<li><code>+0.25C</code>, <code>-0.25P</code> (25-delta call and put — primary signal points)</li>
+<li><code>+0.10C</code>, <code>-0.10P</code> (10-delta call and put — extreme tail points)</li>
+</ul>
+<p>The 25-delta points are the main signal inputs. The 10-delta points provide additional tail context when coverage is sufficient (Full tier). If either ATM or 25-delta points are missing, the pipeline degrades or suppresses alerts for that bucket.</p>
+<h3>2.3 Metric Formulas (Mid and Worst)</h3>
+<p>At bucket level:</p>
+<pre><code>
+rr25_mid    = iv(+0.25C) − iv(−0.25P)          ← skew asymmetry
+fly25_mid   = (iv(+0.25C) + iv(−0.25P))/2 − iv(ATM)   ← smile curvature
+term_slope  = atm_iv(bucket_i) − atm_iv(bucket_j)     ← front vs back vol
+</code></pre>
+<p>**Mid** uses implied vols computed from option midpoints — theoretical, not tradeable.</p>
+<p>**Worst-case** versions (<code>rr25_worst</code>, <code>fly25_worst</code>, <code>term_slope_worst</code>) recompute the same metrics using the *adverse* bid or ask IV for each leg — simulating what the metric would look like if every fill went against you. This is the execution reality check: if worst-case and mid agree, the signal is robust. If they diverge, the signal may exist only in the spread, not in the real market.</p>
+<p>Why both metrics exist: option spreads on SPX wings can be wide enough to make a seemingly large RR25 dislocation disappear entirely once you account for realistic fill prices. The worst-case gate exists specifically to catch this.</p>
+<h3>2.4 Alert Logic</h3>
+<p>Alerts are generated in <code>src/core/alerts.py</code> and filtered further in <code>src/core/compute_snapshot.py</code>. An alert requires:</p>
+<ol>
+<li>**Z-score gate**: <code>zscore_mid ≥ alerts.z_threshold</code> (default 2.0). The z-score is computed over a 60-day rolling window. This makes the threshold context-sensitive: the same absolute metric level can be extreme in a calm regime and unremarkable in a stress regime.</li>
+<li>**Persistence gate**: the condition must hold on <code>≥ 2</code> consecutive snapshots (configurable). This eliminates single-snapshot spikes.</li>
+<li>**Worst-case gate**: <code>zscore_worst</code> must also exceed threshold. This eliminates spread artifacts.</li>
+<li>**Confidence tier**: requires sufficient IV point coverage (<code>Core</code> = ATM + 25Δ, <code>Full</code> = all five points).</li>
+<li>**Tradability gate**: spread quality proxy must be acceptable.</li>
+<li>**Regime gate**: certain alert types are suppressed in specific regimes (e.g., <code>RR_EXTREME</code> skew-fade signals are suppressed in Stress regime, because mean-reversion assumptions are unreliable when stress is accelerating).</li>
+</ol>
+<p>Alert types:</p>
+<ul>
+<li><code>RR_EXTREME</code> — skew dislocation (from <code>rr25_*</code>)</li>
+<li><code>FLY_EXTREME</code> — smile convexity dislocation (from <code>fly25_*</code>)</li>
+<li><code>TERM_KINK</code> — term structure dislocation (from <code>term_slope_*</code>)</li>
+</ul>
+<h2>3) Reading Graphs Correctly</h2>
+<p>The Metric Explorer supports two x-axis modes and gap-aware line segmentation:</p>
+<ul>
+<li>**Timeline**: actual timestamps.</li>
+<li>**Snapshot sequence**: evenly spaced index (<code>1..N</code>) to inspect pattern independent of wall-clock gaps.</li>
+<li>**Gap split**: line breaks when time gap exceeds configured threshold.</li>
+</ul>
+<p>Also use the chart caption:</p>
+<ul>
+<li><code>Points</code></li>
+<li><code>median gap</code></li>
+<li><code>max gap</code></li>
+</ul>
+<p>If <code>max gap</code> is large, visual shape can look misleading on timeline mode.</p>
+<h2>Pattern Gallery (Illustrations)</h2>
+<p>These illustrations are synthetic shape guides, not direct exports from OptionTrader.</p>
+<p>For real examples tied to actual snapshots, use:</p>
+<ul>
+<li><code>docs/spx-curriculum/11-real-world-casebook.md</code></li>
+<li><code>docs/spx-curriculum/11-real-world-casebook.html</code></li>
+</ul>
+<ul>
+<li>Flat then spike: <code>docs/assets/illustrations/pattern-flat-spike.svg</code></li>
+<li>Stair-step with gaps: <code>docs/assets/illustrations/pattern-stair-gap.svg</code></li>
+<li>Level shift and hold: <code>docs/assets/illustrations/pattern-level-shift.svg</code></li>
+</ul>
+<p>!<a href="assets/illustrations/pattern-flat-spike.svg">Flat spike pattern</a></p>
+<ul>
+<li>Shape label: Pattern A (synthetic)</li>
+<li>Metric archetype: <code>rr25_mid</code> or <code>fly25_mid</code></li>
+<li>Axes: x=<code>time</code>, y=<code>metric value</code></li>
+<li>In-tool interpretation: confirm with <code>*_worst</code>, persistence, and data integrity gates</li>
+</ul>
+<p>!<a href="assets/illustrations/pattern-stair-gap.svg">Stair-step gap pattern</a></p>
+<ul>
+<li>Shape label: Pattern B (synthetic)</li>
+<li>Metric archetype: any (mostly cadence effect)</li>
+<li>Axes: x=<code>time</code>, y=<code>metric value</code></li>
+<li>In-tool interpretation: compare Timeline vs Snapshot sequence and inspect <code>max gap</code></li>
+</ul>
+<p>!<a href="assets/illustrations/pattern-level-shift.svg">Level shift pattern</a></p>
+<ul>
+<li>Shape label: Pattern E (synthetic)</li>
+<li>Metric archetype: <code>term_slope_mid</code> or persistent RR/FLY regime shift</li>
+<li>Axes: x=<code>time</code>, y=<code>metric value</code></li>
+<li>In-tool interpretation: choose branch first (<code>reversion</code> / <code>continuation</code> / <code>no-trade</code>)</li>
+</ul>
+<h2>4) Pattern Library: What You See vs What It Usually Means</h2>
+<p>Use this section as your first triage map.</p>
+<h3>Pattern A: Flat line then isolated spike</h3>
+<ul>
+<li>**Typical shape**: long calm segment, one large jump, then partial reversion.</li>
+<li>**Primary interpretation**: event shock or outlier snapshot.</li>
+<li>**Checks**:</li>
+<li>Compare Timeline vs Snapshot sequence.</li>
+<li>Inspect <code>source</code> (IB vs yfinance) around the spike.</li>
+<li>Confirm quote coverage and spread quality on that snapshot.</li>
+<li>**Alert risk**: high probability of <code>RR_EXTREME</code>/<code>FLY_EXTREME</code> if z-score window is short.</li>
+</ul>
+<h3>Pattern B: Stair-step moves with big horizontal gaps</h3>
+<ul>
+<li>**Typical shape**: plateaus connected by jumps.</li>
+<li>**Primary interpretation**: irregular sampling cadence, not continuous repricing.</li>
+<li>**Checks**:</li>
+<li>Lower/raise gap-break threshold to expose segments.</li>
+<li>Use Snapshot sequence mode to evaluate local continuity.</li>
+<li>**Alert risk**: medium; can inflate perceived persistence if runs are sparse.</li>
+</ul>
+<h3>Pattern C: Smooth drift over many points</h3>
+<ul>
+<li>**Typical shape**: gradual slope, low volatility around trend.</li>
+<li>**Primary interpretation**: regime transition or macro trend.</li>
+<li>**Checks**:</li>
+<li>Validate move appears in both mid and worst metrics.</li>
+<li>Check other buckets for coherent confirmation.</li>
+<li>**Alert risk**: moderate; more reliable when persistence passes naturally.</li>
+</ul>
+<h3>Pattern D: High-frequency zig-zag around mean</h3>
+<ul>
+<li>**Typical shape**: alternating up/down near zero drift.</li>
+<li>**Primary interpretation**: microstructure noise, often weak signal quality.</li>
+<li>**Checks**:</li>
+<li>Inspect bid/ask spread quality and tradability score.</li>
+<li>Require stronger persistence before acting.</li>
+<li>**Alert risk**: false-positive prone if threshold too low.</li>
+</ul>
+<h3>Pattern E: Sudden level shift that stays elevated/depressed</h3>
+<ul>
+<li>**Typical shape**: jump, then stable new baseline.</li>
+<li>**Primary interpretation**: repricing to new regime (higher confidence).</li>
+<li>**Checks**:</li>
+<li>Confirm across nearby buckets.</li>
+<li>Confirm worst-case metric agrees with mid.</li>
+<li>**Alert risk**: high and often actionable if tradability is acceptable.</li>
+</ul>
+<h3>Pattern F: Missing bucket points / intermittent nulls</h3>
+<ul>
+<li>**Typical shape**: sparse points or disappearing bucket lines.</li>
+<li>**Primary interpretation**: ingest/contract coverage issue.</li>
+<li>**Checks**:</li>
+<li><code>metrics_rows</code> per snapshot (expect full bucket set).</li>
+<li><code>iv_points</code> count and expiries count.</li>
+<li>IB errors (<code>No security definition</code>, <code>Unknown contract</code>).</li>
+<li>**Alert risk**: unreliable; treat alerts cautiously until coverage is restored.</li>
+</ul>
+<h2>5) Alert-Specific Shape Heuristics</h2>
+<h3>5.1 RR_EXTREME (Skew Dislocation)</h3>
+<p>Watch for:</p>
+<ul>
+<li>fast one-direction move in <code>rr25_mid</code> and <code>rr25_worst</code></li>
+<li>persistence over required snapshots</li>
+<li>supportive move in related bucket(s)</li>
+</ul>
+<p>Confidence increases when:</p>
+<ul>
+<li><code>zscore_worst</code> is close to <code>zscore_mid</code></li>
+<li>confidence tier is <code>Full</code></li>
+<li>tradability score remains high</li>
+</ul>
+<h3>5.2 FLY_EXTREME (Smile Convexity Distortion)</h3>
+<p>Watch for:</p>
+<ul>
+<li>large excursions in <code>fly25_*</code> away from local baseline</li>
+<li>asymmetry with little ATM move can indicate wing-specific repricing</li>
+</ul>
+<p>Confidence increases when:</p>
+<ul>
+<li>move is not a single-point spike only</li>
+<li>nearby expiries show related convexity stress</li>
+</ul>
+<h3>5.3 TERM_KINK (Term Structure Dislocation)</h3>
+<p>Watch for:</p>
+<ul>
+<li>abrupt sign flips or magnitude jumps in <code>term_slope_*</code></li>
+<li>kink remains for multiple snapshots</li>
+</ul>
+<p>Confidence increases when:</p>
+<ul>
+<li>slope change aligns with known event calendar or macro catalyst</li>
+<li>same direction appears in both mid and worst slope</li>
+</ul>
+<h2>6) Data-Quality vs Market-Signal Decision Tree</h2>
+<p>Use this in order:</p>
+<ol>
+<li>**Cadence check**: are point gaps too large or highly irregular?</li>
+<li>**Coverage check**: were expiries and bucket metrics complete?</li>
+<li>**Source check**: did source switch (<code>IB</code> &lt;-&gt; <code>yfinance</code>) near the move?</li>
+<li>**Quality check**: spreads and tradability healthy?</li>
+<li>**Confirmation check**: mid and worst both agree?</li>
+<li>**Persistence check**: threshold held for required snapshots?</li>
+</ol>
+<p>If steps 1-3 fail, classify as **data artifact risk** first.</p>
+<h2>7) Practical Scenarios and Recommended Actions</h2>
+<h3>Scenario 1: “Charts look too straight/sparse”</h3>
+<ul>
+<li>Likely cause: low ingest coverage and/or long timestamp gaps.</li>
+<li>Action:</li>
+<li>verify <code>iv_points</code>, <code>metrics_rows</code>, expiry count in logs,</li>
+<li>inspect IB contract-definition errors,</li>
+<li>use Snapshot sequence mode before concluding metric bug.</li>
+</ul>
+<h3>Scenario 2: “One dramatic alert after quiet period”</h3>
+<ul>
+<li>Likely cause: event repricing or isolated outlier.</li>
+<li>Action:</li>
+<li>compare mid vs worst z-score,</li>
+<li>inspect surrounding snapshots and quote quality,</li>
+<li>treat as provisional until one more confirming snapshot.</li>
+</ul>
+<h3>Scenario 3: “Alert repeats but tradability is poor”</h3>
+<ul>
+<li>Likely cause: statistically real but execution-fragile signal.</li>
+<li>Action:</li>
+<li>keep as research signal,</li>
+<li>block execution ideas or down-rank confidence,</li>
+<li>monitor spread conditions for re-entry.</li>
+</ul>
+<h3>Scenario 4: “After-hours run changes source unexpectedly”</h3>
+<ul>
+<li>Likely cause: IB unavailability leading to fallback ingest.</li>
+<li>Action:</li>
+<li>annotate source change,</li>
+<li>avoid strict apples-to-apples comparison during transition,</li>
+<li>continue monitoring if bucket coverage remains complete.</li>
+</ul>
+<h2>8) Building This Knowledge Base Over Time</h2>
+<p>Add one entry per notable event:</p>
+<ul>
+<li>date/time range</li>
+<li>source (<code>IB</code>/<code>yfinance</code>)</li>
+<li>affected metric + bucket</li>
+<li>observed shape</li>
+<li>whether alert fired</li>
+<li>root cause (market move / ingest issue / display artifact)</li>
+<li>final decision (actionable / monitor / ignore)</li>
+</ul>
+<p>Suggested extension sections to add later:</p>
+<ul>
+<li>annotated chart screenshots per pattern</li>
+<li>empirical precision/recall by alert type</li>
+<li>per-regime threshold tuning notes</li>
+<li>post-trade outcomes by pattern class</li>
+</ul>
+<h2>Screenshot Slots</h2>
+<p>Add real screenshots in this folder and keep file names stable:</p>
+<ul>
+<li><code>docs/assets/screenshots/metric-explorer-timeline.png</code></li>
+<li><code>docs/assets/screenshots/metric-explorer-sequence.png</code></li>
+<li><code>docs/assets/screenshots/alert-detail-example.png</code></li>
+</ul>
+<p>When adding a screenshot, include:</p>
+<ul>
+<li>timestamp range</li>
+<li>metric + bucket</li>
+<li>source</li>
+<li>one-line interpretation</li>
+</ul>
+<h2>9) Reference Files</h2>
+<ul>
+<li>Alert rules: <code>src/core/alerts.py</code></li>
+<li>Snapshot compute and gates: <code>src/core/compute_snapshot.py</code></li>
+<li>Metric formulas: <code>src/core/metrics.py</code></li>
+<li>Metric Explorer UI: <code>src/app/streamlit_app.py</code></li>
+<li>Main config: <code>config/config-v1.yaml</code></li>
+</ul>
+<h2>10) Quick Checklist for Analysts</h2>
+<p>Before acting on an alert, confirm all are true:</p>
+<ul>
+<li>bucket data is complete and recent</li>
+<li>shape remains meaningful in Snapshot sequence mode</li>
+<li><code>zscore_mid</code> and <code>zscore_worst</code> both pass threshold</li>
+<li>persistence requirement is met</li>
+<li>tradability score is acceptable</li>
+<li>regime filter does not invalidate the alert type</li>
+</ul>
+<p>If any of the first two fail, classify as **watch-only** until data quality normalizes.</p>
+<h2>Glossary</h2>
+<ul>
+<li>**DTE**: Days to expiry.</li>
+<li>**ATM**: At-the-money implied volatility point (50-delta). Measures vol *level*, not shape.</li>
+<li>**RR25**: 25-delta risk reversal = <code>IV(+0.25C) − IV(−0.25P)</code>. Measures skew *asymmetry*. Negative in SPX (puts structurally more expensive than calls due to hedging demand). The interesting signal is not the absolute level but how extreme it is relative to its own recent history.</li>
+<li>**FLY25**: 25-delta butterfly proxy = <code>(IV(+0.25C) + IV(−0.25P))/2 − IV(ATM)</code>. Measures smile *curvature* — how elevated both wings are relative to the center. Separable from RR25: you can have high FLY (both wings elevated) with neutral RR (symmetric), or extreme RR (asymmetric) with low FLY.</li>
+<li>**Term Slope**: ATM IV difference across neighboring expiry buckets. Positive = front vol &gt; back vol (event premium or stress). A *kink* (non-monotone local distortion) is more signal-relevant than a steady slope.</li>
+<li>**Mid**: Metric computed from option midpoints — theoretical, not tradeable.</li>
+<li>**Worst**: Same metric computed using adverse bid/ask fills for every leg — the execution reality check. Mid and worst agreeing is a signal robustness condition.</li>
+<li>**Z-score**: How many standard deviations the current metric value is from its 60-day rolling mean. Context-sensitive threshold: same absolute level can be extreme or ordinary depending on recent regime.</li>
+<li>**Persistence**: The alert has held above threshold on ≥ 2 consecutive snapshots. Eliminates single-point spikes.</li>
+<li>**Tradability Score**: <code>1 − min(1, median_spread / spread_gate_pct)</code>. Near 1.0 = tight spreads (good execution). Near 0.0 = wide spreads (edge likely consumed by friction). Computed in <code>src/core/tradability.py</code>.</li>
+</ul></div>
+  </div>
+</body>
+</html>

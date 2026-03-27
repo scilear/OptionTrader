@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 2 — The Volatility Surface: Decomposition and Why It Matters</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 2 — The Volatility Surface: Decomposition and Why It Matters</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 2 — The Volatility Surface: Decomposition and Why It Matters</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Understand why the vol surface has shape, not just a level.</li>
+<li>See why RR25, FLY25, and TERM are the right decomposition, not arbitrary choices.</li>
+<li>Build intuition for what each metric captures economically, not just mathematically.</li>
+<li>Understand the design decisions behind how OptionTrader measures and alerts on these metrics.</li>
+</ul>
+<p>---</p>
+<h2>1) Why the Surface Has Shape</h2>
+<p>Implied volatility is not a single number — it varies by strike and by expiry. If markets believed future returns were normally distributed, every option on the same underlying and same expiry would have the same implied vol. They don&#x27;t.</p>
+<p>Two structural forces shape the surface permanently in equity index options:</p>
+<p>**Asymmetric demand for insurance.** Large institutional investors hold equity portfolios and buy puts to hedge drawdowns. This demand for downside protection structurally exceeds demand for upside speculation. The result: put options are persistently more expensive (in vol terms) than equidistant calls. This is not a pricing anomaly waiting to be arbitraged — it reflects a structural premium that compensates option sellers for the asymmetric risk they take on. In SPX options specifically, this put-side premium has persisted for decades.</p>
+<p>**Jump and volatility uncertainty.** Markets know that implied vol itself is uncertain, and that crashes can be sudden and large. Options priced under these conditions need to include compensation for fat tails even beyond what a normal distribution would imply. This makes *both* wings more expensive than ATM, not just the put side.</p>
+<p>These two forces operate independently. The first makes the surface *asymmetric* (one side more expensive than the other). The second makes it *curved* (both wings elevated relative to ATM). A good decomposition separates them.</p>
+<p>---</p>
+<h2>2) Why Three Metrics, and Why These Three</h2>
+<p>The full volatility surface has many degrees of freedom — every strike-expiry combination is its own data point. For practical analysis, you need a compact representation that:</p>
+<ul>
+<li>captures the economically meaningful dimensions,</li>
+<li>is stable enough to build a signal on,</li>
+<li>aligns with how professional desks actually communicate vol.</li>
+</ul>
+<p>RR25, FLY25, and TERM meet all three criteria. They are approximately *orthogonal*: knowing one tells you relatively little about the others. A surface can be asymmetric without being unusually curved. It can be in steep backwardation without being unusually skewed. This orthogonality is what makes them useful as separate signal families.</p>
+<p>They are also professional conventions inherited from FX vol markets. Vol traders quote and risk-manage in these coordinates. That means the metrics are liquid (desks actually trade these), interpretable (there&#x27;s shared meaning), and comparable across time.</p>
+<p>---</p>
+<h2>3) RR25 — Skew (Asymmetry)</h2>
+<h3>Formula</h3>
+<pre><code>
+RR25(T) = IV(+0.25Δ call, T) − IV(−0.25Δ put, T)
+</code></pre>
+<p>In OptionTrader: <code>rr25_mid</code> (midpoint-based), <code>rr25_worst</code> (pessimistic bid/ask version).</p>
+<h3>What it captures</h3>
+<p>RR25 measures the premium of one wing over the other. For SPX, it is almost always negative: put-side IV exceeds call-side IV. The more negative it is, the steeper the left skew.</p>
+<p>Intuitively: how much more expensive is crash insurance than an equivalent bet on a rally?</p>
+<h3>Why 25-delta specifically</h3>
+<p>25-delta is a market convention that balances two competing needs. Go too close to ATM (50-delta) and you&#x27;re measuring vol level, not shape. Go too far OTM (10-delta or beyond) and liquidity thins out, quotes become unreliable, and the signal is dominated by noise. The 25-delta strike sits in the region where institutional hedging concentrates — it&#x27;s deep enough to show tail pricing but liquid enough to trust.</p>
+<p>The 10-delta points (also captured by OptionTrader) are more tail-focused and appropriate for measuring extreme fear regimes, but they are noisier and require stricter data quality checks.</p>
+<h3>Why delta-based rather than strike-based</h3>
+<p>If SPX moves from 5000 to 4500, the &quot;25-delta strike&quot; moves with it. A fixed absolute strike (e.g., 4750) would change from 25-delta to something else. Delta-based reference points are sticky in *moneyness space* — they represent a roughly constant distance from the current probability mass, which makes the time series much more interpretable.</p>
+<h3>Why SPX skew is persistently negative — and what that means for signals</h3>
+<p>The structural hedging demand described in Section 1 is the reason. SPX put demand consistently exceeds supply of naked put sellers willing to absorb it, so the market pays a skew premium. This is a real cost that option sellers collect over time in exchange for downside exposure.</p>
+<p>This has two implications. First, the *absolute level* of RR25 is not a signal — a value of -4% can be completely normal. Second, the interesting question is always *how extreme is the current level relative to recent history*? This is why OptionTrader uses z-scores, not absolute thresholds.</p>
+<h3>Same RR25, different stories</h3>
+<p>Two snapshots can show identical RR25 with entirely different mechanics:</p>
+<ul>
+<li>**Put-driven widening**: put IV rises, call IV is stable → fear-driven skew expansion (hedging demand surge or spot shock).</li>
+<li>**Call-driven compression**: call IV falls, put IV is stable → upside premium is leaving (rally complacency, call selling pressure).</li>
+<li>**Parallel shift**: both wings move but put moves more → mixed repricing, often in regime transitions.</li>
+</ul>
+<p>These have different implications for structure selection. A put-driven widening might normalize as fear subsides; a call-driven compression might have a different reversal path. OptionTrader reports the RR25 spread; decomposing which wing moved requires inspecting the individual IV points or comparing against historical wing levels.</p>
+<h3>The z-score: why absolute thresholds fail</h3>
+<p>RR25 = -0.08 means something different in a calm market than in a stress regime. In a calm regime, that level might be 3 standard deviations extreme. In a stress regime it might be unremarkable. A fixed threshold like &quot;alert if RR25 &lt; -0.06&quot; will fire constantly in stress and never fire in calm.</p>
+<p>OptionTrader solves this with a 60-day rolling z-score. The window is long enough to capture a meaningful local distribution (roughly one quarter), short enough that it doesn&#x27;t average across very different regimes. An alert fires when the current value is extreme *relative to its own recent context*, not against any universal benchmark.</p>
+<p>---</p>
+<h2>4) FLY25 — Smile Curvature (Convexity)</h2>
+<h3>Formula</h3>
+<pre><code>
+FLY25(T) = 0.5 × (IV(+0.25Δ call, T) + IV(−0.25Δ put, T)) − IV(ATM, T)
+</code></pre>
+<p>In OptionTrader: <code>fly25_mid</code>, <code>fly25_worst</code>.</p>
+<h3>What it captures</h3>
+<p>FLY25 measures how elevated the *average* wing is relative to the center of the smile. It is a proxy for smile curvature.</p>
+<ul>
+<li>High FLY25: both wings are expensive relative to ATM → the market prices large moves (in either direction) as more probable than the ATM IV alone would imply.</li>
+<li>Low (or negative) FLY25: wings are compressed relative to center → the distribution implied by option prices is narrower in the tails than usual.</li>
+</ul>
+<p>Note the key difference from RR25: FLY25 is about *both* wings together. RR25 is about the *difference* between wings. A surface can have strong RR25 (asymmetric) with low FLY25 (flat overall smile), or high FLY25 (elevated wings) with RR25 near zero (symmetric). They are separate dimensions.</p>
+<h3>Economic interpretation</h3>
+<p>Elevated FLY25 often reflects:</p>
+<ul>
+<li>event-driven tail-risk pricing (earnings, macro announcements, FOMC),</li>
+<li>general vol-of-vol stress (uncertainty about future uncertainty),</li>
+<li>supply/demand imbalances in wing options.</li>
+</ul>
+<p>Suppressed FLY25 relative to history can indicate:</p>
+<ul>
+<li>complacency or post-event relaxation of tail pricing,</li>
+<li>opportunity if tails are genuinely underpriced vs recent norms.</li>
+</ul>
+<h3>FLY25 decomposition matters</h3>
+<p>Before trading on a FLY signal, determine whether the move is wing-led or center-led:</p>
+<ul>
+<li><code>W = 0.5 × (C25 + P25)</code> — the average wing</li>
+<li><code>A = ATM</code></li>
+<li>FLY25 = W − A</li>
+</ul>
+<p>If FLY25 is high because wings rose, the interpretation is tail demand. If FLY25 is high because ATM fell while wings were stable, the interpretation is ATM compression (possibly a liquidity or data artifact). These have very different trade implications.</p>
+<p>---</p>
+<h2>5) TERM Slope — Intertemporal Structure</h2>
+<h3>Formula</h3>
+<pre><code>
+TERM(T_i, T_j) = IV_ATM(T_i) − IV_ATM(T_j)    where T_i &lt; T_j
+</code></pre>
+<p>In OptionTrader, computed across expiry buckets (e.g., 21D, 30D, 45D): <code>term_slope_mid</code>, <code>term_slope_worst</code>.</p>
+<h3>What it captures</h3>
+<p>TERM slope measures how steeply the surface rises or falls as you look at different maturities at the same delta (ATM).</p>
+<ul>
+<li>Positive (front &gt; back): near-term uncertainty exceeds long-term. Typical in two cases: (1) known near-term event (earnings, FOMC, election) causes front vol to be bid, (2) spot stress has spiked near-term fear.</li>
+<li>Negative (back &gt; front): long-term uncertainty exceeds near-term. Typical in calm markets where the near-term outlook is stable but long-run uncertainty is elevated.</li>
+<li>A **kink** — a non-monotone shape, where one maturity is above or below its neighbors in a way inconsistent with the surrounding structure — is what OptionTrader&#x27;s <code>TERM_KINK</code> alert targets.</li>
+</ul>
+<h3>Why kinks are more interesting than level slopes</h3>
+<p>A steady upward or downward slope is often rational and persistent. A kink — where one specific expiry is out of line with its neighbors — is more likely to reflect transient mispricing, event premium decay, or a supply/demand imbalance in one specific expiry. The kink premise is that the local distortion has a higher probability of resolving than a full slope does.</p>
+<h3>Why term interpretation is the most context-sensitive</h3>
+<p>Term structure is highly sensitive to the event calendar. A large front-maturity premium one week before a Fed decision is rational and may persist until after the announcement. The same pattern one week after the decision may represent premium that should decay. OptionTrader cannot read the calendar — that judgment is yours. When you see a <code>TERM_KINK</code> alert, the first question is always: does the event calendar explain this kink, or is it truly an unexplained dislocation?</p>
+<p>---</p>
+<h2>6) Mid vs Worst: The Execution Reality Gate</h2>
+<h3>Why mid alone is not enough</h3>
+<p>When OptionTrader computes <code>rr25_mid</code>, it uses implied vols derived from the midpoint of each option&#x27;s bid/ask spread. This is a theoretical value — in live trading, you buy options at the ask and sell at the bid. The spread between bid and ask can be substantial, especially in wings and in lower-liquidity expiries.</p>
+<p>The worst-case variants (<code>rr25_worst</code>, <code>fly25_worst</code>, <code>term_slope_worst</code>) compute the metric assuming every leg is filled at the unfavorable side. If you&#x27;re buying the +0.25Δ call as part of a combo, the worst-case uses the ask IV. If you&#x27;re selling the -0.25Δ put, the worst-case uses the bid IV.</p>
+<h3>What agreement/disagreement tells you</h3>
+<ul>
+<li>**Mid and worst agree** (both show extreme z-scores in the same direction): the signal is robust to realistic execution. The dislocation is large enough that even assuming adverse fills, the metric is extreme.</li>
+<li>**Mid extreme, worst weak or reversed**: the signal may be a *spread artifact* — the apparent dislocation lives in the bid-ask spread, not in the underlying option pricing. This is a common failure mode for options with wide, infrequently updated quotes.</li>
+</ul>
+<p>This is why Gate 1 in the five-gate decision process requires *both* <code>zscore_mid</code> and <code>zscore_worst</code> to pass, and why divergence between them is a hard downgrade signal in OptionTrader.</p>
+<p>---</p>
+<h2>7) Putting It Together: What the Tool Measures and Why</h2>
+<p>OptionTrader does not attempt to model the full volatility surface. It computes three targeted metrics per expiry bucket — RR25, FLY25, TERM slope — that each represent one economically meaningful dimension of vol surface behavior. It then measures whether the current value is extreme relative to its own recent history (z-score), whether that extremeness is durable (persistence gate), whether it survives realistic execution friction (worst-case gate), and whether the signal is coherent with current market regime.</p>
+<p>This multi-gate architecture exists precisely because individual metrics can fire for bad reasons: sparse data, cadence artifacts, source transitions, wide spreads, event repricing. Each gate is a filter for one class of false signal.</p>
+<p>The OptionTrader Metric Explorer gives you direct access to all of this. When you see a large move in <code>rr25_mid</code> on the chart:</p>
+<ol>
+<li>Switch to <code>rr25_worst</code> — does it confirm? If not, it&#x27;s probably a spread artifact.</li>
+<li>Check the chart caption (<code>Points</code>, <code>median gap</code>, <code>max gap</code>) — is the shape built from dense or sparse data?</li>
+<li>Switch between Timeline and Snapshot sequence modes — does the shape survive or disappear?</li>
+<li>Go to Alert Detail for the corresponding alert — what did the pipeline&#x27;s gate evidence show?</li>
+</ol>
+<p>The chart is a starting point, not a conclusion.</p>
+<p>---</p>
+<h2>8) Drill</h2>
+<p>For 5 historical alerts in OptionTrader:</p>
+<ol>
+<li>For each, identify the primary metric driver (RR/FLY/TERM) and write one sentence on *what market behavior could have caused this level*.</li>
+<li>Check whether the worst-case variant confirms. Write one sentence on what the agreement or divergence implies.</li>
+<li>Sketch whether the move is more consistent with a fear-driven cause, an event-premium cause, or possibly a data artifact.</li>
+<li>Choose one decision label (<code>Trade</code>, <code>Watch</code>, <code>Research</code>, <code>Reject</code>) and write the one fact that would most change your label.</li>
+</ol></div>
+  </div>
+</body>
+</html>

@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 
 
-def build_trade_export(alert: dict, idea: dict) -> dict:
-    return {
+def build_trade_export(alert: dict, idea: dict, decision: dict | None = None) -> dict:
+    payload = {
         "alert": {
             "alert_id": alert.get("alert_id"),
             "alert_type": alert.get("alert_type"),
@@ -24,6 +24,9 @@ def build_trade_export(alert: dict, idea: dict) -> dict:
             "scenarios": idea.get("scenarios"),
         },
     }
+    if decision is not None:
+        payload["decision"] = decision
+    return payload
 
 
 def export_to_json(payload: dict) -> str:

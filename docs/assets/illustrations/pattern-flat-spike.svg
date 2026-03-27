@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-label="Flat then spike pattern">
+  <rect width="960" height="300" fill="#fbfbf8"/>
+  <line x1="60" y1="250" x2="920" y2="250" stroke="#888" stroke-width="1"/>
+  <line x1="60" y1="40" x2="60" y2="250" stroke="#888" stroke-width="1"/>
+  <polyline fill="none" stroke="#0b5fff" stroke-width="4" points="80,190 140,188 200,191 260,189 320,190 380,189 440,191 500,188 560,190 620,189 680,191 740,188 800,90 860,150 900,142"/>
+  <text x="70" y="30" font-family="Arial, sans-serif" font-size="18" fill="#222">Pattern A: Flat line then isolated spike</text>
+  <text x="80" y="278" font-family="Arial, sans-serif" font-size="14" fill="#333">time</text>
+  <text x="20" y="52" font-family="Arial, sans-serif" font-size="14" fill="#333">value</text>
+</svg>
