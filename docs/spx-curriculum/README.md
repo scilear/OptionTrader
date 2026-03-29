@@ -18,6 +18,7 @@ Use this folder for deep learning and incremental updates.
 3. `docs/spx-curriculum/03-alert-to-trade-process.md` — the five-gate decision process; alert-to-decision workflow
 4. `docs/spx-curriculum/04-combo-playbooks.md` — hypothesis-to-structure mapping; branch selection
 5. `docs/spx-curriculum/05-risk-execution-and-review.md` — risk rules; review loops
+6. `docs/spx-curriculum/05b-greeks-and-position-management.md` — Greek profiles per template; portfolio aggregation; what-if scenarios; adjustment triggers
 
 **Phase 3 — Metric Workbooks** (numerical practice per signal family)
 6. `docs/spx-curriculum/07-rr25-numerical-workbook.md`

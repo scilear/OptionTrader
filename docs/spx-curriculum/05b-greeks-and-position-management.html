@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Module 5b — Greeks, Exposure, and Position Management</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --text: #1f2430;
+      --muted: #5e6777;
+      --accent: #0f5ba8;
+      --border: #d6ddea;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #eaf2fb 0%, #f6f7f3 42%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top { background: linear-gradient(125deg, #0f5ba8, #247f96); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .top h1 { margin: 0 0 5px; font-size: 24px; }
+    .top a { color: #fff; text-decoration: underline; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    h1, h2, h3 { line-height: 1.3; }
+    p, li { line-height: 1.55; }
+    code { background: #f0f4f9; padding: 1px 4px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f3f7fb; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Module 5b — Greeks, Exposure, and Position Management</h1>
+      <div>
+        <a href="../spx-combo-trading-curriculum.html">Curriculum overview</a> |
+        <a href="README.html">Module index</a>
+      </div>
+    </div>
+    <div class="panel"><h1>Module 5b — Greeks, Exposure, and Position Management</h1>
+<h2>Learning Objectives</h2>
+<ul>
+<li>Understand what each Greek measures for a combo, not just a single option.</li>
+<li>Build the Greek profile of each OptionTrader template and know its dominant risks.</li>
+<li>Aggregate exposure across multiple positions and identify concentration.</li>
+<li>Run what-if scenarios before entry and use them as management triggers mid-trade.</li>
+</ul>
+<p>---</p>
+<h2>1) Why Greeks Are Different for Vol Surface Trades</h2>
+<p>For a directional trader, delta dominates: how much does P&amp;L move with the underlying? For a vol surface trader, the frame is different. You are expressing a view about the *shape* of the implied vol surface — skew, curvature, term structure. The primary exposures are:</p>
+<ul>
+<li>**Vega**: sensitivity to changes in implied vol level. A vol surface trade that is net short vega loses if IV rises uniformly — regardless of what skew does.</li>
+<li>**Skew vega / relative vega**: sensitivity to changes in the *difference* between two points on the surface. This is the actual edge the trade is targeting. A SkewFade is not an outright vega trade — it is a bet on relative vega (one wing&#x27;s IV relative to another).</li>
+<li>**Gamma**: sensitivity to large realized moves. Short-gamma positions profit from stability and suffer from large moves. Long-gamma positions profit from large moves regardless of direction.</li>
+<li>**Delta**: residual directional exposure. Vol combos are often approximately delta-neutral at entry, but this can change quickly with spot moves.</li>
+<li>**Theta**: daily P&amp;L from time decay. Most defined-risk vol structures are net short options (short vega, short gamma), which means they collect positive theta — time works in your favor in calm conditions but accelerates against you if the position is underwater.</li>
+</ul>
+<p>These five exposures interact. A position that looks manageable in isolation may behave very differently in motion. Understanding how each template&#x27;s Greeks evolve is the key to in-trade management.</p>
+<p>---</p>
+<h2>2) Greeks from OptionTrader</h2>
+<p>OptionTrader computes per-leg Greeks using Black-Scholes via <code>src/core/iv_solve.py::bs_greeks</code>. Each trade idea exported from the tool includes:</p>
+<ul>
+<li><code>delta</code>: sensitivity of leg price to a 1-point move in the underlying.</li>
+<li><code>gamma</code>: sensitivity of delta to a 1-point move (i.e., second-order spot risk, per point²).</li>
+<li><code>vega</code>: sensitivity of leg price to a 1% (100bp) move in implied vol.</li>
+</ul>
+<p>Theta is not currently output by the tool but can be approximated: for a short-premium structure, daily theta ≈ <code>0.5 × gamma × spot² × vol²</code> (the Black-Scholes theta-gamma relationship). This means you can estimate your daily time decay from the gamma output.</p>
+<p>When reviewing a trade idea, always look at the aggregate Greeks of the full combo (sum across all legs with their respective quantities and signs), not individual legs in isolation.</p>
+<p>---</p>
+<h2>3) Greek Profile: SkewFade_PutSpread</h2>
+<p>**Legs**: sell -0.25Δ put (short), buy -0.10Δ put (long)</p>
+<table><thead><tr>
+<th>Greek</th>
+<th>Sold -0.25P leg</th>
+<th>Bought -0.10P leg</th>
+<th>Net combo</th>
+</tr></thead><tbody>
+<tr>
+<td>Delta</td>
+<td>+0.25 (short put → long delta)</td>
+<td>−0.10 (long put → short delta)</td>
+<td>**≈ +0.15**</td>
+</tr>
+<tr>
+<td>Vega</td>
+<td>negative (short option)</td>
+<td>positive (long option)</td>
+<td>**net short vega** (−0.25P has more vega than −0.10P)</td>
+</tr>
+<tr>
+<td>Gamma</td>
+<td>negative (short option)</td>
+<td>positive (long option)</td>
+<td>**net short gamma**</td>
+</tr>
+<tr>
+<td>Theta</td>
+<td>positive</td>
+<td>negative</td>
+<td>**net positive theta**</td>
+</tr>
+</tbody></table>
+<p>**What this means in practice:**</p>
+<p>The position has modest long-delta exposure: a 1% down move costs you roughly 0.15 × notional × 1%. This is small but meaningful if the move is large.</p>
+<p>The net short vega means a uniform IV spike works against you — even if your skew thesis is eventually right. This is the key trap: in a sudden vol expansion, you can lose on vega before you gain on skew normalization. This is why regime context matters: entering this structure when stress is *accelerating* is fighting both delta and vega at the same time.</p>
+<p>The short gamma means large moves in either direction hurt. The long -0.10P tail hedge limits how bad the downside can get, but doesn&#x27;t eliminate the loss.</p>
+<p>The positive theta is the compensation: if the underlying stays stable and skew gradually normalizes, you collect theta while the trade converges.</p>
+<p>**Primary risk**: spot sells off sharply with skew steepening → adverse delta + vega + gamma simultaneously. This is the archetypical &quot;wrong-regime entry&quot; failure mode.</p>
+<p>**What-if table (approximate, per 100-unit notional at entry):**</p>
+<table><thead><tr>
+<th>Scenario</th>
+<th>Delta P&amp;L</th>
+<th>Vega P&amp;L</th>
+<th>Net</th>
+</tr></thead><tbody>
+<tr>
+<td>Spot flat, skew −1σ normalizes</td>
+<td>~0</td>
+<td>positive (skew-vega gain)</td>
+<td>**positive**</td>
+</tr>
+<tr>
+<td>Spot −1%, IV +2pp</td>
+<td>small loss</td>
+<td>loss</td>
+<td>**negative**</td>
+</tr>
+<tr>
+<td>Spot +1%, IV flat</td>
+<td>small gain</td>
+<td>neutral</td>
+<td>**small positive**</td>
+</tr>
+<tr>
+<td>Spot −3%, IV +5pp (stress)</td>
+<td>moderate loss</td>
+<td>significant loss</td>
+<td>**significantly negative**</td>
+</tr>
+<tr>
+<td>5 days pass, vol flat</td>
+<td>neutral</td>
+<td>neutral</td>
+<td>**small positive (theta)**</td>
+</tr>
+</tbody></table>
+<p>---</p>
+<h2>4) Greek Profile: Fly_1x2x1</h2>
+<p>**Legs**: buy -0.25Δ put × 1, sell -0.50Δ put × 2, buy -0.10Δ put × 1</p>
+<table><thead><tr>
+<th>Greek</th>
+<th>Long -0.25P</th>
+<th>Short 2× -0.50P</th>
+<th>Long -0.10P</th>
+<th>Net combo</th>
+</tr></thead><tbody>
+<tr>
+<td>Delta</td>
+<td>−0.25</td>
+<td>+1.00 (2 × +0.50)</td>
+<td>−0.10</td>
+<td>**≈ +0.65**</td>
+</tr>
+<tr>
+<td>Vega</td>
+<td>positive</td>
+<td>negative × 2</td>
+<td>positive</td>
+<td>**near zero to slightly negative** (ATM vega largest)</td>
+</tr>
+<tr>
+<td>Gamma</td>
+<td>positive</td>
+<td>negative × 2</td>
+<td>positive</td>
+<td>**net negative gamma** (short two ATM, highest gamma)</td>
+</tr>
+<tr>
+<td>Theta</td>
+<td>negative</td>
+<td>positive × 2</td>
+<td>negative</td>
+<td>**net positive theta**</td>
+</tr>
+</tbody></table>
+<p>**What this means in practice:**</p>
+<p>The fly has significant long-delta bias (+0.65) from selling two ATM puts. This is not a delta-neutral position at entry — a large down move has two adverse effects: the delta loss *and* the fact that spot is moving away from the sweet spot (the 0.50Δ body strike where the maximum profit lives).</p>
+<p>The near-zero net vega means the fly is relatively insensitive to a uniform IV shift. This is intentional: the thesis is about *shape* (wings vs center), not level. However, if wings and ATM reprice asymmetrically (wings rise while ATM stays, or vice versa), the vega decomposition matters.</p>
+<p>The short net gamma is the most significant ongoing risk: the position needs the underlying to stay near the body strike. A large realized move in either direction costs you. This is why flies are particularly sensitive to path and should not be held through high-gamma-risk periods (e.g., immediately before major economic releases).</p>
+<p>**Primary risk**: large realized move (high gamma), especially to the downside where delta and gamma losses compound.</p>
+<p>**What-if table:**</p>
+<table><thead><tr>
+<th>Scenario</th>
+<th>Delta P&amp;L</th>
+<th>Gamma P&amp;L</th>
+<th>Net</th>
+</tr></thead><tbody>
+<tr>
+<td>Spot flat at expiry near body</td>
+<td>~0</td>
+<td>positive convergence</td>
+<td>**positive (max payoff zone)**</td>
+</tr>
+<tr>
+<td>Spot −3% (large down move)</td>
+<td>significant loss</td>
+<td>gamma loss</td>
+<td>**significantly negative**</td>
+</tr>
+<tr>
+<td>Spot +2% (moderate up move)</td>
+<td>gain</td>
+<td>small gamma loss</td>
+<td>**small net**</td>
+</tr>
+<tr>
+<td>Wings normalize, ATM stable</td>
+<td>0</td>
+<td>0</td>
+<td>**positive (vega/skew gain)**</td>
+</tr>
+<tr>
+<td>ATM IV spikes, wings flat</td>
+<td>0</td>
+<td>0</td>
+<td>**negative (FLY widens)**</td>
+</tr>
+</tbody></table>
+<p>---</p>
+<h2>5) Greek Profile: ATM_Calendar</h2>
+<p>**Legs**: sell front ATM call/put (short), buy back ATM call/put (long), sized to approximate vega neutrality</p>
+<table><thead><tr>
+<th>Greek</th>
+<th>Short front ATM</th>
+<th>Long back ATM</th>
+<th>Net combo</th>
+</tr></thead><tbody>
+<tr>
+<td>Delta</td>
+<td>≈ +0.50 (short ATM put)</td>
+<td>≈ −0.50 (long ATM put)</td>
+<td>**≈ 0 (near delta-neutral)**</td>
+</tr>
+<tr>
+<td>Vega</td>
+<td>negative (front)</td>
+<td>positive (back)</td>
+<td>**depends on sizing: targeted near-neutral or slightly long**</td>
+</tr>
+<tr>
+<td>Gamma</td>
+<td>negative (short front — highest gamma)</td>
+<td>positive (long back — lower gamma)</td>
+<td>**net short gamma**</td>
+</tr>
+<tr>
+<td>Theta</td>
+<td>positive (front decays faster)</td>
+<td>negative (back decays slower)</td>
+<td>**net positive theta**</td>
+</tr>
+</tbody></table>
+<p>**What this means in practice:**</p>
+<p>The calendar is the most theta-sensitive structure of the three. You are short the fast-decaying front option and long the slower-decaying back option. Time works in your favor day-to-day, as long as the underlying stays near the body strike.</p>
+<p>Vega decomposition is the key nuance. The calendar is long *back vega* and short *front vega*. If the term KINK resolves because front vol falls (normalization), both theta and relative vega work for you. If front vol stays elevated (event remains priced), you collect theta slowly but the vega thesis doesn&#x27;t converge. This is why pre-event entries are risky: you may collect theta while the vol thesis goes against you.</p>
+<p>The short net gamma means large moves hurt, just as with the fly. The calendar needs stability in the underlying to work.</p>
+<p>**Primary risk**: a large underlying move at any point during the hold period, or a persistent event premium that prevents front-back convergence.</p>
+<p>**What-if table:**</p>
+<table><thead><tr>
+<th>Scenario</th>
+<th>Theta P&amp;L</th>
+<th>Vega P&amp;L</th>
+<th>Net</th>
+</tr></thead><tbody>
+<tr>
+<td>5 days pass, spot flat</td>
+<td>positive</td>
+<td>neutral</td>
+<td>**positive**</td>
+</tr>
+<tr>
+<td>Front vol −2pp (normalization)</td>
+<td>neutral</td>
+<td>positive</td>
+<td>**positive**</td>
+</tr>
+<tr>
+<td>Spot ±3% (large move)</td>
+<td>neutral</td>
+<td>neutral</td>
+<td>**negative (gamma loss)**</td>
+</tr>
+<tr>
+<td>Front vol stays elevated (event)</td>
+<td>positive (slow)</td>
+<td>negative (no convergence)</td>
+<td>**uncertain / small**</td>
+</tr>
+<tr>
+<td>Post-event vol collapse across curve</td>
+<td>neutral</td>
+<td>mixed</td>
+<td>**depends on relative vol change**</td>
+</tr>
+</tbody></table>
+<p>---</p>
+<h2>6) Aggregating Exposure Across Positions</h2>
+<p>If you hold multiple positions simultaneously, you need to track the *portfolio* Greeks, not just each trade in isolation.</p>
+<p>**Net delta** is the most immediate risk. Sum all leg deltas weighted by notional. If your portfolio has +0.80 net delta, a 1% sell-off costs roughly 0.8% of your options notional before any vol effects.</p>
+<p>**Net vega** tells you your overall sensitivity to a vol regime shift. A portfolio that is net short vega across multiple trades can suffer disproportionately in a sudden vol expansion even if each individual trade was sized modestly.</p>
+<p>**Concentration check**: ask two questions:</p>
+<ol>
+<li>Are most of your active trades in the same expiry bucket? Concentrated maturity risk.</li>
+<li>Are they all in the same alert family (all RR, all FLY)? Correlated vol-surface risk — they will likely move together.</li>
+</ol>
+<p>A simple aggregation table to maintain:</p>
+<table><thead><tr>
+<th>Position</th>
+<th>Alert family</th>
+<th>Bucket</th>
+<th>Net delta</th>
+<th>Net vega</th>
+<th>Net gamma</th>
+<th>Entry date</th>
+</tr></thead><tbody>
+<tr>
+<td>Trade A</td>
+<td>RR_EXTREME</td>
+<td>30D</td>
+<td>+0.15</td>
+<td>−0.20</td>
+<td>−0.05</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Trade B</td>
+<td>FLY_EXTREME</td>
+<td>21D</td>
+<td>+0.60</td>
+<td>−0.05</td>
+<td>−0.12</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Trade C</td>
+<td>TERM_KINK</td>
+<td>30D/45D</td>
+<td>0.00</td>
+<td>+0.10</td>
+<td>−0.08</td>
+<td>—</td>
+</tr>
+<tr>
+<td>**Total**</td>
+<td></td>
+<td></td>
+<td>**+0.75**</td>
+<td>**−0.15**</td>
+<td>**−0.25**</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>This portfolio is net long delta, net short vega, net short gamma. A large down move with a vol spike would be adverse across all three dimensions simultaneously.</p>
+<p>---</p>
+<h2>7) What-If Scenarios: Using Greeks to Stress-Test Before Entry</h2>
+<p>Before entering any position, run these four scenarios mentally (or on paper). Each corresponds to a realistic market shock:</p>
+<p>**Scenario 1 — Spot moves ±X% (delta + gamma)**</p>
+<p>Estimated P&amp;L ≈ <code>net_delta × spot_move + 0.5 × net_gamma × spot_move²</code></p>
+<p>For a +0.15 delta, −0.05 gamma position with a −3% spot move: <code>= 0.15 × (−0.03) + 0.5 × (−0.05) × (0.03)² ≈ −4.5% − 0.002% ≈ −4.5%</code> of notional</p>
+<p>If this exceeds your max-loss, the position is sized too large for the scenario.</p>
+<p>**Scenario 2 — IV rises uniformly +2pp (vega)**</p>
+<p>Estimated P&amp;L ≈ <code>net_vega × 0.02</code></p>
+<p>A net vega of −0.20 with a 2pp IV rise → estimated loss of 0.4% of notional per unit. Understand this *before* entry, not after.</p>
+<p>**Scenario 3 — Time passes with no move (theta)**</p>
+<p>Estimated daily P&amp;L ≈ <code>net_theta</code> or approximately <code>−0.5 × net_gamma × spot² × vol²</code> (annualized, divide by 365).</p>
+<p>If you are net short gamma and net short vega, theta is your return source. Know how many days of theta you need to recover a 1% adverse move scenario.</p>
+<p>**Scenario 4 — Your thesis reverses (signal degrades)**</p>
+<p>What happens if the vol signal that justified entry begins to fade? For example, RR25 stops being extreme or persistence drops. This is not a Greek scenario — it is a *thesis degradation* scenario. Pre-commit: at what threshold do you exit even if mark-to-market is break-even?</p>
+<p>---</p>
+<h2>8) Adjustment Triggers</h2>
+<p>The purpose of pre-trade scenarios is to create *pre-committed adjustment rules*, not react emotionally mid-trade.</p>
+<p>**Delta trigger**: if net portfolio delta exceeds a predefined limit (e.g., ±0.5 normalized to your options notional), consider a delta hedge or size reduction — regardless of your vol thesis conviction.</p>
+<p>**Vega trigger**: if the portfolio is net short vega and a vol regime shift is underway (IV rising, regime moving toward Stress), reduce net vega exposure before the loss compounds.</p>
+<p>**Gamma trigger**: if a large realized move puts your short-gamma positions materially underwater, do not double down. The short-gamma loss is geometric — it accelerates with move size.</p>
+<p>**Signal degradation trigger** (most important): if the alert that prompted entry no longer meets the persistence threshold, or <code>zscore_worst</code> has fallen below the configured threshold, the statistical basis for the trade has weakened. This is your primary exit signal, independent of P&amp;L.</p>
+<p>**P&amp;L stop**: define a max-loss per position at entry (required by Gate 5 of the decision process). Honor it. Vega and gamma losses can compound faster than linear.</p>
+<p>**Rule**: if two or more triggers fire simultaneously, exit the position. Do not reason your way around coincident adverse signals.</p>
+<p>---</p>
+<h2>9) Drill</h2>
+<p>For each of the three OptionTrader templates:</p>
+<ol>
+<li>Write the net delta, vega, and gamma profile in one sentence (no table needed).</li>
+<li>Identify the single market scenario that is most adverse for that profile.</li>
+<li>Define one numeric trigger (e.g., &quot;if net delta of portfolio &gt; X&quot;) that would cause you to reduce or exit.</li>
+<li>For a hypothetical portfolio of two concurrent trades (e.g., SkewFade + Calendar in the same bucket), aggregate the Greeks and run Scenario 1 and 2 from Section 7. Is the combined exposure acceptable?</li>
+</ol></div>
+  </div>
+</body>
+</html>
