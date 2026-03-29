@@ -36,6 +36,7 @@ These modules bridge from the concepts to what OptionTrader actually shows you.
 | 3 | [03-alert-to-trade-process.md](spx-curriculum/03-alert-to-trade-process.md) | The five-gate decision process; how to trace an alert through signal → data → regime → execution → risk gates |
 | 4 | [04-combo-playbooks.md](spx-curriculum/04-combo-playbooks.md) | Mapping validated alerts to structure families; when *not* to map; branch selection before structure |
 | 5 | [05-risk-execution-and-review.md](spx-curriculum/05-risk-execution-and-review.md) | Position-level and process-level risk rules; post-trade review loops |
+| 5b | [05b-greeks-and-position-management.md](spx-curriculum/05b-greeks-and-position-management.md) | Greek profiles per template; portfolio aggregation; what-if scenarios; adjustment triggers |
 
 ### Phase 3 — Metric Workbooks (numerical practice)
 
