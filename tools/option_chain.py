@@ -262,14 +262,30 @@ def _fetch_ib(
 
         # Option chain definition
         chains = ib.reqSecDefOptParams(upper, "", sec_type, underlying.conId)
-        chain = next((c for c in chains if c.exchange == "SMART"), None)
-        if chain is None and chains:
-            chain = chains[0]
-        if chain is None:
+        if not chains:
             return None
 
-        # Find expiry closest to target
+        # Try SMART first, but if it doesn't have the target expiry,
+        # find the chain whose expirations contain (or are closest to) the target.
         target_date = date.fromisoformat(target_expiry)
+        chain = next((c for c in chains if c.exchange == "SMART"), None)
+        if chain is None:
+            chain = min(
+                chains,
+                key=lambda c: (
+                    min(
+                        abs(
+                            (
+                                date(int(e[:4]), int(e[4:6]), int(e[6:8])) - target_date
+                            ).days
+                        )
+                        for e in c.expirations
+                    )
+                    if c.expirations
+                    else 99999
+                ),
+            )
+
         ib_expiry = min(
             chain.expirations,
             key=lambda e: abs(
@@ -281,8 +297,11 @@ def _fetch_ib(
         hi = spot * (1 + strike_pct_range)
         valid_strikes = sorted(s for s in chain.strikes if lo <= s <= hi)
 
+        # Use the exchange from the chain itself (not hardcoded SMART — e.g. XOP trades on ARCA)
+        exchange = chain.exchange
+
         contracts = [
-            Option(upper, ib_expiry, strike, right, "SMART", currency="USD")
+            Option(upper, ib_expiry, strike, right, exchange, currency="USD")
             for strike in valid_strikes
             for right in ("C", "P")
         ]
