@@ -16,6 +16,7 @@ Usage:
     python tools/iv_rank.py --ticker GLD --no-cache
     python tools/iv_rank.py --ticker GLD --no-ib
 """
+
 from __future__ import annotations
 
 import argparse
@@ -72,6 +73,7 @@ def _safe_float(val) -> float:
 
 def _host_reachable(host: str, port: int, timeout: float = 2.0) -> bool:
     import socket
+
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
@@ -121,7 +123,9 @@ def _compute_rv_series(closes: list[float]) -> list[float]:
     return rv
 
 
-def _get_closes(ticker: str, lookback_days: int, use_cache: bool) -> Optional[list[float]]:
+def _get_closes(
+    ticker: str, lookback_days: int, use_cache: bool
+) -> Optional[list[float]]:
     """Return list of closing prices oldest-first, using cache when available."""
     if use_cache:
         cached = _load_cache(ticker)
@@ -129,6 +133,7 @@ def _get_closes(ticker: str, lookback_days: int, use_cache: bool) -> Optional[li
             return cached
     try:
         import yfinance as yf
+
         yf_sym = _YF_SYMBOL_MAP.get(ticker, ticker)
         hist = yf.Ticker(yf_sym).history(period=f"{lookback_days}d")
         if hist.empty or len(hist) < 50:
@@ -149,7 +154,16 @@ def _spot_from_ib(ticker: str, config: dict) -> Optional[float]:
         return None
 
     ib_cfg = config.get("ib", {})
-    hosts = ib_cfg.get("hosts", [])
+    hosts = list(ib_cfg.get("hosts", []))
+    preferred_hosts = ["wendy", "100.125.138.42"]
+    for preferred_host in reversed(preferred_hosts):
+        if preferred_host in hosts:
+            hosts.remove(preferred_host)
+        if "localhost" in hosts:
+            localhost_idx = hosts.index("localhost") + 1
+            hosts.insert(localhost_idx, preferred_host)
+        else:
+            hosts.append(preferred_host)
     port = ib_cfg.get("port", 7496)
     client_id = ib_cfg.get("client_id", 10) + 5
     timeout_secs = ib_cfg.get("timeout_seconds", 10)
@@ -233,13 +247,13 @@ class IVRankResult:
     source: str
     lookback_days: int
     atm_iv_30d: Optional[float]
-    iv_rank: Optional[float]        # (current - min) / (max - min) * 100
+    iv_rank: Optional[float]  # (current - min) / (max - min) * 100
     iv_percentile: Optional[float]  # % of RV observations below current ATM IV
     rv_min: Optional[float]
     rv_max: Optional[float]
-    rv_current: Optional[float]     # most recent rolling 21D RV
+    rv_current: Optional[float]  # most recent rolling 21D RV
     term_structure: list[TermPoint]
-    signal: str                     # "elevated" | "depressed" | "neutral" | "n/a"
+    signal: str  # "elevated" | "depressed" | "neutral" | "n/a"
 
 
 # ── Core computation ────────────────────────────────────────────────────────────
@@ -263,6 +277,7 @@ def compute(
     if spot <= 0:
         try:
             import yfinance as yf
+
             yf_sym = _YF_SYMBOL_MAP.get(upper, ticker)
             yf_t = yf.Ticker(yf_sym)
             fast = getattr(yf_t, "fast_info", None)
@@ -294,6 +309,7 @@ def compute(
 
     try:
         import yfinance as yf
+
         yf_sym = _YF_SYMBOL_MAP.get(upper, ticker)
         yf_t = yf.Ticker(yf_sym)
         available_dates = [date.fromisoformat(e) for e in yf_t.options]
@@ -308,16 +324,20 @@ def compute(
             # Term structure for each DTE bucket
             for dte_target in DTE_BUCKETS:
                 target_date = today + timedelta(days=dte_target)
-                closest = min(available_dates, key=lambda d: abs((d - target_date).days))
+                closest = min(
+                    available_dates, key=lambda d: abs((d - target_date).days)
+                )
                 expiry_str = closest.isoformat()
                 dte_actual = (closest - today).days
                 atm_iv = _atm_iv_from_chain(yf_t, expiry_str, spot)
-                term_structure.append(TermPoint(
-                    dte_target=dte_target,
-                    expiry=expiry_str,
-                    dte_actual=dte_actual,
-                    atm_iv=atm_iv,
-                ))
+                term_structure.append(
+                    TermPoint(
+                        dte_target=dte_target,
+                        expiry=expiry_str,
+                        dte_actual=dte_actual,
+                        atm_iv=atm_iv,
+                    )
+                )
     except Exception:
         pass
 
@@ -360,10 +380,10 @@ def compute(
 
 # ── Output formatters ──────────────────────────────────────────────────────────
 _SIGNAL_LABEL = {
-    "elevated":  " ▲  elevated  — good time to sell premium",
+    "elevated": " ▲  elevated  — good time to sell premium",
     "depressed": " ▼  depressed — good time to buy premium",
-    "neutral":   " —  neutral",
-    "n/a":       "",
+    "neutral": " —  neutral",
+    "n/a": "",
 }
 
 
@@ -379,7 +399,9 @@ def _print_table(result: IVRankResult) -> None:
     print(f"{'=' * 52}")
     print(f"  Spot:               {result.spot:.2f}")
     print(f"  30D ATM IV:         {pct(result.atm_iv_30d)}")
-    print(f"  IV Rank  (RV px):   {rank_str(result.iv_rank)}{_SIGNAL_LABEL.get(result.signal, '')}")
+    print(
+        f"  IV Rank  (RV px):   {rank_str(result.iv_rank)}{_SIGNAL_LABEL.get(result.signal, '')}"
+    )
     print(f"  IV Pctile (RV px):  {rank_str(result.iv_percentile)}")
     if result.rv_min is not None:
         print(
@@ -391,10 +413,12 @@ def _print_table(result: IVRankResult) -> None:
 
     if result.term_structure:
         print(f"  {'DTE':>6}  {'Expiry':<12}  {'Act DTE':>7}  {'ATM IV':>8}")
-        print(f"  {'-'*6}  {'-'*12}  {'-'*7}  {'-'*8}")
+        print(f"  {'-' * 6}  {'-' * 12}  {'-' * 7}  {'-' * 8}")
         for tp in result.term_structure:
             iv_str = f"{tp.atm_iv * 100:.1f}%" if tp.atm_iv else "n/a"
-            print(f"  {tp.dte_target:>6}  {tp.expiry:<12}  {tp.dte_actual:>7}  {iv_str:>8}")
+            print(
+                f"  {tp.dte_target:>6}  {tp.expiry:<12}  {tp.dte_actual:>7}  {iv_str:>8}"
+            )
     print()
 
 
@@ -409,7 +433,9 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("--ticker", required=True, help="Ticker symbol (e.g. GLD, SPX, AAPL)")
+    parser.add_argument(
+        "--ticker", required=True, help="Ticker symbol (e.g. GLD, SPX, AAPL)"
+    )
     parser.add_argument(
         "--lookback",
         type=int,
@@ -422,12 +448,17 @@ def main() -> None:
         default="table",
         help="Output format (default: table)",
     )
-    parser.add_argument("--no-ib", action="store_true", help="Skip IB, use yfinance only")
-    parser.add_argument("--no-cache", action="store_true", help="Re-fetch history, bypass cache")
+    parser.add_argument(
+        "--no-ib", action="store_true", help="Skip IB, use yfinance only"
+    )
+    parser.add_argument(
+        "--no-cache", action="store_true", help="Re-fetch history, bypass cache"
+    )
     args = parser.parse_args()
 
     try:
         from src.core.config import load_config
+
         config = load_config()
     except Exception:
         config = {}

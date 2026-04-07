@@ -11,6 +11,7 @@ Usage:
     python tools/option_chain.py --ticker GLD --dte 21 --output json
     python tools/option_chain.py --ticker SPX --dte 21 --no-ib
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +35,7 @@ from src.core.iv_solve import solve_iv, bs_greeks
 # Inlined from ingest_ib to avoid pulling in db/duckdb dependencies
 def _host_reachable(host: str, port: int, timeout: float = 2.0) -> bool:
     import socket
+
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
@@ -56,8 +58,9 @@ def _safe_int(val) -> int:
     except (TypeError, ValueError):
         return 0
 
+
 # ── Constants ──────────────────────────────────────────────────────────────────
-RATE = 0.05           # approximate risk-free rate
+RATE = 0.05  # approximate risk-free rate
 WIDE_SPREAD_PCT = 0.15
 BATCH_SIZE = 50
 
@@ -83,7 +86,7 @@ _YF_SYMBOL_MAP: dict[str, str] = {
 class OptionRow:
     expiry: str
     strike: float
-    right: str              # "C" or "P"
+    right: str  # "C" or "P"
     bid: float
     ask: float
     mid: float
@@ -95,8 +98,8 @@ class OptionRow:
     theta: Optional[float]  # points per calendar day
     oi: int
     volume: int
-    stale: bool             # bid=0 or ask=0
-    wide_spread: bool       # spread > 15% of mid
+    stale: bool  # bid=0 or ask=0
+    wide_spread: bool  # spread > 15% of mid
     iv_solve_status: str
 
 
@@ -209,7 +212,16 @@ def _fetch_ib(
         return None
 
     ib_cfg = config.get("ib", {})
-    hosts: list[str] = ib_cfg.get("hosts", [])
+    hosts: list[str] = list(ib_cfg.get("hosts", []))
+    preferred_hosts = ["wendy", "100.125.138.42"]
+    for preferred_host in reversed(preferred_hosts):
+        if preferred_host in hosts:
+            hosts.remove(preferred_host)
+        if "localhost" in hosts:
+            localhost_idx = hosts.index("localhost") + 1
+            hosts.insert(localhost_idx, preferred_host)
+        else:
+            hosts.append(preferred_host)
     port: int = ib_cfg.get("port", 7496)
     # Use client_id+5 to avoid conflicting with the running pipeline (client_id 10)
     client_id: int = ib_cfg.get("client_id", 10) + 5
@@ -222,7 +234,9 @@ def _fetch_ib(
 
     ib = IB()
     try:
-        ib.connect(host_used, port, clientId=client_id, timeout=timeout_secs, readonly=True)
+        ib.connect(
+            host_used, port, clientId=client_id, timeout=timeout_secs, readonly=True
+        )
 
         upper = ticker.upper()
         if upper in _IB_INDEX_INFO:
@@ -258,7 +272,9 @@ def _fetch_ib(
         target_date = date.fromisoformat(target_expiry)
         ib_expiry = min(
             chain.expirations,
-            key=lambda e: abs((date(int(e[:4]), int(e[4:6]), int(e[6:8])) - target_date).days),
+            key=lambda e: abs(
+                (date(int(e[:4]), int(e[4:6]), int(e[6:8])) - target_date).days
+            ),
         )
 
         lo = spot * (1 - strike_pct_range)
@@ -322,9 +338,7 @@ def _fetch_ib(
 
 
 # ── yfinance fetch ────────────────────────────────────────────────────────────
-def _fetch_yf(
-    ticker: str, target_expiry: str
-) -> tuple[float, list[OptionRow]] | None:
+def _fetch_yf(ticker: str, target_expiry: str) -> tuple[float, list[OptionRow]] | None:
     """Fetch option chain from yfinance. Returns (spot, rows) or None."""
     try:
         import yfinance as yf
@@ -430,7 +444,11 @@ def _compute_iv_rank(ticker: str, atm_iv: float) -> Optional[float]:
 def _filter_delta(
     rows: list[OptionRow], delta_min: float, delta_max: float
 ) -> list[OptionRow]:
-    return [r for r in rows if r.delta is not None and delta_min <= abs(r.delta) <= delta_max]
+    return [
+        r
+        for r in rows
+        if r.delta is not None and delta_min <= abs(r.delta) <= delta_max
+    ]
 
 
 # ── Output formatters ─────────────────────────────────────────────────────────
@@ -442,10 +460,27 @@ def _print_table(
     rows: list[OptionRow], spot: float, iv_rank: Optional[float], source: str
 ) -> None:
     rank_str = f"{iv_rank:.1f}%" if iv_rank is not None else "n/a"
-    print(f"\nSpot: {spot:.2f}  |  IV Rank (RV proxy): {rank_str}  |  Source: {source}\n")
+    print(
+        f"\nSpot: {spot:.2f}  |  IV Rank (RV proxy): {rank_str}  |  Source: {source}\n"
+    )
 
     col_w = [12, 9, 5, 7, 7, 7, 7, 7, 9, 8, 9, 8, 8, 10]
-    headers = ["Expiry", "Strike", "Side", "Bid", "Ask", "Mid", "IV%", "Delta", "Gamma", "Vega", "Theta", "OI", "Vol", "Flags"]
+    headers = [
+        "Expiry",
+        "Strike",
+        "Side",
+        "Bid",
+        "Ask",
+        "Mid",
+        "IV%",
+        "Delta",
+        "Gamma",
+        "Vega",
+        "Theta",
+        "OI",
+        "Vol",
+        "Flags",
+    ]
     sep = "  ".join("-" * w for w in col_w)
     hdr = "  ".join(h.ljust(w) for h, w in zip(headers, col_w))
     print(hdr)
@@ -504,18 +539,49 @@ def _print_json(
 
 def _print_csv(rows: list[OptionRow], spot: float, iv_rank: Optional[float]) -> None:
     writer = csv.writer(sys.stdout)
-    writer.writerow([
-        "expiry", "strike", "right", "bid", "ask", "mid", "last",
-        "iv", "delta", "gamma", "vega", "theta",
-        "oi", "volume", "stale", "wide_spread", "iv_solve_status",
-    ])
+    writer.writerow(
+        [
+            "expiry",
+            "strike",
+            "right",
+            "bid",
+            "ask",
+            "mid",
+            "last",
+            "iv",
+            "delta",
+            "gamma",
+            "vega",
+            "theta",
+            "oi",
+            "volume",
+            "stale",
+            "wide_spread",
+            "iv_solve_status",
+        ]
+    )
     for r in rows:
-        writer.writerow([
-            r.expiry, r.strike, r.right,
-            r.bid, r.ask, r.mid, r.last,
-            r.iv, r.delta, r.gamma, r.vega, r.theta,
-            r.oi, r.volume, r.stale, r.wide_spread, r.iv_solve_status,
-        ])
+        writer.writerow(
+            [
+                r.expiry,
+                r.strike,
+                r.right,
+                r.bid,
+                r.ask,
+                r.mid,
+                r.last,
+                r.iv,
+                r.delta,
+                r.gamma,
+                r.vega,
+                r.theta,
+                r.oi,
+                r.volume,
+                r.stale,
+                r.wide_spread,
+                r.iv_solve_status,
+            ]
+        )
 
 
 # ── ATM IV helper ─────────────────────────────────────────────────────────────
@@ -535,7 +601,9 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("--ticker", required=True, help="Ticker symbol (e.g. GLD, SPX, AAPL)")
+    parser.add_argument(
+        "--ticker", required=True, help="Ticker symbol (e.g. GLD, SPX, AAPL)"
+    )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dte", type=int, help="Target DTE in calendar days")
     group.add_argument("--expiry", help="Specific expiry date YYYY-MM-DD")
@@ -552,7 +620,9 @@ def main() -> None:
         default="table",
         help="Output format (default: table)",
     )
-    parser.add_argument("--no-ib", action="store_true", help="Skip IB, use yfinance only")
+    parser.add_argument(
+        "--no-ib", action="store_true", help="Skip IB, use yfinance only"
+    )
     args = parser.parse_args()
 
     ticker = args.ticker.upper()
@@ -560,6 +630,7 @@ def main() -> None:
 
     try:
         from src.core.config import load_config
+
         config = load_config()
     except Exception:
         config = {}
