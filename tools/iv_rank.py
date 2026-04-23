@@ -17,6 +17,13 @@ Usage:
     python tools/iv_rank.py --ticker GLD --no-ib
 """
 
+# Suppress expected "No security definition found" errors from ib_insync wrapper
+import logging
+
+logging.getLogger("ib_insync.wrapper").setLevel(logging.CRITICAL)
+logging.getLogger("ib_insync.ib").setLevel(logging.CRITICAL)
+
+
 from __future__ import annotations
 
 import argparse

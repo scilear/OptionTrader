@@ -59,6 +59,13 @@ def _safe_int(val) -> int:
         return 0
 
 
+# Suppress expected "No security definition found" errors from ib_insync wrapper
+import logging
+
+logging.getLogger("ib_insync.wrapper").setLevel(logging.CRITICAL)
+logging.getLogger("ib_insync.ib").setLevel(logging.CRITICAL)
+
+
 # ── Constants ──────────────────────────────────────────────────────────────────
 RATE = 0.05  # approximate risk-free rate
 WIDE_SPREAD_PCT = 0.15
