@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
+import logging
 
 from src.core.bootstrap import ensure_repo_root_on_path
 
@@ -8,16 +10,12 @@ ensure_repo_root_on_path()
 
 import pandas as pd
 
+from src.core.alerts import compute_alerts
 from src.core.config import load_config
 from src.core.metrics import compute_iv_points, compute_surface_metrics, filter_quotes_by_dte
+from src.core.regime import regime_params_from_config, regime_threshold_hash
+from src.core.trade_ideas import IdeaContext, build_trade_ideas
 from src.core.tradability import compute_tradability_score
-import json
-import logging
-
-import json
-
-from src.core.alerts import compute_alerts
-from src.core.trade_ideas import build_trade_ideas, IdeaContext
 from src.db.connection import connect
 
 
@@ -41,6 +39,74 @@ def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
     conn.execute("DELETE FROM iv_points WHERE snapshot_id = ?", (snapshot_id,))
 
 
+def _build_explain_payload(
+    alert: dict,
+    threshold: float,
+    persistence_required: int,
+    tier: str | None,
+    regime_label: str,
+    tradability_score: float,
+) -> dict:
+    zscore_mid = alert.get("zscore_mid")
+    zscore_worst = alert.get("zscore_worst")
+    persistence = int(alert.get("persistence") or 0)
+    zscore_pass = (
+        zscore_mid is not None
+        and zscore_worst is not None
+        and abs(float(zscore_mid)) >= threshold
+        and abs(float(zscore_worst)) >= threshold
+    )
+    persistence_pass = persistence >= persistence_required
+    data_tier_pass = tier is not None
+    regime_pass = not (
+        alert.get("alert_type") == "RR_EXTREME" and regime_label == "Stress"
+    )
+    tradability_pass = tradability_score > 0.0
+
+    return {
+        "alert_type": alert.get("alert_type"),
+        "expiry_bucket": alert.get("expiry_bucket"),
+        "gates": {
+            "zscore": {
+                "status": "PASS" if zscore_pass else "FAIL",
+                "reason_code": "threshold_met" if zscore_pass else "threshold_not_met",
+                "threshold": threshold,
+                "zscore_mid": zscore_mid,
+                "zscore_worst": zscore_worst,
+            },
+            "persistence": {
+                "status": "PASS" if persistence_pass else "FAIL",
+                "reason_code": (
+                    "persistence_met" if persistence_pass else "persistence_short"
+                ),
+                "required": persistence_required,
+                "observed": persistence,
+            },
+            "data_tier_quality": {
+                "status": "PASS" if data_tier_pass else "FAIL",
+                "reason_code": "tier_available" if data_tier_pass else "tier_missing",
+                "confidence_tier": tier,
+            },
+            "regime": {
+                "status": "PASS" if regime_pass else "FAIL",
+                "reason_code": (
+                    "allowed"
+                    if regime_pass
+                    else "rr_extreme_blocked_in_stress"
+                ),
+                "regime_label": regime_label,
+            },
+            "tradability": {
+                "status": "PASS" if tradability_pass else "FAIL",
+                "reason_code": (
+                    "positive_tradability" if tradability_pass else "non_positive_tradability"
+                ),
+                "tradability_score": tradability_score,
+            },
+        },
+    }
+
+
 def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     logger = logging.getLogger("compute")
     config = load_config()
@@ -48,9 +114,16 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     window = config["metrics"]["zscore_window_days"]
     threshold = config["alerts"]["z_threshold"]
     persistence = config["alerts"]["persistence_snapshots"]
+    pessimistic_gate = bool(config["alerts"].get("pessimistic_gate", True))
     spread_gate_pct = config["quality"]["spread_gate_pct"]
+    min_valid_points_full = int(config["quality"]["min_valid_points_full"])
+    min_valid_points_core = int(config["quality"]["min_valid_points_core"])
     dte_min = config["data"]["dte_min"]
     dte_max = config["data"]["dte_max"]
+    delta_points = config["metrics"].get("delta_points", [0.10, 0.25])
+    pricing = config.get("pricing", {})
+    rate = float(pricing.get("rate", 0.0))
+    dividend_yield = float(pricing.get("dividend_yield", 0.0))
 
     conn = connect()
     try:
@@ -60,7 +133,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
         regime_row = conn.execute(
             """
-            SELECT regime_label FROM regime_state
+            SELECT regime_label, regime_config_hash FROM regime_state
             WHERE regime_date <= ?
             ORDER BY regime_date DESC
             LIMIT 1
@@ -68,6 +141,14 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             (ts.date(),),
         ).fetchone()
         regime_label = regime_row[0] if regime_row else "Neutral"
+        current_regime_hash = regime_threshold_hash(regime_params_from_config(config))
+        persisted_regime_hash = regime_row[1] if regime_row and len(regime_row) > 1 else None
+        if persisted_regime_hash and persisted_regime_hash != current_regime_hash:
+            logger.warning(
+                "Regime threshold hash mismatch for snapshot_id=%s. "
+                "Recompute regime_state with current config before relying on history.",
+                snapshot_id,
+            )
         quotes = conn.execute(
             "SELECT expiry, strike, option_right, bid, ask FROM option_quotes WHERE snapshot_id = ?",
             (snapshot_id,),
@@ -76,7 +157,15 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         quotes = filter_quotes_by_dte(quotes, ts, dte_min, dte_max)
         tradability_score = compute_tradability_score(quotes, spread_gate_pct)
 
-        iv_points = compute_iv_points(quotes, ts, spot, spread_gate_pct)
+        iv_points = compute_iv_points(
+            quotes,
+            ts,
+            spot,
+            spread_gate_pct,
+            delta_points=delta_points,
+            rate=rate,
+            div=dividend_yield,
+        )
         logger.info("iv_points=%s", len(iv_points))
         for point in iv_points:
             conn.execute(
@@ -98,7 +187,13 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 ),
             )
 
-        metrics = compute_surface_metrics(iv_points, ts, buckets)
+        metrics = compute_surface_metrics(
+            iv_points,
+            ts,
+            buckets,
+            min_valid_points_core=min_valid_points_core,
+            min_valid_points_full=min_valid_points_full,
+        )
         logger.info("metrics_rows=%s", len(metrics))
         tier_by_bucket = {m["expiry_bucket"]: m.get("tier") for m in metrics}
         for m in metrics:
@@ -138,7 +233,13 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             JOIN snapshots s ON s.snapshot_id = m.snapshot_id
             """
         ).fetchdf()
-        alerts = compute_alerts(metric_series, window, threshold, persistence)
+        alerts = compute_alerts(
+            metric_series,
+            window,
+            threshold,
+            persistence,
+            pessimistic_gate=pessimistic_gate,
+        )
         logger.info("alerts=%s", len(alerts))
         for alert in alerts:
             tier = tier_by_bucket.get(alert["expiry_bucket"])
@@ -146,17 +247,14 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 continue
             if alert["alert_type"] == "RR_EXTREME" and regime_label == "Stress":
                 continue
-            explain = {
-                "alert_type": alert["alert_type"],
-                "expiry_bucket": alert["expiry_bucket"],
-                "z_threshold": threshold,
-                "zscore_mid": alert["zscore_mid"],
-                "zscore_worst": alert["zscore_worst"],
-                "persistence": alert["persistence"],
-                "regime_label": regime_label,
-                "confidence_tier": tier,
-                "tradability_score": tradability_score,
-            }
+            explain = _build_explain_payload(
+                alert=alert,
+                threshold=threshold,
+                persistence_required=persistence,
+                tier=tier,
+                regime_label=regime_label,
+                tradability_score=tradability_score,
+            )
             conn.execute(
                 """
                 INSERT INTO alerts (
@@ -220,12 +318,13 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             context = IdeaContext(
                 spot=spot,
                 t_years=t_years,
-                rate=0.0,
-                div=0.0,
+                rate=rate,
+                div=dividend_yield,
                 iv_mid=iv_mid,
                 iv_bid=iv_bid,
                 iv_ask=iv_ask,
                 expiry=target_expiry,
+                config=config,
             )
             ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"], context)
             for idea in ideas:

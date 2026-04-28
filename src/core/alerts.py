@@ -34,6 +34,7 @@ def compute_alerts(
     window: int,
     threshold: float,
     persistence_required: int,
+    pessimistic_gate: bool = True,
 ) -> list[dict]:
     alerts = []
     if metrics_df.empty:
@@ -69,7 +70,7 @@ def compute_alerts(
                 worst_series = recent[metric_worst].dropna()
                 if not worst_series.empty:
                     z_worst = (worst_series.iloc[-1] - worst_series.mean()) / worst_series.std(ddof=1)
-                    if z_worst is not None and abs(z_worst) < threshold:
+                    if pessimistic_gate and z_worst is not None and abs(z_worst) < threshold:
                         continue
 
             alerts.append(

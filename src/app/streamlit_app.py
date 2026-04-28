@@ -267,10 +267,12 @@ def alerts_page():
 
 def metrics_page():
     st.header("Metric Explorer")
+    config = load_config()
+    bucket_values = [f"{int(b)}D" for b in config["metrics"]["expiry_buckets_days"]]
     metric = st.selectbox(
         "Metric", ["rr25_mid", "fly25_mid", "term_slope_mid", "event_premium"]
     )
-    bucket = st.selectbox("Expiry bucket", ["21D", "30D", "45D"])
+    bucket = st.selectbox("Expiry bucket", bucket_values)
     if metric == "event_premium":
         data = query_df(
             """

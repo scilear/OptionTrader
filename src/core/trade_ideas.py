@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass, field
 from datetime import date
 
+from src.core.config import load_config
 from src.core.iv_solve import _bs_price, bs_greeks, strike_from_delta
 
 
@@ -18,6 +18,7 @@ class IdeaContext:
     iv_bid: dict
     iv_ask: dict
     expiry: date | None = None
+    config: dict | None = None
 
 
 def _leg_price(vol: float, context: IdeaContext, right: str, delta: float) -> tuple[float | None, float | None, dict]:
@@ -49,14 +50,27 @@ def _aggregate_greeks(leg_greeks: list[dict]) -> dict:
 
 def build_trade_ideas(alert_type: str, expiry_bucket: str, context: IdeaContext | None) -> list[dict]:
     ideas: list[dict] = []
+    cfg = context.config if context and context.config else load_config()
+    structures = cfg.get("structures", {})
+    skew_cfg = structures.get("skew_fade", {})
+    fly_cfg = structures.get("fly", {})
+    cal_cfg = structures.get("calendar", {})
+
+    skew_short_put_delta = float(skew_cfg.get("short_put_delta", -0.25))
+    skew_long_put_delta = float(skew_cfg.get("long_put_delta", -0.10))
+    fly_wing_delta = abs(float(fly_cfg.get("wing_delta", 0.25)))
+    front_dte_min = int(cal_cfg.get("front_dte_min", 14))
+    front_dte_max = int(cal_cfg.get("front_dte_max", 30))
+    back_dte_min = int(cal_cfg.get("back_dte_min", 30))
+    back_dte_max = int(cal_cfg.get("back_dte_max", 60))
 
     if alert_type == "RR_EXTREME":
         ideas.append(
             {
                 "template": "SkewFade_PutSpread",
                 "legs": [
-                    {"right": "P", "delta": -0.25, "action": "SELL"},
-                    {"right": "P", "delta": -0.10, "action": "BUY"},
+                    {"right": "P", "delta": skew_short_put_delta, "action": "SELL"},
+                    {"right": "P", "delta": skew_long_put_delta, "action": "BUY"},
                 ],
                 "risk_flags": ["tail_risk", "liquidity"],
             }
@@ -66,9 +80,9 @@ def build_trade_ideas(alert_type: str, expiry_bucket: str, context: IdeaContext 
             {
                 "template": "Fly_1x2x1",
                 "legs": [
-                    {"right": "P", "delta": -0.25, "action": "BUY"},
+                    {"right": "P", "delta": -fly_wing_delta, "action": "BUY"},
                     {"right": "P", "delta": -0.50, "action": "SELL", "qty": 2},
-                    {"right": "P", "delta": -0.10, "action": "BUY"},
+                    {"right": "P", "delta": -max(0.10, min(0.45, fly_wing_delta / 2.0)), "action": "BUY"},
                 ],
                 "risk_flags": ["pin_risk", "liquidity"],
             }
@@ -78,8 +92,22 @@ def build_trade_ideas(alert_type: str, expiry_bucket: str, context: IdeaContext 
             {
                 "template": "ATM_Calendar",
                 "legs": [
-                    {"right": "C", "delta": 0.50, "action": "SELL", "tenor": "front"},
-                    {"right": "C", "delta": 0.50, "action": "BUY", "tenor": "back"},
+                    {
+                        "right": "C",
+                        "delta": 0.50,
+                        "action": "SELL",
+                        "tenor": "front",
+                        "dte_min": front_dte_min,
+                        "dte_max": front_dte_max,
+                    },
+                    {
+                        "right": "C",
+                        "delta": 0.50,
+                        "action": "BUY",
+                        "tenor": "back",
+                        "dte_min": back_dte_min,
+                        "dte_max": back_dte_max,
+                    },
                 ],
                 "risk_flags": ["short_gamma", "event_gap"],
             }

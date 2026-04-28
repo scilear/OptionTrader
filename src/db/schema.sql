@@ -6,15 +6,28 @@ CREATE SEQUENCE IF NOT EXISTS iv_points_id_seq;
 CREATE SEQUENCE IF NOT EXISTS surface_metrics_id_seq;
 CREATE SEQUENCE IF NOT EXISTS alerts_id_seq;
 CREATE SEQUENCE IF NOT EXISTS trade_ideas_id_seq;
+CREATE SEQUENCE IF NOT EXISTS pipeline_runs_id_seq;
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  run_id INTEGER PRIMARY KEY DEFAULT nextval('pipeline_runs_id_seq'),
+  started_at TIMESTAMP NOT NULL,
+  finished_at TIMESTAMP,
+  status TEXT NOT NULL,
+  config_hash TEXT,
+  code_version TEXT,
+  error_message TEXT
+);
 
 CREATE TABLE IF NOT EXISTS snapshots (
   snapshot_id INTEGER PRIMARY KEY DEFAULT nextval('snapshots_id_seq'),
+  run_id INTEGER,
   ts TIMESTAMP NOT NULL,
   underlying TEXT NOT NULL,
   spot DOUBLE NOT NULL,
   source TEXT NOT NULL,
   session_tag TEXT NOT NULL,
-  notes TEXT
+  notes TEXT,
+  FOREIGN KEY(run_id) REFERENCES pipeline_runs(run_id)
 );
 
 CREATE TABLE IF NOT EXISTS option_quotes (
@@ -72,7 +85,8 @@ CREATE TABLE IF NOT EXISTS regime_state (
   rv20_percentile DOUBLE NOT NULL,
   drawdown_percent DOUBLE NOT NULL,
   regime_score INTEGER NOT NULL,
-  regime_label TEXT NOT NULL
+  regime_label TEXT NOT NULL,
+  regime_config_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
