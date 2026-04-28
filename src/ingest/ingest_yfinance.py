@@ -14,7 +14,6 @@ import yfinance as yf
 from src.core.config import load_config
 from src.core.qc import evaluate_quote
 from src.db.connection import connect
-from src.db.init_db import init_db
 
 
 def to_int(value) -> int:
@@ -45,7 +44,7 @@ def _valid_expiry(expiry: str, dte_min: int, dte_max: int) -> bool:
     return dte_min <= dte <= dte_max
 
 
-def run_ingest() -> None:
+def run_ingest(run_id: int | None = None) -> None:
     logger = logging.getLogger("ingest")
     config = load_config()
     symbol = config["data"]["symbol"]
@@ -61,15 +60,17 @@ def run_ingest() -> None:
     spot = _get_spot(ticker)
     logger.info("spot=%s", spot)
 
-    init_db()
     conn = connect()
     try:
         conn.execute(
             """
-            INSERT INTO snapshots (snapshot_id, ts, underlying, spot, source, session_tag, notes)
-            VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)
+            INSERT INTO snapshots (
+                snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
+            )
+            VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
+                run_id,
                 timestamp,
                 config["data"]["underlying"],
                 spot,

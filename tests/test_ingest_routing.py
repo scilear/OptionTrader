@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 from src.ingest.dispatcher import run_ingest
 
 
@@ -53,3 +55,14 @@ def test_data_source_ib_keeps_fallback_behavior(monkeypatch) -> None:
 
     assert calls["ib"] == 1
     assert calls["yf"] == 1
+
+
+def test_real_ingest_signatures_accept_run_id() -> None:
+    from src.ingest.ingest_ib import try_ingest_ib
+    from src.ingest.ingest_yfinance import run_ingest as yf_run_ingest
+
+    ib_sig = inspect.signature(try_ingest_ib)
+    yf_sig = inspect.signature(yf_run_ingest)
+
+    assert "run_id" in ib_sig.parameters
+    assert "run_id" in yf_sig.parameters

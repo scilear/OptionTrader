@@ -11,7 +11,6 @@ from src.core.bootstrap import ensure_repo_root_on_path
 
 ensure_repo_root_on_path()
 
-from src.core.config import load_config
 from src.core.qc import evaluate_quote
 from src.db.connection import connect
 
@@ -56,7 +55,7 @@ def _fetch_spot(ib, underlying) -> float:
     raise ValueError("Cannot determine spot price from IB")
 
 
-def _run_ib_ingest(host: str, port: int, config: dict) -> None:
+def _run_ib_ingest(host: str, port: int, config: dict, run_id: int | None = None) -> None:
     from ib_insync import IB, Index, Option
 
     logger = logging.getLogger("ingest.ib")
@@ -201,10 +200,12 @@ def _run_ib_ingest(host: str, port: int, config: dict) -> None:
         try:
             conn.execute(
                 """
-                INSERT INTO snapshots (snapshot_id, ts, underlying, spot, source, session_tag, notes)
-                VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)
+                INSERT INTO snapshots (
+                    snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
+                )
+                VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (timestamp, symbol, spot, f"ib:{host}", "mid", None),
+                (run_id, timestamp, symbol, spot, f"ib:{host}", "mid", None),
             )
             snapshot_id = conn.execute(
                 "SELECT MAX(snapshot_id) FROM snapshots"
@@ -260,7 +261,7 @@ def _run_ib_ingest(host: str, port: int, config: dict) -> None:
         ib.disconnect()
 
 
-def try_ingest_ib(config: dict) -> bool:
+def try_ingest_ib(config: dict, run_id: int | None = None) -> bool:
     """Try each configured IB host in order. Returns True on success, False if all fail."""
     logger = logging.getLogger("ingest.ib")
     ib_cfg = config.get("ib", {})
@@ -277,7 +278,7 @@ def try_ingest_ib(config: dict) -> bool:
             logger.info("host %s port %s not reachable", host, port)
             continue
         try:
-            _run_ib_ingest(host, port, config)
+            _run_ib_ingest(host, port, config, run_id=run_id)
             logger.info("IB ingest succeeded via %s:%s", host, port)
             return True
         except Exception as exc:
