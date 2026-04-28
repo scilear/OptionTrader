@@ -27,6 +27,10 @@ storage:
   engine: duckdb
   path: data/test_optiontrader.duckdb
 
+pricing:
+  rate: 0.0
+  dividend_yield: 0.0
+
 metrics:
   delta_points: [0.10, 0.25, 0.50]
   zscore_window_days: 60

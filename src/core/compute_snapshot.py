@@ -19,6 +19,79 @@ from src.core.tradability import compute_tradability_score
 from src.db.connection import connect
 
 
+def _normalize_delta(value: float) -> float:
+    return round(float(value), 2)
+
+
+def _build_iv_lookup(
+    iv_points,
+    target_expiry,
+) -> tuple[dict[float, float], dict[float, float], dict[float, float]]:
+    iv_mid: dict[float, float] = {}
+    iv_bid: dict[float, float] = {}
+    iv_ask: dict[float, float] = {}
+    for point in iv_points:
+        if target_expiry and point.expiry != target_expiry:
+            continue
+        bucket = str(point.delta_bucket)
+        if bucket == "ATM":
+            if point.iv_mid is not None:
+                iv_mid[0.5] = point.iv_mid
+                iv_mid[-0.5] = point.iv_mid
+            if point.iv_bid is not None:
+                iv_bid[0.5] = point.iv_bid
+                iv_bid[-0.5] = point.iv_bid
+            if point.iv_ask is not None:
+                iv_ask[0.5] = point.iv_ask
+                iv_ask[-0.5] = point.iv_ask
+            continue
+        if len(bucket) < 3:
+            continue
+        side = bucket[-1]
+        if side not in {"C", "P"}:
+            continue
+        try:
+            magnitude = abs(float(bucket[:-1]))
+        except ValueError:
+            continue
+        key = _normalize_delta(magnitude if side == "C" else -magnitude)
+        if point.iv_mid is not None:
+            iv_mid[key] = point.iv_mid
+        if point.iv_bid is not None:
+            iv_bid[key] = point.iv_bid
+        if point.iv_ask is not None:
+            iv_ask[key] = point.iv_ask
+    return iv_mid, iv_bid, iv_ask
+
+
+def _validate_structure_delta_support(
+    context: IdeaContext,
+    logger: logging.Logger,
+    expiry_bucket: str,
+) -> None:
+    structures = context.config.get("structures", {}) if context.config else {}
+    skew_cfg = structures.get("skew_fade", {})
+    fly_cfg = structures.get("fly", {})
+    expected = {
+        _normalize_delta(float(skew_cfg.get("short_put_delta", -0.25))),
+        _normalize_delta(float(skew_cfg.get("long_put_delta", -0.10))),
+        _normalize_delta(-abs(float(fly_cfg.get("wing_delta", 0.25)))),
+        _normalize_delta(-max(0.10, min(0.45, abs(float(fly_cfg.get("wing_delta", 0.25))) / 2.0))),
+        0.5,
+    }
+    available = {
+        _normalize_delta(value)
+        for value in set(context.iv_mid.keys()) | set(context.iv_bid.keys()) | set(context.iv_ask.keys())
+    }
+    missing = sorted(expected - available)
+    if missing:
+        logger.warning(
+            "Configured structure deltas missing IV support for bucket=%s: %s",
+            expiry_bucket,
+            ", ".join(f"{x:.2f}" for x in missing),
+        )
+
+
 def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float]:
     row = conn.execute(
         "SELECT ts, spot FROM snapshots WHERE snapshot_id = ?",
@@ -281,10 +354,6 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             alert_id = conn.execute("SELECT MAX(alert_id) FROM alerts").fetchone()[0]
             bucket_days = int(alert["expiry_bucket"].replace("D", ""))
             t_years = bucket_days / 365.0
-            iv_mid = {}
-            iv_bid = {}
-            iv_ask = {}
-
             expiry_dates = sorted({p.expiry for p in iv_points})
             target_expiry = None
             if expiry_dates:
@@ -293,27 +362,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     key=lambda d: abs((d - ts.date()).days - bucket_days),
                 )
 
-            for point in iv_points:
-                if target_expiry and point.expiry != target_expiry:
-                    continue
-                if point.delta_bucket == "ATM":
-                    continue
-                if point.delta_bucket == "+0.25C":
-                    iv_mid[0.25] = point.iv_mid
-                    iv_bid[0.25] = point.iv_bid
-                    iv_ask[0.25] = point.iv_ask
-                if point.delta_bucket == "-0.25P":
-                    iv_mid[-0.25] = point.iv_mid
-                    iv_bid[-0.25] = point.iv_bid
-                    iv_ask[-0.25] = point.iv_ask
-                if point.delta_bucket == "+0.10C":
-                    iv_mid[0.10] = point.iv_mid
-                    iv_bid[0.10] = point.iv_bid
-                    iv_ask[0.10] = point.iv_ask
-                if point.delta_bucket == "-0.10P":
-                    iv_mid[-0.10] = point.iv_mid
-                    iv_bid[-0.10] = point.iv_bid
-                    iv_ask[-0.10] = point.iv_ask
+            iv_mid, iv_bid, iv_ask = _build_iv_lookup(iv_points, target_expiry)
 
             context = IdeaContext(
                 spot=spot,
@@ -326,6 +375,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 expiry=target_expiry,
                 config=config,
             )
+            _validate_structure_delta_support(context, logger, alert["expiry_bucket"])
             ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"], context)
             for idea in ideas:
                 conn.execute(

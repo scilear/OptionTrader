@@ -55,3 +55,25 @@ def test_trade_ideas_structure_config_changes_legs():
     assert '"delta": -0.3' in fly["legs"]
     assert '"dte_min": 10' in cal["legs"]
     assert '"dte_max": 70' in cal["legs"]
+
+
+def test_compute_snapshot_iv_lookup_parses_dynamic_delta_buckets() -> None:
+    from datetime import date
+
+    from src.core.compute_snapshot import _build_iv_lookup
+    from src.core.metrics import IvPoint
+
+    points = [
+        IvPoint(date(2026, 3, 15), "ATM", 0.2, 0.19, 0.21, "ok", 1.0),
+        IvPoint(date(2026, 3, 15), "+0.30C", 0.24, 0.23, 0.25, "ok", 1.0),
+        IvPoint(date(2026, 3, 15), "-0.05P", 0.27, 0.26, 0.28, "ok", 1.0),
+    ]
+
+    iv_mid, iv_bid, iv_ask = _build_iv_lookup(points, target_expiry=date(2026, 3, 15))
+
+    assert iv_mid[0.5] == 0.2
+    assert iv_mid[-0.5] == 0.2
+    assert iv_mid[0.3] == 0.24
+    assert iv_mid[-0.05] == 0.27
+    assert iv_bid[0.3] == 0.23
+    assert iv_ask[-0.05] == 0.28
