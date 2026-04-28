@@ -18,6 +18,11 @@ ensure_repo_root_on_path()
 from src.db.connection import connect
 
 
+def _table_columns(conn, table_name: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+    return {row[1] for row in rows}
+
+
 def init_db(schema_path: Path | None = None) -> None:
     path = schema_path or Path("src/db/schema.sql")
     sql = path.read_text()
@@ -31,7 +36,12 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("DROP TABLE IF EXISTS option_quotes")
             conn.execute("DROP TABLE IF EXISTS regime_state")
             conn.execute("DROP TABLE IF EXISTS snapshots")
+            conn.execute("DROP TABLE IF EXISTS pipeline_runs")
         conn.execute(sql)
+        if "run_id" not in _table_columns(conn, "snapshots"):
+            conn.execute("ALTER TABLE snapshots ADD COLUMN run_id INTEGER")
+        if "regime_config_hash" not in _table_columns(conn, "regime_state"):
+            conn.execute("ALTER TABLE regime_state ADD COLUMN regime_config_hash TEXT")
     finally:
         conn.close()
 

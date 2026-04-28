@@ -60,18 +60,63 @@ def _bucket_days(dte: int, buckets: Iterable[int]) -> int:
     return min(buckets, key=lambda b: abs(dte - b))
 
 
+def _expected_delta_buckets(delta_points: Iterable[float]) -> list[tuple[float, str, str]]:
+    pairs: list[tuple[float, str, str]] = []
+    for point in sorted({float(p) for p in delta_points}, reverse=True):
+        if point <= 0.0 or point > 0.5:
+            continue
+        pairs.append((point, f"+{point:.2f}C", "C"))
+        pairs.append((-point, f"-{point:.2f}P", "P"))
+    return pairs
+
+
+def _quality_for_bucket(exp_df: pd.DataFrame, bucket: str) -> float:
+    values = exp_df.loc[exp_df["bucket"] == bucket, "quality"]
+    if values.empty:
+        return 0.0
+    return float(values.iloc[0])
+
+
+def _value_for_bucket(exp_df: pd.DataFrame, bucket: str, column: str) -> float | None:
+    values = exp_df.loc[exp_df["bucket"] == bucket, column]
+    if values.empty:
+        return None
+    value = values.iloc[0]
+    return float(value) if pd.notna(value) else None
+
+
+def _resolve_tier(
+    exp_df: pd.DataFrame,
+    min_valid_points_core: int,
+    min_valid_points_full: int,
+) -> str | None:
+    core_required = ["ATM", "+0.25C", "-0.25P"]
+    full_required = core_required + ["+0.10C", "-0.10P"]
+
+    core_membership_ok = all(_quality_for_bucket(exp_df, b) >= 1.0 for b in core_required)
+    full_membership_ok = all(_quality_for_bucket(exp_df, b) >= 1.0 for b in full_required)
+    valid_count = int((exp_df["quality"] >= 1.0).sum())
+
+    if full_membership_ok and valid_count >= int(min_valid_points_full):
+        return "Full"
+    if core_membership_ok and valid_count >= int(min_valid_points_core):
+        return "Core"
+    return None
+
+
 def compute_iv_points(
     quotes: pd.DataFrame,
     snapshot_ts: datetime,
     spot: float,
     spread_gate_pct: float,
+    delta_points: Iterable[float] | None = None,
+    rate: float = 0.0,
+    div: float = 0.0,
 ) -> list[IvPoint]:
     points: list[IvPoint] = []
     if quotes.empty:
         return points
-
-    rate = 0.0
-    div = 0.0
+    delta_targets = _expected_delta_buckets(delta_points or [0.10, 0.25])
 
     for expiry_value, exp_df in quotes.groupby("expiry"):
         expiry = pd.to_datetime(expiry_value).date()
@@ -143,12 +188,7 @@ def compute_iv_points(
             sub["delta_dist"] = (sub["delta"] - target).abs()
             return sub.loc[sub["delta_dist"].idxmin()]
 
-        for target, bucket, right in [
-            (0.25, "+0.25C", "C"),
-            (-0.25, "-0.25P", "P"),
-            (0.10, "+0.10C", "C"),
-            (-0.10, "-0.10P", "P"),
-        ]:
+        for target, bucket, right in delta_targets:
             row = select_delta(target, right)
             if row is None:
                 continue
@@ -171,6 +211,8 @@ def compute_surface_metrics(
     iv_points: list[IvPoint],
     snapshot_ts: datetime,
     buckets: Iterable[int],
+    min_valid_points_core: int = 3,
+    min_valid_points_full: int = 5,
 ) -> list[dict]:
     if not iv_points:
         return []
@@ -196,32 +238,23 @@ def compute_surface_metrics(
         if dte <= 0:
             continue
         bucket_days = _bucket_days(dte, buckets)
-        atm = exp_df.loc[exp_df["bucket"] == "ATM", "iv_mid"].squeeze()
-        c25 = exp_df.loc[exp_df["bucket"] == "+0.25C", "iv_mid"].squeeze()
-        p25 = exp_df.loc[exp_df["bucket"] == "-0.25P", "iv_mid"].squeeze()
-        c10 = exp_df.loc[exp_df["bucket"] == "+0.10C", "iv_mid"].squeeze()
-        p10 = exp_df.loc[exp_df["bucket"] == "-0.10P", "iv_mid"].squeeze()
+        atm = _value_for_bucket(exp_df, "ATM", "iv_mid")
+        c25 = _value_for_bucket(exp_df, "+0.25C", "iv_mid")
+        p25 = _value_for_bucket(exp_df, "-0.25P", "iv_mid")
+        c10 = _value_for_bucket(exp_df, "+0.10C", "iv_mid")
+        p10 = _value_for_bucket(exp_df, "-0.10P", "iv_mid")
 
-        atm_bid = exp_df.loc[exp_df["bucket"] == "ATM", "iv_bid"].squeeze()
-        c25_ask = exp_df.loc[exp_df["bucket"] == "+0.25C", "iv_ask"].squeeze()
-        p25_bid = exp_df.loc[exp_df["bucket"] == "-0.25P", "iv_bid"].squeeze()
-        c10_ask = exp_df.loc[exp_df["bucket"] == "+0.10C", "iv_ask"].squeeze()
-        p10_bid = exp_df.loc[exp_df["bucket"] == "-0.10P", "iv_bid"].squeeze()
+        atm_bid = _value_for_bucket(exp_df, "ATM", "iv_bid")
+        c25_ask = _value_for_bucket(exp_df, "+0.25C", "iv_ask")
+        p25_bid = _value_for_bucket(exp_df, "-0.25P", "iv_bid")
+        c10_ask = _value_for_bucket(exp_df, "+0.10C", "iv_ask")
+        p10_bid = _value_for_bucket(exp_df, "-0.10P", "iv_bid")
 
-        def q(bucket: str) -> float:
-            return float(exp_df.loc[exp_df["bucket"] == bucket, "quality"].squeeze())
-
-        quality_atm = q("ATM") if "ATM" in exp_df["bucket"].values else 0.0
-        quality_c25 = q("+0.25C") if "+0.25C" in exp_df["bucket"].values else 0.0
-        quality_p25 = q("-0.25P") if "-0.25P" in exp_df["bucket"].values else 0.0
-        quality_c10 = q("+0.10C") if "+0.10C" in exp_df["bucket"].values else 0.0
-        quality_p10 = q("-0.10P") if "-0.10P" in exp_df["bucket"].values else 0.0
-
-        tier = None
-        if quality_atm >= 1 and quality_c25 >= 1 and quality_p25 >= 1:
-            tier = "Core"
-        if tier == "Core" and quality_c10 >= 1 and quality_p10 >= 1:
-            tier = "Full"
+        tier = _resolve_tier(
+            exp_df,
+            min_valid_points_core=min_valid_points_core,
+            min_valid_points_full=min_valid_points_full,
+        )
 
         rr25 = (c25 - p25) if pd.notna(c25) and pd.notna(p25) else None
         rr10 = (c10 - p10) if pd.notna(c10) and pd.notna(p10) else None

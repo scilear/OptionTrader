@@ -15,12 +15,12 @@ def test_regime_filter_blocks_rr(monkeypatch):
         CREATE TABLE surface_metrics (metric_id INTEGER, snapshot_id INTEGER, expiry_bucket TEXT, atm_iv_mid DOUBLE, rr25_mid DOUBLE, rr10_mid DOUBLE, fly25_mid DOUBLE, fly10_mid DOUBLE, term_slope_mid DOUBLE, atm_iv_worst DOUBLE, rr25_worst DOUBLE, rr10_worst DOUBLE, fly25_worst DOUBLE, fly10_worst DOUBLE, term_slope_worst DOUBLE);
         CREATE TABLE alerts (alert_id INTEGER, snapshot_id INTEGER, alert_type TEXT, expiry_bucket TEXT, severity DOUBLE, zscore_mid DOUBLE, zscore_worst DOUBLE, tradability_score DOUBLE, confidence_tier TEXT, persistence_count INTEGER, regime_label TEXT, explain TEXT);
         CREATE TABLE trade_ideas (trade_id INTEGER, alert_id INTEGER, template TEXT, legs TEXT, price_mid DOUBLE, price_worst DOUBLE, greeks TEXT, scenarios TEXT, risk_flags TEXT);
-        CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT);
+        CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT, regime_config_hash TEXT);
         """
     )
     conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
     conn.execute(
-        "INSERT INTO regime_state VALUES ('2026-02-13', 90, 90, 12, 6, 'Stress')"
+        "INSERT INTO regime_state VALUES ('2026-02-13', 90, 90, 12, 6, 'Stress', NULL)"
     )
 
     class ConnWrapper:
