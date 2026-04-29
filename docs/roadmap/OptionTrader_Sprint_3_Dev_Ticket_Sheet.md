@@ -1,0 +1,117 @@
+# OptionTrader Sprint 3 Dev Ticket Sheet
+
+Date: 2026-04-29
+Source plan: `docs/roadmap/OptionTrader_Sprint_3_Execution_Plan.md`
+Status: Implemented and adversarially reviewed
+
+## Ticket Board Snapshot
+
+| Ticket | Objective | Status | Evidence |
+|---|---|---|---|
+| S3-00 | Baseline freeze contract | Done | `tests/test_surface_adversarial.py` stability contract |
+| S3-01 | Model selection protocol | Done | `docs/roadmap/OptionTrader_Surface_Model_Card.md` |
+| S3-02 | Fit/interpolation engine | Done | `src/core/surface_fit.py`, `tests/test_surface_fit.py` |
+| S3-03 | Surface QC module | Done | `src/core/surface_qc.py`, `tests/test_surface_qc.py` |
+| S3-04 | Hard-block integration | Done | `src/core/compute_snapshot.py`, `tests/test_explainability.py` |
+| S3-05 | Schema + migrations | Done | `src/db/schema.sql`, `src/db/init_db.py`, `tests/test_schema.py` |
+| S3-06 | Adversarial pack | Done | `tests/test_surface_adversarial.py` |
+
+## Ticket Detail
+
+### S3-00 - Baseline Freeze and Measurement Contract
+
+- Scope delivered:
+  - Defined adversarial stability contract at test level.
+  - Stability metric implemented as max bucket IV drift after one OTM strike removal.
+- Acceptance:
+  - [x] Comparison contract is deterministic.
+  - [x] Stability metric is codified in test.
+
+### S3-01 - Surface Model Selection Protocol
+
+- Scope delivered:
+  - Candidate comparison and selected model documented.
+  - Rejection/fallback policy and hard-block implications documented.
+- Acceptance:
+  - [x] Selected and rejected models documented.
+  - [x] Fit/QC threshold policy documented.
+  - [x] Versioned model identifier documented.
+
+### S3-02 - Fit/Interpolation Engine Wiring
+
+- Scope delivered:
+  - New fitter module with exact/interpolated/degraded paths.
+  - `compute_iv_points` moved from nearest-only to fit-driven bucket extraction.
+  - Fit diagnostics propagated through `IvPoint`.
+- Acceptance:
+  - [x] Strike perturbation no longer causes nearest-neighbor step flips by construction.
+  - [x] Low support emits degraded status + reason codes.
+  - [x] Unit tests cover interpolation and degraded paths.
+
+### S3-03 - Surface QC Module
+
+- Scope delivered:
+  - Vertical and calendar consistency checks added.
+  - Epsilon tolerance wired via `qc.no_arb_epsilon`.
+  - QC result object provides pass/fail, quality score, reason codes.
+- Acceptance:
+  - [x] Invalid fixtures fail with machine-readable reason codes.
+  - [x] Valid/tolerant paths pass.
+  - [x] Result object is serializable and deterministic.
+
+### S3-04 - Hard-Block Integration in Compute Path
+
+- Scope delivered:
+  - QC evaluated before alert persistence.
+  - Alert/trade-idea writes suppressed on QC failure.
+  - Explain payload extended with `surface_qc` gate details.
+- Acceptance:
+  - [x] QC fail blocks alert/trade outputs.
+  - [x] Explain payload includes QC evidence.
+  - [x] Degraded fallback trap enforced.
+
+### S3-05 - Schema and Migration for Diagnostics
+
+- Scope delivered:
+  - Added fit diagnostics columns in `iv_points`.
+  - Added fit/QC summary columns in `surface_metrics`.
+  - Additive migration logic added to `init_db`.
+- Acceptance:
+  - [x] New schema fields created on fresh DBs.
+  - [x] Legacy DB migration adds fields.
+  - [x] Schema tests validate presence.
+
+### S3-06 - Adversarial Pack + Replay-Style Robustness Checks
+
+- Scope delivered:
+  - Added adversarial tests for one-strike-removal and sparse support.
+- Acceptance:
+  - [x] Adversarial suite passes.
+  - [x] Stability check asserts bounded drift.
+  - [ ] Full historical replay artifact publication (deferred follow-up).
+
+## Adversarial Review Closure
+
+Applied from review report:
+
+- [x] `qc.no_arb_epsilon` configured and wired.
+- [x] Degraded fallback is terminal for alerting.
+- [x] Fit engine isolated to `surface_fit.py`.
+
+## Verification Commands and Results
+
+Executed:
+
+```bash
+source .venv/bin/activate
+pytest -q
+```
+
+Observed:
+
+- `67 passed`
+
+## Notes
+
+- `docs/roadmap/OptionTrader_Sprint_3_Review_Report.md` is retained as independent adversarial review evidence.
+- One unrelated tracked modification remains in `docs/roadmap/OptionTrader_Config_Contract_Matrix.md` from prior work and was not reverted.

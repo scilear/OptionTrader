@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-import math
 from typing import Iterable
 
 import pandas as pd
 
 from src.core.iv_solve import bs_delta, solve_iv
+from src.core.surface_fit import fit_surface_for_expiry
 
 
 @dataclass
@@ -19,6 +19,11 @@ class IvPoint:
     iv_ask: float | None
     solve_status: str
     quality_score: float
+    fit_model_id: str = ""
+    fit_residual: float | None = None
+    fit_support: int = 0
+    fit_confidence: float = 0.0
+    fit_reason_codes: tuple[str, ...] = ()
 
 
 def _t_years(snapshot_ts: datetime, expiry: date) -> float:
@@ -52,22 +57,8 @@ def event_premium_series(series: pd.DataFrame) -> pd.Series:
     return df["event_premium"]
 
 
-def _forward(spot: float, rate: float, div: float, t_years: float) -> float:
-    return spot * math.exp((rate - div) * t_years)
-
-
 def _bucket_days(dte: int, buckets: Iterable[int]) -> int:
     return min(buckets, key=lambda b: abs(dte - b))
-
-
-def _expected_delta_buckets(delta_points: Iterable[float]) -> list[tuple[float, str, str]]:
-    pairs: list[tuple[float, str, str]] = []
-    for point in sorted({float(p) for p in delta_points}, reverse=True):
-        if point <= 0.0 or point > 0.5:
-            continue
-        pairs.append((point, f"+{point:.2f}C", "C"))
-        pairs.append((-point, f"-{point:.2f}P", "P"))
-    return pairs
 
 
 def _quality_for_bucket(exp_df: pd.DataFrame, bucket: str) -> float:
@@ -116,7 +107,6 @@ def compute_iv_points(
     points: list[IvPoint] = []
     if quotes.empty:
         return points
-    delta_targets = _expected_delta_buckets(delta_points or [0.10, 0.25])
 
     for expiry_value, exp_df in quotes.groupby("expiry"):
         expiry = pd.to_datetime(expiry_value).date()
@@ -143,7 +133,7 @@ def compute_iv_points(
                 spread = (ask - bid) / mid
                 if spread > spread_gate_pct:
                     quality_score = 0.0
-            rows.append((strike, right, bid, ask, mid, iv_mid, iv_bid, iv_ask, delta, quality_score))
+            rows.append((expiry, strike, right, bid, ask, mid, iv_mid, iv_bid, iv_ask, delta, quality_score))
 
         if not rows:
             continue
@@ -151,6 +141,7 @@ def compute_iv_points(
         df = pd.DataFrame(
             rows,
             columns=[
+                "expiry",
                 "strike",
                 "right",
                 "bid",
@@ -164,43 +155,30 @@ def compute_iv_points(
             ],
         )
 
-        fwd = _forward(spot, rate, div, t_years)
-        df["fwd_dist"] = (df["strike"] - fwd).abs()
-
-        atm_row = df.loc[df["fwd_dist"].idxmin()]
-        points.append(
-            IvPoint(
-                expiry=expiry,
-                delta_bucket="ATM",
-                iv_mid=float(atm_row["iv_mid"]),
-                iv_bid=float(atm_row["iv_bid"]) if pd.notna(atm_row["iv_bid"]) else None,
-                iv_ask=float(atm_row["iv_ask"]) if pd.notna(atm_row["iv_ask"]) else None,
-                solve_status="ok",
-                quality_score=float(atm_row["quality"]),
-            )
+        fit_points = fit_surface_for_expiry(
+            rows=df,
+            expiry=expiry,
+            spot=spot,
+            rate=rate,
+            div=div,
+            t_years=t_years,
+            delta_points=delta_points or [0.10, 0.25],
         )
-
-        def select_delta(target: float, right: str) -> pd.Series | None:
-            sub = df[df["right"] == right]
-            if sub.empty:
-                return None
-            sub = sub.copy()
-            sub["delta_dist"] = (sub["delta"] - target).abs()
-            return sub.loc[sub["delta_dist"].idxmin()]
-
-        for target, bucket, right in delta_targets:
-            row = select_delta(target, right)
-            if row is None:
-                continue
+        for fit_point in fit_points:
             points.append(
                 IvPoint(
-                    expiry=expiry,
-                    delta_bucket=bucket,
-                    iv_mid=float(row["iv_mid"]),
-                    iv_bid=float(row["iv_bid"]) if pd.notna(row["iv_bid"]) else None,
-                    iv_ask=float(row["iv_ask"]) if pd.notna(row["iv_ask"]) else None,
-                    solve_status="ok",
-                    quality_score=float(row["quality"]),
+                    expiry=fit_point.expiry,
+                    delta_bucket=fit_point.delta_bucket,
+                    iv_mid=fit_point.iv_mid,
+                    iv_bid=fit_point.iv_bid,
+                    iv_ask=fit_point.iv_ask,
+                    solve_status=fit_point.solve_status,
+                    quality_score=fit_point.quality_score,
+                    fit_model_id=fit_point.fit_model_id,
+                    fit_residual=fit_point.fit_residual,
+                    fit_support=fit_point.fit_support,
+                    fit_confidence=fit_point.fit_confidence,
+                    fit_reason_codes=fit_point.reason_codes,
                 )
             )
 

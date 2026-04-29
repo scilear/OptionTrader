@@ -30,7 +30,7 @@ def test_compute_for_snapshot_is_repeatable(monkeypatch):
         """
     )
     conn.execute(
-        "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral')"
+        "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', NULL)"
     )
 
     class ConnWrapper:
@@ -49,11 +49,11 @@ def test_compute_for_snapshot_is_repeatable(monkeypatch):
     def fake_compute_iv_points(*_args, **_kwargs):
         expiry = date(2026, 3, 15)
         return [
-            IvPoint(expiry, "ATM", 0.2, 0.19, 0.21, "ok", 1.0),
-            IvPoint(expiry, "+0.25C", 0.21, 0.20, 0.22, "ok", 1.0),
-            IvPoint(expiry, "-0.25P", 0.22, 0.21, 0.23, "ok", 1.0),
-            IvPoint(expiry, "+0.10C", 0.23, 0.22, 0.24, "ok", 1.0),
-            IvPoint(expiry, "-0.10P", 0.24, 0.23, 0.25, "ok", 1.0),
+            IvPoint(expiry, "ATM", 0.2, 0.19, 0.21, "ok", 1.0, fit_confidence=0.9),
+            IvPoint(expiry, "+0.25C", 0.21, 0.20, 0.22, "ok", 1.0, fit_confidence=0.9),
+            IvPoint(expiry, "-0.25P", 0.22, 0.21, 0.23, "ok", 1.0, fit_confidence=0.9),
+            IvPoint(expiry, "+0.10C", 0.23, 0.22, 0.24, "ok", 1.0, fit_confidence=0.9),
+            IvPoint(expiry, "-0.10P", 0.24, 0.23, 0.25, "ok", 1.0, fit_confidence=0.9),
         ]
 
     def fake_compute_surface_metrics(*_args, **_kwargs):

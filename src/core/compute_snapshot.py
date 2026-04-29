@@ -14,6 +14,7 @@ from src.core.alerts import compute_alerts
 from src.core.config import load_config
 from src.core.metrics import compute_iv_points, compute_surface_metrics, filter_quotes_by_dte
 from src.core.regime import regime_params_from_config, regime_threshold_hash
+from src.core.surface_qc import evaluate_surface_qc
 from src.core.trade_ideas import IdeaContext, build_trade_ideas
 from src.core.tradability import compute_tradability_score
 from src.db.connection import connect
@@ -119,6 +120,9 @@ def _build_explain_payload(
     tier: str | None,
     regime_label: str,
     tradability_score: float,
+    surface_qc_passed: bool,
+    surface_qc_reasons: list[str],
+    surface_quality_score: float,
 ) -> dict:
     zscore_mid = alert.get("zscore_mid")
     zscore_worst = alert.get("zscore_worst")
@@ -135,6 +139,7 @@ def _build_explain_payload(
         alert.get("alert_type") == "RR_EXTREME" and regime_label == "Stress"
     )
     tradability_pass = tradability_score > 0.0
+    surface_qc_gate_pass = bool(surface_qc_passed)
 
     return {
         "alert_type": alert.get("alert_type"),
@@ -176,6 +181,12 @@ def _build_explain_payload(
                 ),
                 "tradability_score": tradability_score,
             },
+            "surface_qc": {
+                "status": "PASS" if surface_qc_gate_pass else "FAIL",
+                "reason_code": "surface_qc_passed" if surface_qc_gate_pass else "surface_qc_failed",
+                "surface_quality_score": surface_quality_score,
+                "reasons": surface_qc_reasons,
+            },
         },
     }
 
@@ -189,6 +200,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     persistence = config["alerts"]["persistence_snapshots"]
     pessimistic_gate = bool(config["alerts"].get("pessimistic_gate", True))
     spread_gate_pct = config["quality"]["spread_gate_pct"]
+    no_arb_epsilon = float(config.get("qc", {}).get("no_arb_epsilon", 0.0))
     min_valid_points_full = int(config["quality"]["min_valid_points_full"])
     min_valid_points_core = int(config["quality"]["min_valid_points_core"])
     dte_min = config["data"]["dte_min"]
@@ -245,8 +257,9 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 """
                 INSERT INTO iv_points (
                     iv_id, snapshot_id, expiry, delta_bucket, iv_mid, iv_bid, iv_ask,
-                    solve_status, quality_score
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?)
+                    solve_status, quality_score,
+                    fit_model_id, fit_residual, fit_support, fit_confidence, fit_reason_codes
+                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
@@ -257,6 +270,11 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     point.iv_ask,
                     point.solve_status,
                     point.quality_score,
+                    point.fit_model_id,
+                    point.fit_residual,
+                    point.fit_support,
+                    point.fit_confidence,
+                    json.dumps(list(point.fit_reason_codes)),
                 ),
             )
 
@@ -268,8 +286,30 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             min_valid_points_full=min_valid_points_full,
         )
         logger.info("metrics_rows=%s", len(metrics))
+        surface_qc = evaluate_surface_qc(metrics, iv_points, no_arb_epsilon=no_arb_epsilon)
+        logger.info(
+            "surface_qc_passed=%s reasons=%s quality=%.4f",
+            surface_qc.passed,
+            list(surface_qc.reason_codes),
+            surface_qc.quality_score,
+        )
         tier_by_bucket = {m["expiry_bucket"]: m.get("tier") for m in metrics}
         for m in metrics:
+            point_rows = [
+                p for p in iv_points if int((p.expiry - ts.date()).days) > 0 and m["expiry_bucket"] == f"{min(buckets, key=lambda b: abs((p.expiry - ts.date()).days - b))}D"
+            ]
+            fit_model_id = "mixed"
+            fit_residual = None
+            fit_support = 0
+            fit_confidence = 0.0
+            if point_rows:
+                model_ids = {p.fit_model_id for p in point_rows if p.fit_model_id}
+                fit_model_id = sorted(model_ids)[0] if len(model_ids) == 1 else "mixed"
+                residuals = [p.fit_residual for p in point_rows if p.fit_residual is not None]
+                fit_residual = max(residuals) if residuals else None
+                fit_support = max((int(p.fit_support or 0) for p in point_rows), default=0)
+                confidences = [float(p.fit_confidence or 0.0) for p in point_rows]
+                fit_confidence = sum(confidences) / len(confidences) if confidences else 0.0
             conn.execute(
                 """
                 INSERT INTO surface_metrics (
@@ -277,8 +317,10 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     atm_iv_mid, rr25_mid, rr10_mid, fly25_mid, fly10_mid,
                     term_slope_mid,
                     atm_iv_worst, rr25_worst, rr10_worst, fly25_worst, fly10_worst,
-                    term_slope_worst
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    term_slope_worst,
+                    fit_model_id, fit_residual, fit_support, fit_confidence,
+                    surface_quality_score, qc_pass, qc_reason_codes
+                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
@@ -295,6 +337,13 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                     m.get("fly25_worst"),
                     m.get("fly10_worst"),
                     m.get("term_slope_worst"),
+                    fit_model_id,
+                    fit_residual,
+                    fit_support,
+                    fit_confidence,
+                    surface_qc.quality_score,
+                    surface_qc.passed,
+                    json.dumps(list(surface_qc.reason_codes)),
                 ),
             )
 
@@ -315,6 +364,8 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         )
         logger.info("alerts=%s", len(alerts))
         for alert in alerts:
+            if not surface_qc.passed:
+                continue
             tier = tier_by_bucket.get(alert["expiry_bucket"])
             if tier is None:
                 continue
@@ -327,6 +378,9 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 tier=tier,
                 regime_label=regime_label,
                 tradability_score=tradability_score,
+                surface_qc_passed=surface_qc.passed,
+                surface_qc_reasons=list(surface_qc.reason_codes),
+                surface_quality_score=surface_qc.quality_score,
             )
             conn.execute(
                 """

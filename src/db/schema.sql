@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS iv_points (
   iv_ask DOUBLE,
   solve_status TEXT NOT NULL,
   quality_score DOUBLE,
+  fit_model_id TEXT,
+  fit_residual DOUBLE,
+  fit_support INTEGER,
+  fit_confidence DOUBLE,
+  fit_reason_codes TEXT,
   FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
 );
 
@@ -76,6 +81,13 @@ CREATE TABLE IF NOT EXISTS surface_metrics (
   fly25_worst DOUBLE,
   fly10_worst DOUBLE,
   term_slope_worst DOUBLE,
+  fit_model_id TEXT,
+  fit_residual DOUBLE,
+  fit_support INTEGER,
+  fit_confidence DOUBLE,
+  surface_quality_score DOUBLE,
+  qc_pass BOOLEAN,
+  qc_reason_codes TEXT,
   FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
 );
 
