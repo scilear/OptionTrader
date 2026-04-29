@@ -98,6 +98,7 @@ def test_delta_points_config_changes_selected_buckets(monkeypatch):
     assert "-0.10P" in buckets_10
     assert "+0.25C" not in buckets_10
     assert "-0.25P" not in buckets_10
+    assert all(p.solve_status == "ok" for p in points_10)
 
     points_25 = compute_iv_points(
         quotes,
@@ -111,3 +112,4 @@ def test_delta_points_config_changes_selected_buckets(monkeypatch):
     assert "-0.25P" in buckets_25
     assert "+0.10C" not in buckets_25
     assert "-0.10P" not in buckets_25
+    assert all(p.solve_status == "ok" for p in points_25)

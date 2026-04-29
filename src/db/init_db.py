@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import sys
 from pathlib import Path
 
@@ -42,6 +40,32 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE snapshots ADD COLUMN run_id INTEGER")
         if "regime_config_hash" not in _table_columns(conn, "regime_state"):
             conn.execute("ALTER TABLE regime_state ADD COLUMN regime_config_hash TEXT")
+        iv_columns = _table_columns(conn, "iv_points")
+        if "fit_model_id" not in iv_columns:
+            conn.execute("ALTER TABLE iv_points ADD COLUMN fit_model_id TEXT")
+        if "fit_residual" not in iv_columns:
+            conn.execute("ALTER TABLE iv_points ADD COLUMN fit_residual DOUBLE")
+        if "fit_support" not in iv_columns:
+            conn.execute("ALTER TABLE iv_points ADD COLUMN fit_support INTEGER")
+        if "fit_confidence" not in iv_columns:
+            conn.execute("ALTER TABLE iv_points ADD COLUMN fit_confidence DOUBLE")
+        if "fit_reason_codes" not in iv_columns:
+            conn.execute("ALTER TABLE iv_points ADD COLUMN fit_reason_codes TEXT")
+        surface_columns = _table_columns(conn, "surface_metrics")
+        if "fit_model_id" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN fit_model_id TEXT")
+        if "fit_residual" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN fit_residual DOUBLE")
+        if "fit_support" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN fit_support INTEGER")
+        if "fit_confidence" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN fit_confidence DOUBLE")
+        if "surface_quality_score" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN surface_quality_score DOUBLE")
+        if "qc_pass" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_pass BOOLEAN")
+        if "qc_reason_codes" not in surface_columns:
+            conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_reason_codes TEXT")
     finally:
         conn.close()
 

@@ -17,6 +17,9 @@ def test_explain_payload_schema_pass_path():
         tier="Core",
         regime_label="Neutral",
         tradability_score=0.7,
+        surface_qc_passed=True,
+        surface_qc_reasons=[],
+        surface_quality_score=0.9,
     )
 
     encoded = json.dumps(payload)
@@ -28,6 +31,7 @@ def test_explain_payload_schema_pass_path():
         "data_tier_quality",
         "regime",
         "tradability",
+        "surface_qc",
     }
     assert all(gate["status"] == "PASS" for gate in decoded["gates"].values())
 
@@ -46,6 +50,9 @@ def test_explain_payload_schema_block_path():
         tier=None,
         regime_label="Stress",
         tradability_score=0.0,
+        surface_qc_passed=False,
+        surface_qc_reasons=["degraded_surface_fit"],
+        surface_quality_score=0.1,
     )
 
     assert payload["gates"]["zscore"]["status"] == "FAIL"
@@ -53,3 +60,4 @@ def test_explain_payload_schema_block_path():
     assert payload["gates"]["data_tier_quality"]["status"] == "FAIL"
     assert payload["gates"]["regime"]["status"] == "FAIL"
     assert payload["gates"]["tradability"]["status"] == "FAIL"
+    assert payload["gates"]["surface_qc"]["status"] == "FAIL"

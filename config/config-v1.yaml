@@ -50,6 +50,9 @@ alerts:
   persistence_snapshots: 2
   pessimistic_gate: true
 
+qc:
+  no_arb_epsilon: 0.005
+
 regime:
   vix_pct_calm: 40
   vix_pct_stress: 80
