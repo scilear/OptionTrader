@@ -29,6 +29,13 @@ def test_unknown_high_impact_key_warns_in_runtime_mode() -> None:
     assert result["unknown_high_impact"] == ["alerts.not_a_real_field"]
 
 
+def test_unknown_qc_key_warns_in_runtime_mode() -> None:
+    config = _load_test_config()
+    config.setdefault("qc", {})["not_a_real_field"] = True
+    result = validate_config_contract(config, strict_unknown_high_impact=False)
+    assert result["unknown_high_impact"] == ["qc.not_a_real_field"]
+
+
 def test_unknown_high_impact_key_fails_in_strict_mode() -> None:
     config = _load_test_config()
     config["regime"]["unexpected_threshold"] = 99
