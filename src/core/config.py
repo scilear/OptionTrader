@@ -71,6 +71,7 @@ HIGH_IMPACT_TOP_LEVEL_KEYS = frozenset(
         "metrics",
         "quality",
         "alerts",
+        "qc",
         "regime",
         "structures",
         "storage",
