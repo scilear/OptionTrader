@@ -129,3 +129,6 @@ CREATE TABLE IF NOT EXISTS trade_ideas (
   risk_flags TEXT,
   FOREIGN KEY(alert_id) REFERENCES alerts(alert_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_iv_points_snapshot_id ON iv_points(snapshot_id);
+CREATE INDEX IF NOT EXISTS idx_surface_metrics_snapshot_id ON surface_metrics(snapshot_id);

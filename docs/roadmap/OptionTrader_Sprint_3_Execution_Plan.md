@@ -1,7 +1,7 @@
 # OptionTrader Sprint 3 Execution Plan
 
 Date: 2026-04-29
-Last updated: 2026-04-30
+Last updated: 2026-04-30 (S3.1 closure)
 Sprint window: Weeks 3-4
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_2_Execution_Plan.md`
@@ -62,7 +62,10 @@ Status: completed (post-review corrected)
   - calendar checks,
   - degraded-fit blocker,
   - quality score output.
-- Config tolerance key wired: `qc.no_arb_epsilon`.
+- Config tolerance keys wired:
+  - `qc.no_arb_epsilon` (legacy fallback),
+  - `qc.no_arb_epsilon_iv` (vertical IV-domain checks),
+  - `qc.no_arb_epsilon_var` (calendar variance-domain checks).
 - Calendar criterion corrected after code review:
   - replaced ATM-IV-direction check with total-variance monotonicity check,
   - violation now emitted as `calendar_total_variance_violation:<near_bucket>-><far_bucket>`.
@@ -82,6 +85,9 @@ Status: completed
 - `iv_points` now persists fit diagnostics.
 - `surface_metrics` now persists fit + QC summary diagnostics.
 - `init_db` migration path updated with additive columns for existing DBs.
+- Snapshot-scope indexes added for scale/perf hardening:
+  - `idx_iv_points_snapshot_id` on `iv_points(snapshot_id)`
+  - `idx_surface_metrics_snapshot_id` on `surface_metrics(snapshot_id)`
 
 ### S3-06 Adversarial Test Pack
 
@@ -125,7 +131,7 @@ pytest -q
 
 Result:
 
-- `69 passed`
+- `71 passed`
 
 ## Adversarial Review Pass
 
@@ -140,10 +146,7 @@ Adversarial review concerns from `docs/roadmap/OptionTrader_Sprint_3_Review_Repo
 
 - Produce a persisted baseline-vs-sprint3 replay artifact in docs with alert-density deltas.
 - Add operational dashboard counters for QC reason-code frequencies.
-- Split epsilon semantics by domain:
-  - keep IV-space epsilon for vertical checks,
-  - add dedicated variance-space epsilon for calendar checks.
-- Add indexes for scale/perf hardening:
-  - `iv_points(snapshot_id)`,
-  - `surface_metrics(snapshot_id)`.
+- Follow-up tickets completed in S3.1 hardening:
+  - split epsilon semantics by domain with backward compatibility,
+  - added snapshot-scope indexes on `iv_points` and `surface_metrics`.
 - Optionally evaluate higher-order constrained fit class as Sprint 3.1 if needed.
