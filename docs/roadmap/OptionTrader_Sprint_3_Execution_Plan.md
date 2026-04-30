@@ -1,6 +1,7 @@
 # OptionTrader Sprint 3 Execution Plan
 
 Date: 2026-04-29
+Last updated: 2026-04-30
 Sprint window: Weeks 3-4
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_2_Execution_Plan.md`
@@ -54,7 +55,7 @@ Status: completed
 
 ### S3-03 Surface QC Module
 
-Status: completed
+Status: completed (post-review corrected)
 
 - Added `src/core/surface_qc.py` with:
   - vertical checks,
@@ -62,6 +63,9 @@ Status: completed
   - degraded-fit blocker,
   - quality score output.
 - Config tolerance key wired: `qc.no_arb_epsilon`.
+- Calendar criterion corrected after code review:
+  - replaced ATM-IV-direction check with total-variance monotonicity check,
+  - violation now emitted as `calendar_total_variance_violation:<near_bucket>-><far_bucket>`.
 
 ### S3-04 Hard-Block Integration
 
@@ -121,7 +125,7 @@ pytest -q
 
 Result:
 
-- `67 passed`
+- `69 passed`
 
 ## Adversarial Review Pass
 
@@ -130,9 +134,16 @@ Adversarial review concerns from `docs/roadmap/OptionTrader_Sprint_3_Review_Repo
 - Added `qc.no_arb_epsilon` to avoid false hard-blocks from numerical noise.
 - Enforced degraded fallback trap: any degraded fit triggers QC failure and alert block.
 - Kept fit logic in standalone module for swap/testability.
+- Corrected calendar QC directionality to variance-monotonic rule so normal contango is not falsely blocked.
 
 ## Remaining Follow-Ups
 
 - Produce a persisted baseline-vs-sprint3 replay artifact in docs with alert-density deltas.
 - Add operational dashboard counters for QC reason-code frequencies.
+- Split epsilon semantics by domain:
+  - keep IV-space epsilon for vertical checks,
+  - add dedicated variance-space epsilon for calendar checks.
+- Add indexes for scale/perf hardening:
+  - `iv_points(snapshot_id)`,
+  - `surface_metrics(snapshot_id)`.
 - Optionally evaluate higher-order constrained fit class as Sprint 3.1 if needed.

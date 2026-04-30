@@ -52,6 +52,8 @@ alerts:
 
 qc:
   no_arb_epsilon: 0.005
+  no_arb_epsilon_iv: 0.005
+  no_arb_epsilon_var: 0.005
 
 regime:
   vix_pct_calm: 40

@@ -1,6 +1,7 @@
 # OptionTrader Sprint 3 Dev Ticket Sheet
 
 Date: 2026-04-29
+Last updated: 2026-04-30
 Source plan: `docs/roadmap/OptionTrader_Sprint_3_Execution_Plan.md`
 Status: Implemented and adversarially reviewed
 
@@ -54,10 +55,13 @@ Status: Implemented and adversarially reviewed
   - Vertical and calendar consistency checks added.
   - Epsilon tolerance wired via `qc.no_arb_epsilon`.
   - QC result object provides pass/fail, quality score, reason codes.
+  - Calendar check corrected post-review to total-variance monotonicity rule.
+  - Reason code renamed to `calendar_total_variance_violation:*`.
 - Acceptance:
   - [x] Invalid fixtures fail with machine-readable reason codes.
   - [x] Valid/tolerant paths pass.
   - [x] Result object is serializable and deterministic.
+  - [x] Normal contango allowed when total variance is monotone.
 
 ### S3-04 - Hard-Block Integration in Compute Path
 
@@ -109,7 +113,21 @@ pytest -q
 
 Observed:
 
-- `67 passed`
+- `69 passed`
+
+## Post-Review Findings and Explicit Recommendation
+
+Code-review conclusion after calendar fix:
+
+- Merge recommendation: **go with follow-up tasks**, not blocked.
+- Blockers: none remaining for Sprint 3 safety objective.
+- Required follow-up tickets:
+  - [ ] Add split tolerances by domain:
+    - `qc.no_arb_epsilon_iv` for vertical checks,
+    - `qc.no_arb_epsilon_var` for calendar total-variance checks.
+  - [ ] Add DB indexes for operational scaling:
+    - index `iv_points(snapshot_id)`,
+    - index `surface_metrics(snapshot_id)`.
 
 ## Notes
 
