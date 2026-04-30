@@ -1,7 +1,7 @@
 # OptionTrader Surface Model Card (Sprint 3)
 
 Date: 2026-04-29
-Status: Selected, implemented, and post-review hardened (S3.1)
+Status: Selected, implemented, and post-review hardened (S3.2 closure)
 Owner: Core quant engineering
 Scope: `src/core/surface_fit.py`, `src/core/surface_qc.py`, `src/core/compute_snapshot.py`
 
@@ -130,3 +130,8 @@ Define the surface fit model, diagnostics, acceptance thresholds, fallback polic
   - snapshot-scope indexes added on `iv_points(snapshot_id)` and `surface_metrics(snapshot_id)`.
 - S3.1-03 completed:
   - model card, execution plan, and ticket sheet synchronized with final reason-code and tolerance policy.
+- S3.2-02 completed:
+  - QC monitoring and reason-code rollups operationalized via `scripts/qc_health_check.sh`.
+- S3.2-01 completed:
+  - replay artifact published at `docs/roadmap/OptionTrader_Sprint_3_2_Replay_Artifact.md`
+    using locked contract window and lineage fields.
