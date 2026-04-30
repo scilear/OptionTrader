@@ -72,17 +72,23 @@ Define the surface fit model, diagnostics, acceptance thresholds, fallback polic
 - Vertical consistency checks:
   - RR magnitude inversion guard,
   - negative fly guards for 25d/10d wings.
+  - RR inversion is a conservative policy gate (signal-quality heuristic), not a strict no-arbitrage identity.
 - Calendar consistency checks:
-  - near-tenor ATM IV must not be below longer-tenor ATM IV beyond tolerance.
+  - total variance monotonicity check across tenors:
+    - fail when `sigma_far^2 * T_far + epsilon < sigma_near^2 * T_near`.
+  - this permits normal contango and focuses on backwardation-style variance inversion.
 - Numerical tolerance:
-  - `qc.no_arb_epsilon` (default `0.005`) from config.
+  - split tolerances by domain:
+    - `qc.no_arb_epsilon_iv` for IV-space vertical checks,
+    - `qc.no_arb_epsilon_var` for variance-space calendar checks.
+  - legacy `qc.no_arb_epsilon` remains as backward-compatible fallback.
 - Check order:
   - vertical first, calendar second.
 - QC reason code taxonomy:
   - `vertical_rr_magnitude_inversion`
   - `vertical_negative_fly25`
   - `vertical_negative_fly10`
-  - `calendar_contango_violation:<near_bucket>-><far_bucket>`
+  - `calendar_total_variance_violation:<near_bucket>-><far_bucket>`
   - `degraded_surface_fit`
   - `empty_surface_metrics`
 - Hard-block behavior:

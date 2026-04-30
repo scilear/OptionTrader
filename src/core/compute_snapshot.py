@@ -200,7 +200,10 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     persistence = config["alerts"]["persistence_snapshots"]
     pessimistic_gate = bool(config["alerts"].get("pessimistic_gate", True))
     spread_gate_pct = config["quality"]["spread_gate_pct"]
-    no_arb_epsilon = float(config.get("qc", {}).get("no_arb_epsilon", 0.0))
+    qc_cfg = config.get("qc", {})
+    no_arb_epsilon = float(qc_cfg.get("no_arb_epsilon", 0.0))
+    no_arb_epsilon_iv = float(qc_cfg.get("no_arb_epsilon_iv", no_arb_epsilon))
+    no_arb_epsilon_var = float(qc_cfg.get("no_arb_epsilon_var", no_arb_epsilon))
     min_valid_points_full = int(config["quality"]["min_valid_points_full"])
     min_valid_points_core = int(config["quality"]["min_valid_points_core"])
     dte_min = config["data"]["dte_min"]
@@ -286,7 +289,13 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
             min_valid_points_full=min_valid_points_full,
         )
         logger.info("metrics_rows=%s", len(metrics))
-        surface_qc = evaluate_surface_qc(metrics, iv_points, no_arb_epsilon=no_arb_epsilon)
+        surface_qc = evaluate_surface_qc(
+            metrics,
+            iv_points,
+            no_arb_epsilon=no_arb_epsilon,
+            iv_epsilon=no_arb_epsilon_iv,
+            var_epsilon=no_arb_epsilon_var,
+        )
         logger.info(
             "surface_qc_passed=%s reasons=%s quality=%.4f",
             surface_qc.passed,
