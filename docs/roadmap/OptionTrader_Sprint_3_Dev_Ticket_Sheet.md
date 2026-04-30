@@ -1,7 +1,7 @@
 # OptionTrader Sprint 3 Dev Ticket Sheet
 
 Date: 2026-04-29
-Last updated: 2026-04-30
+Last updated: 2026-04-30 (S3.1 closure)
 Source plan: `docs/roadmap/OptionTrader_Sprint_3_Execution_Plan.md`
 Status: Implemented and adversarially reviewed
 
@@ -53,7 +53,10 @@ Status: Implemented and adversarially reviewed
 
 - Scope delivered:
   - Vertical and calendar consistency checks added.
-  - Epsilon tolerance wired via `qc.no_arb_epsilon`.
+  - Epsilon tolerances split by domain:
+    - `qc.no_arb_epsilon_iv` for vertical IV-domain checks,
+    - `qc.no_arb_epsilon_var` for calendar variance-domain checks,
+    - `qc.no_arb_epsilon` retained as legacy fallback.
   - QC result object provides pass/fail, quality score, reason codes.
   - Calendar check corrected post-review to total-variance monotonicity rule.
   - Reason code renamed to `calendar_total_variance_violation:*`.
@@ -84,6 +87,9 @@ Status: Implemented and adversarially reviewed
   - [x] New schema fields created on fresh DBs.
   - [x] Legacy DB migration adds fields.
   - [x] Schema tests validate presence.
+  - [x] Snapshot-scope indexes created and migration-safe:
+    - `idx_iv_points_snapshot_id`
+    - `idx_surface_metrics_snapshot_id`
 
 ### S3-06 - Adversarial Pack + Replay-Style Robustness Checks
 
@@ -99,8 +105,10 @@ Status: Implemented and adversarially reviewed
 Applied from review report:
 
 - [x] `qc.no_arb_epsilon` configured and wired.
+- [x] Domain-split epsilon policy implemented with backward compatibility.
 - [x] Degraded fallback is terminal for alerting.
 - [x] Fit engine isolated to `surface_fit.py`.
+- [x] Snapshot-scope DB indexes added for operational scaling.
 
 ## Verification Commands and Results
 
@@ -113,7 +121,7 @@ pytest -q
 
 Observed:
 
-- `69 passed`
+- `71 passed`
 
 ## Post-Review Findings and Explicit Recommendation
 
@@ -122,10 +130,10 @@ Code-review conclusion after calendar fix:
 - Merge recommendation: **go with follow-up tasks**, not blocked.
 - Blockers: none remaining for Sprint 3 safety objective.
 - Required follow-up tickets:
-  - [ ] Add split tolerances by domain:
+  - [x] Add split tolerances by domain:
     - `qc.no_arb_epsilon_iv` for vertical checks,
     - `qc.no_arb_epsilon_var` for calendar total-variance checks.
-  - [ ] Add DB indexes for operational scaling:
+  - [x] Add DB indexes for operational scaling:
     - index `iv_points(snapshot_id)`,
     - index `surface_metrics(snapshot_id)`.
 

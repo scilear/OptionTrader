@@ -39,6 +39,15 @@ def test_schema_executes():
         snapshot_cols = conn.execute("DESCRIBE snapshots").fetchall()
         snapshot_col_names = {c[0] for c in snapshot_cols}
         assert "run_id" in snapshot_col_names
+
+        indexes = {
+            (row[0], row[1])
+            for row in conn.execute(
+                "SELECT index_name, table_name FROM duckdb_indexes()"
+            ).fetchall()
+        }
+        assert ("idx_iv_points_snapshot_id", "iv_points") in indexes
+        assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
     finally:
         conn.close()
 
@@ -130,5 +139,14 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
         assert "surface_quality_score" in surface_col_names
         assert "qc_pass" in surface_col_names
         assert "qc_reason_codes" in surface_col_names
+
+        indexes = {
+            (row[0], row[1])
+            for row in migrated.execute(
+                "SELECT index_name, table_name FROM duckdb_indexes()"
+            ).fetchall()
+        }
+        assert ("idx_iv_points_snapshot_id", "iv_points") in indexes
+        assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
     finally:
         migrated.close()
