@@ -1,7 +1,7 @@
 # OptionTrader Sprint 3 Execution Plan
 
 Date: 2026-04-29
-Last updated: 2026-04-30 (S3.1 closure)
+Last updated: 2026-04-30 (S3.2 closure)
 Sprint window: Weeks 3-4
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_2_Execution_Plan.md`
@@ -142,11 +142,15 @@ Adversarial review concerns from `docs/roadmap/OptionTrader_Sprint_3_Review_Repo
 - Kept fit logic in standalone module for swap/testability.
 - Corrected calendar QC directionality to variance-monotonic rule so normal contango is not falsely blocked.
 
-## Remaining Follow-Ups
+## Follow-Up Closure and Handoff
 
-- Produce a persisted baseline-vs-sprint3 replay artifact in docs with alert-density deltas.
-- Add operational dashboard counters for QC reason-code frequencies.
 - Follow-up tickets completed in S3.1 hardening:
   - split epsilon semantics by domain with backward compatibility,
   - added snapshot-scope indexes on `iv_points` and `surface_metrics`.
-- Optionally evaluate higher-order constrained fit class as Sprint 3.1 if needed.
+- Sprint 3.2 closure artifacts completed:
+  - replay artifact: `docs/roadmap/OptionTrader_Sprint_3_2_Replay_Artifact.md`
+  - replay generator: `scripts/generate_replay_artifact.py`
+  - QC reason-code monitor: `scripts/qc_health_check.sh`
+- Sprint 4 handoff package:
+  - `docs/roadmap/OptionTrader_Sprint_4_Execution_Plan.md`
+  - `docs/roadmap/OptionTrader_Sprint_4_Dev_Ticket_Sheet.md`
