@@ -111,6 +111,19 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE regime_state (
+                regime_date DATE PRIMARY KEY,
+                vix_percentile DOUBLE,
+                rv20_percentile DOUBLE,
+                drawdown_percent DOUBLE,
+                regime_score INTEGER,
+                regime_label TEXT,
+                regime_config_hash TEXT
+            )
+            """
+        )
     finally:
         conn.close()
 
@@ -139,6 +152,15 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
         assert "surface_quality_score" in surface_col_names
         assert "qc_pass" in surface_col_names
         assert "qc_reason_codes" in surface_col_names
+
+        regime_cols = migrated.execute("DESCRIBE regime_state").fetchall()
+        regime_col_names = {col[0] for col in regime_cols}
+        assert "vix_spot" in regime_col_names
+        assert "rv20_value" in regime_col_names
+        assert "drawdown_value" in regime_col_names
+        assert "event_score" in regime_col_names
+        assert "stress_proxy_score" in regime_col_names
+        assert "decomposition" in regime_col_names
 
         indexes = {
             (row[0], row[1])

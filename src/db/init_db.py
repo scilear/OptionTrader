@@ -40,6 +40,19 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE snapshots ADD COLUMN run_id INTEGER")
         if "regime_config_hash" not in _table_columns(conn, "regime_state"):
             conn.execute("ALTER TABLE regime_state ADD COLUMN regime_config_hash TEXT")
+        regime_columns = _table_columns(conn, "regime_state")
+        if "vix_spot" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN vix_spot DOUBLE")
+        if "rv20_value" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN rv20_value DOUBLE")
+        if "drawdown_value" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN drawdown_value DOUBLE")
+        if "event_score" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN event_score DOUBLE")
+        if "stress_proxy_score" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN stress_proxy_score DOUBLE")
+        if "decomposition" not in regime_columns:
+            conn.execute("ALTER TABLE regime_state ADD COLUMN decomposition TEXT")
         iv_columns = _table_columns(conn, "iv_points")
         if "fit_model_id" not in iv_columns:
             conn.execute("ALTER TABLE iv_points ADD COLUMN fit_model_id TEXT")

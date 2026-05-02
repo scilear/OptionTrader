@@ -61,6 +61,13 @@ Rules:
 | `regime.rv20_pct_stress` | active | `src/core/regime.py` | `tests/test_regime.py`, `tests/test_config_contract.py` | Config-driven regime thresholds. |
 | `regime.drawdown_calm` | active | `src/core/regime.py` | `tests/test_regime.py`, `tests/test_config_contract.py` | Config-driven regime thresholds. |
 | `regime.drawdown_stress` | active | `src/core/regime.py` | `tests/test_regime.py`, `tests/test_config_contract.py` | Config-driven regime thresholds. |
+| `regime.event_path` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Scheduled-event source path (`config/regime_events_v1.yaml`). |
+| `regime.stress_proxy_ticker` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Cross-domain stress proxy ticker selector. |
+| `regime.weights.vix` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for VIX component. |
+| `regime.weights.rv20` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for RV20 component. |
+| `regime.weights.drawdown` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for drawdown component. |
+| `regime.weights.event` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for scheduled-event component. |
+| `regime.weights.stress_proxy` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for stress-proxy component. |
 | `structures.skew_fade.short_put_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |
 | `structures.skew_fade.long_put_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |
 | `structures.fly.wing_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |
