@@ -36,7 +36,27 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-python - "$WINDOW_HOURS" "$THRESHOLD" "$CONSECUTIVE" "$MIN_SNAPSHOTS" "$UNDERLYING" <<'PY'
+PYTHON_BIN=""
+for CANDIDATE in \
+  "${VIRTUAL_ENV:-}/bin/python" \
+  "$(command -v python3 2>/dev/null || true)" \
+  "$(command -v python 2>/dev/null || true)"
+do
+  if [[ -z "${CANDIDATE}" || ! -x "${CANDIDATE}" ]]; then
+    continue
+  fi
+  if "${CANDIDATE}" -c "import duckdb" >/dev/null 2>&1; then
+    PYTHON_BIN="${CANDIDATE}"
+    break
+  fi
+done
+
+if [[ -z "${PYTHON_BIN}" ]]; then
+  echo "No usable Python interpreter found with duckdb installed (checked \$VIRTUAL_ENV/bin/python, python3, python)." >&2
+  exit 2
+fi
+
+"${PYTHON_BIN}" - "$WINDOW_HOURS" "$THRESHOLD" "$CONSECUTIVE" "$MIN_SNAPSHOTS" "$UNDERLYING" <<'PY'
 from __future__ import annotations
 
 import json

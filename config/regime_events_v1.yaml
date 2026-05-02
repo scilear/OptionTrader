@@ -1,0 +1,21 @@
+# Scheduled regime events (v1 manual source)
+# Schema:
+#   events:
+#     - date: YYYY-MM-DD
+#       type: <event_type>
+#       label: <human readable name>
+#       severity: <low|medium|high>
+
+events:
+  - date: 2026-04-10
+    type: cpi
+    label: US CPI Release
+    severity: high
+  - date: 2026-04-29
+    type: fomc
+    label: FOMC Statement
+    severity: high
+  - date: 2026-05-08
+    type: payrolls
+    label: US Nonfarm Payrolls
+    severity: medium
