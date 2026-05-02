@@ -68,6 +68,8 @@ Rules:
 | `regime.weights.drawdown` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for drawdown component. |
 | `regime.weights.event` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for scheduled-event component. |
 | `regime.weights.stress_proxy` | active | `src/core/config.py`, `src/core/regime.py` (S4 wiring) | `tests/test_regime.py`, `tests/test_config_contract.py` | Multi-signal weight for stress-proxy component. |
+| `regime.score_calm_max` | active | `src/core/regime.py` | `tests/test_regime.py`, `tests/test_config_contract.py` | Calm/Transition boundary for normalized weighted score. |
+| `regime.score_stress_min` | active | `src/core/regime.py` | `tests/test_regime.py`, `tests/test_config_contract.py` | Transition/Stress boundary for normalized weighted score. |
 | `structures.skew_fade.short_put_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |
 | `structures.skew_fade.long_put_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |
 | `structures.fly.wing_delta` | active | `src/core/trade_ideas.py` | `tests/test_trade_ideas.py`, `tests/test_config_contract.py` | Template leg parameterized. |

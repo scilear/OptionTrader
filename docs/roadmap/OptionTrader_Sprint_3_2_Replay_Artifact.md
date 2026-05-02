@@ -1,6 +1,6 @@
 # OptionTrader Sprint 3.2 Replay Artifact
 
-Generated at: 2026-04-30T14:39:48.209907Z
+Generated at: 2026-05-02T15:56:40.855823Z
 Source script: `scripts/generate_replay_artifact.py`
 
 ## Locked Comparison Contract

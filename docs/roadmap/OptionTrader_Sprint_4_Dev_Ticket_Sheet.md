@@ -8,11 +8,11 @@ Sprint: Weeks 5-6
 
 | Ticket | Objective | Priority | Status | Evidence |
 |---|---|---|---|---|
-| S4-00 | Regime feature contract + data plumbing | P0 | Todo | schema/config matrix/test updates |
-| S4-01 | Multi-signal scoring engine | P0 | Todo | `src/core/regime.py` + decomposition tests |
-| S4-02 | Event + cross-domain stress inputs | P0 | Todo | feature integration tests + fixtures |
-| S4-03 | Ablation and incremental value gate | P0 | Todo | replay artifact + ablation table |
-| S4-04 | Drift/config safety guardrails | P1 | Todo | stale-hash warnings + tests |
+| S4-00 | Regime feature contract + data plumbing | P0 | Done | `src/db/schema.sql`, `src/db/init_db.py`, `tests/test_schema.py` |
+| S4-01 | Multi-signal scoring engine | P0 | Done | `src/core/regime.py`, `tests/test_regime.py` |
+| S4-02 | Event + cross-domain stress inputs | P0 | Done | `config/regime_events_v1.yaml`, `src/core/regime.py`, `tests/test_regime.py` |
+| S4-03 | Ablation and incremental value gate | P0 | Done | `scripts/generate_regime_ablation_artifact.py`, `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md` |
+| S4-04 | Drift/config safety guardrails | P1 | Done | `src/core/compute_snapshot.py`, `tests/test_regime_filter.py` |
 
 ## Ticket Details
 

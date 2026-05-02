@@ -1,12 +1,12 @@
 from datetime import datetime
+import logging
 
 import duckdb
 
 from src.core.compute_snapshot import compute_for_snapshot
 
 
-def test_regime_filter_blocks_rr(monkeypatch):
-    conn = duckdb.connect(":memory:")
+def _seed_minimal_compute_schema(conn):
     conn.execute(
         """
         CREATE TABLE snapshots (snapshot_id INTEGER, ts TIMESTAMP, spot DOUBLE);
@@ -18,6 +18,11 @@ def test_regime_filter_blocks_rr(monkeypatch):
         CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT, regime_config_hash TEXT);
         """
     )
+
+
+def test_regime_filter_blocks_rr(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema(conn)
     conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 90, 90, 12, 6, 'Stress', NULL)"
@@ -53,3 +58,67 @@ def test_regime_filter_blocks_rr(monkeypatch):
     compute_for_snapshot(1, purge_existing=True)
     count = conn.execute("SELECT COUNT(*) FROM alerts").fetchone()[0]
     assert count == 0
+
+
+def test_regime_hash_mismatch_logs_warning(monkeypatch, caplog):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema(conn)
+    conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
+    conn.execute(
+        "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'stale_hash')"
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.compute_snapshot.connect", lambda: ConnWrapper(conn))
+    monkeypatch.setattr("src.core.compute_snapshot.compute_iv_points", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.compute_surface_metrics", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.compute_alerts", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.regime_threshold_hash", lambda *_a, **_k: "new_hash")
+    monkeypatch.setattr("src.core.compute_snapshot.regime_params_from_config", lambda *_a, **_k: object())
+
+    with caplog.at_level(logging.WARNING, logger="compute"):
+        compute_for_snapshot(1, purge_existing=True)
+
+    assert "Regime threshold hash mismatch" in caplog.text
+    assert "persisted_hash=stale_hash" in caplog.text
+    assert "current_hash=new_hash" in caplog.text
+
+
+def test_regime_hash_match_has_no_warning(monkeypatch, caplog):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema(conn)
+    conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
+    conn.execute(
+        "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.compute_snapshot.connect", lambda: ConnWrapper(conn))
+    monkeypatch.setattr("src.core.compute_snapshot.compute_iv_points", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.compute_surface_metrics", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.compute_alerts", lambda *_a, **_k: [])
+    monkeypatch.setattr("src.core.compute_snapshot.regime_threshold_hash", lambda *_a, **_k: "same_hash")
+    monkeypatch.setattr("src.core.compute_snapshot.regime_params_from_config", lambda *_a, **_k: object())
+
+    with caplog.at_level(logging.WARNING, logger="compute"):
+        compute_for_snapshot(1, purge_existing=True)
+
+    assert "Regime threshold hash mismatch" not in caplog.text

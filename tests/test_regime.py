@@ -1,26 +1,38 @@
 import duckdb
 import pandas as pd
+import json
+from pathlib import Path
 
 from src.core.regime import RegimeParams, compute_regime_state
+
+
+def _create_regime_state_table(conn):
+    conn.execute(
+        """
+        CREATE TABLE regime_state (
+            regime_date DATE PRIMARY KEY,
+            vix_percentile DOUBLE,
+            rv20_percentile DOUBLE,
+            drawdown_percent DOUBLE,
+            regime_score INTEGER,
+            regime_label TEXT,
+            regime_config_hash TEXT,
+            vix_spot DOUBLE,
+            rv20_value DOUBLE,
+            drawdown_value DOUBLE,
+            event_score DOUBLE,
+            stress_proxy_score DOUBLE,
+            decomposition TEXT
+        )
+        """
+    )
 
 
 def test_regime_handles_empty(monkeypatch):
     def fake_connect():
         conn = duckdb.connect(":memory:")
         conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
-        conn.execute(
-            """
-            CREATE TABLE regime_state (
-                regime_date DATE PRIMARY KEY,
-                vix_percentile DOUBLE,
-                rv20_percentile DOUBLE,
-                drawdown_percent DOUBLE,
-                regime_score INTEGER,
-                regime_label TEXT,
-                regime_config_hash TEXT
-            )
-            """
-        )
+        _create_regime_state_table(conn)
         return conn
 
     monkeypatch.setattr("src.core.regime.connect", fake_connect)
@@ -31,19 +43,7 @@ def test_regime_inserts_rows(monkeypatch):
     def fake_connect():
         conn = duckdb.connect(":memory:")
         conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
-        conn.execute(
-            """
-            CREATE TABLE regime_state (
-                regime_date DATE PRIMARY KEY,
-                vix_percentile DOUBLE,
-                rv20_percentile DOUBLE,
-                drawdown_percent DOUBLE,
-                regime_score INTEGER,
-                regime_label TEXT,
-                regime_config_hash TEXT
-            )
-            """
-        )
+        _create_regime_state_table(conn)
         dates = pd.date_range("2026-01-01", periods=80, freq="D")
         for i, d in enumerate(dates):
             conn.execute(
@@ -59,19 +59,7 @@ def test_regime_inserts_rows(monkeypatch):
 def test_regime_thresholds_from_params_change_labels(monkeypatch):
     conn = duckdb.connect(":memory:")
     conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
-    conn.execute(
-        """
-        CREATE TABLE regime_state (
-            regime_date DATE PRIMARY KEY,
-            vix_percentile DOUBLE,
-            rv20_percentile DOUBLE,
-            drawdown_percent DOUBLE,
-            regime_score INTEGER,
-            regime_label TEXT,
-            regime_config_hash TEXT
-        )
-        """
-    )
+    _create_regime_state_table(conn)
     dates = pd.date_range("2026-01-01", periods=80, freq="D")
     for i, d in enumerate(dates):
         conn.execute(
@@ -98,6 +86,8 @@ def test_regime_thresholds_from_params_change_labels(monkeypatch):
         rv20_pct_stress=0,
         drawdown_calm=0,
         drawdown_stress=0,
+        score_calm_max=0.1,
+        score_stress_min=0.2,
     )
     low_thresholds = RegimeParams(
         vix_pct_calm=100,
@@ -106,6 +96,8 @@ def test_regime_thresholds_from_params_change_labels(monkeypatch):
         rv20_pct_stress=100,
         drawdown_calm=100,
         drawdown_stress=100,
+        score_calm_max=1.2,
+        score_stress_min=1.8,
     )
 
     compute_regime_state(params=high_thresholds)
@@ -120,3 +112,182 @@ def test_regime_thresholds_from_params_change_labels(monkeypatch):
 
     assert stress_label == "Stress"
     assert calm_label == "Calm"
+
+
+def test_regime_decomposition_payload_is_present(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    dates = pd.date_range("2026-01-01", periods=80, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute(
+            "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
+            (d.to_pydatetime(), 100 + i),
+        )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+    compute_regime_state()
+
+    row = conn.execute(
+        """
+        SELECT decomposition, event_score, stress_proxy_score
+        FROM regime_state
+        ORDER BY regime_date DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    assert row is not None
+    decomposition = json.loads(row[0])
+    assert "contributions" in decomposition
+    assert "weights" in decomposition
+    assert "normalized_score" in decomposition
+    assert isinstance(row[1], float)
+    assert isinstance(row[2], float)
+
+
+def test_regime_event_signal_can_change_label(monkeypatch, tmp_path):
+    event_path = tmp_path / "regime_events_v1.yaml"
+    event_path.write_text(
+        """
+events:
+  - date: 2026-03-21
+    type: fomc
+    label: FOMC
+    severity: high
+        """.strip()
+    )
+
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+
+    dates = pd.date_range("2026-01-01", periods=80, freq="D")
+    for i, d in enumerate(dates):
+        spot = 100 + i
+        if d.date() == pd.to_datetime("2026-03-21").date():
+            spot = 100
+        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), spot))
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+
+    params_without_event = RegimeParams(
+        vix_pct_calm=100,
+        vix_pct_stress=100,
+        rv20_pct_calm=100,
+        rv20_pct_stress=100,
+        drawdown_calm=100,
+        drawdown_stress=100,
+        weight_vix=0.0,
+        weight_rv20=0.0,
+        weight_drawdown=0.0,
+        weight_event=1.0,
+        weight_stress_proxy=0.0,
+        score_calm_max=0.5,
+        score_stress_min=1.1,
+        event_path=str(Path(tmp_path) / "no_events.yaml"),
+    )
+    compute_regime_state(params=params_without_event)
+    no_event_label = conn.execute(
+        "SELECT regime_label FROM regime_state WHERE regime_date = '2026-03-21'"
+    ).fetchone()[0]
+
+    params_with_event = RegimeParams(
+        vix_pct_calm=100,
+        vix_pct_stress=100,
+        rv20_pct_calm=100,
+        rv20_pct_stress=100,
+        drawdown_calm=100,
+        drawdown_stress=100,
+        weight_vix=0.0,
+        weight_rv20=0.0,
+        weight_drawdown=0.0,
+        weight_event=1.0,
+        weight_stress_proxy=0.0,
+        score_calm_max=0.5,
+        score_stress_min=1.1,
+        event_path=str(event_path),
+    )
+    compute_regime_state(params=params_with_event)
+    with_event_label = conn.execute(
+        "SELECT regime_label FROM regime_state WHERE regime_date = '2026-03-21'"
+    ).fetchone()[0]
+
+    assert no_event_label == "Calm"
+    assert with_event_label == "Stress"
+
+
+def test_regime_stress_proxy_signal_can_change_label(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+
+    dates = pd.date_range("2026-01-01", periods=120, freq="D")
+    for i, d in enumerate(dates):
+        # Build a volatile path so rv percentile climbs near sample end.
+        spot = 100 + (i % 8) * (1 if i % 2 == 0 else -1)
+        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), spot))
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+
+    no_proxy_params = RegimeParams(
+        weight_vix=0.0,
+        weight_rv20=0.0,
+        weight_drawdown=0.0,
+        weight_event=0.0,
+        weight_stress_proxy=1.0,
+        score_calm_max=0.5,
+        score_stress_min=1.1,
+        stress_proxy_ticker="",
+    )
+    compute_regime_state(params=no_proxy_params)
+    no_proxy_label = conn.execute(
+        "SELECT regime_label FROM regime_state ORDER BY regime_date DESC LIMIT 1"
+    ).fetchone()[0]
+
+    with_proxy_params = RegimeParams(
+        weight_vix=0.0,
+        weight_rv20=0.0,
+        weight_drawdown=0.0,
+        weight_event=0.0,
+        weight_stress_proxy=1.0,
+        score_calm_max=0.5,
+        score_stress_min=1.1,
+        stress_proxy_ticker="^VIX",
+    )
+    compute_regime_state(params=with_proxy_params)
+    with_proxy_label = conn.execute(
+        "SELECT regime_label FROM regime_state ORDER BY regime_date DESC LIMIT 1"
+    ).fetchone()[0]
+
+    assert no_proxy_label == "Calm"
+    assert with_proxy_label in {"Transition", "Stress"}

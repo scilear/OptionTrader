@@ -1,6 +1,7 @@
 # OptionTrader Sprint 4 Execution Plan
 
 Date: 2026-04-30
+Last updated: 2026-05-02 (Sprint 4 execution closure)
 Sprint window: Weeks 5-6
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_3_2_Execution_Plan.md`
@@ -148,6 +149,24 @@ Sprint 4 is done only when all are true:
 2. Regime decomposition is transparent and test-covered.
 3. Ablation evidence exists and justifies retained features.
 4. Config and stale-state guardrails prevent silent drift.
+
+## Execution Outcome (2026-05-02)
+
+- S4-00 completed:
+  - additive `regime_state` plumbing validated for fresh + migrated DBs.
+- S4-01 completed:
+  - weighted multi-signal scoring and persisted decomposition implemented in `src/core/regime.py`.
+- S4-02 completed:
+  - scheduled events sourced from `config/regime_events_v1.yaml`.
+  - cross-domain stress proxy path wired via `regime.stress_proxy_ticker`.
+- S4-04 completed:
+  - drift warning path hardened with explicit persisted/current hash output.
+  - mismatch/non-mismatch warning tests added.
+- S4-03 completed with gate-enforced disable outcome:
+  - artifact: `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md`.
+  - result: locked gate failed due insufficient sample/outcome labels in window.
+  - retention decision: disable `event` and `stress_proxy` in runtime defaults
+    (`regime.weights.event=0.00`, `regime.weights.stress_proxy=0.00`).
 
 ## Validation Commands
 

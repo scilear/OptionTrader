@@ -4,8 +4,11 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
 
 import pandas as pd
+import yaml
 
 from src.core.config import load_config
 from src.db.connection import connect
@@ -21,11 +24,21 @@ class RegimeParams:
     rv20_pct_stress: float = 80.0
     drawdown_calm: float = 5.0
     drawdown_stress: float = 10.0
+    weight_vix: float = 0.25
+    weight_rv20: float = 0.25
+    weight_drawdown: float = 0.25
+    weight_event: float = 0.15
+    weight_stress_proxy: float = 0.10
+    score_calm_max: float = 0.67
+    score_stress_min: float = 1.33
+    event_path: str = "config/regime_events_v1.yaml"
+    stress_proxy_ticker: str = "^VIX"
 
 
 def regime_params_from_config(config: dict | None = None) -> RegimeParams:
     cfg = config or load_config()
     regime_cfg = cfg.get("regime", {})
+    weights = regime_cfg.get("weights", {})
     return RegimeParams(
         vix_pct_calm=float(regime_cfg.get("vix_pct_calm", 40.0)),
         vix_pct_stress=float(regime_cfg.get("vix_pct_stress", 80.0)),
@@ -33,6 +46,15 @@ def regime_params_from_config(config: dict | None = None) -> RegimeParams:
         rv20_pct_stress=float(regime_cfg.get("rv20_pct_stress", 80.0)),
         drawdown_calm=float(regime_cfg.get("drawdown_calm", 5.0)),
         drawdown_stress=float(regime_cfg.get("drawdown_stress", 10.0)),
+        weight_vix=float(weights.get("vix", 0.25)),
+        weight_rv20=float(weights.get("rv20", 0.25)),
+        weight_drawdown=float(weights.get("drawdown", 0.25)),
+        weight_event=float(weights.get("event", 0.15)),
+        weight_stress_proxy=float(weights.get("stress_proxy", 0.10)),
+        score_calm_max=float(regime_cfg.get("score_calm_max", 0.67)),
+        score_stress_min=float(regime_cfg.get("score_stress_min", 1.33)),
+        event_path=str(regime_cfg.get("event_path", "config/regime_events_v1.yaml")),
+        stress_proxy_ticker=str(regime_cfg.get("stress_proxy_ticker", "^VIX")),
     )
 
 
@@ -44,9 +66,58 @@ def regime_threshold_hash(params: RegimeParams) -> str:
         "rv20_pct_stress": params.rv20_pct_stress,
         "drawdown_calm": params.drawdown_calm,
         "drawdown_stress": params.drawdown_stress,
+        "weight_vix": params.weight_vix,
+        "weight_rv20": params.weight_rv20,
+        "weight_drawdown": params.weight_drawdown,
+        "weight_event": params.weight_event,
+        "weight_stress_proxy": params.weight_stress_proxy,
+        "score_calm_max": params.score_calm_max,
+        "score_stress_min": params.score_stress_min,
+        "event_path": params.event_path,
+        "stress_proxy_ticker": params.stress_proxy_ticker,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _level_from_thresholds(value: float, calm: float, stress: float) -> int:
+    if value < calm:
+        return 0
+    if value < stress:
+        return 1
+    return 2
+
+
+def _load_event_scores(event_path: str) -> dict[date, float]:
+    path = Path(event_path)
+    if not path.exists():
+        return {}
+    payload = yaml.safe_load(path.read_text()) or {}
+    events = payload.get("events", []) if isinstance(payload, dict) else []
+    severity_to_score = {"low": 0.5, "medium": 1.0, "high": 2.0}
+    scores: dict[date, float] = {}
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        raw_date = event.get("date")
+        if not raw_date:
+            continue
+        try:
+            event_date = pd.to_datetime(raw_date).date()
+        except Exception:
+            continue
+        severity = str(event.get("severity", "low")).lower()
+        score = severity_to_score.get(severity, 0.5)
+        scores[event_date] = max(scores.get(event_date, 0.0), float(score))
+    return scores
+
+
+def _stress_proxy_score(proxy_ticker: str, rv20_pct: float) -> float:
+    if not proxy_ticker:
+        return 0.0
+    # S4-02 v1 path: deterministic proxy derived from volatility percentile.
+    # External market fetch adapters are deferred; this remains reproducible and testable.
+    return max(0.0, min(2.0, float(rv20_pct) / 50.0))
 
 
 def compute_regime_state(params: RegimeParams | None = None) -> int:
@@ -95,45 +166,109 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
 
         daily["rv_pct"] = rv_pct
         daily["dd_pct"] = dd_pct
+        event_scores_by_date = _load_event_scores(params.event_path)
 
         inserts = 0
         for idx, row in daily.iterrows():
             if pd.isna(row["rv20"]) or pd.isna(row["drawdown"]):
                 continue
 
+            # S4-01 keeps vix percentile as rv proxy until S4-02 wires external source.
             vix_pct = float(row["rv_pct"])
             rv20_pct = float(row["rv_pct"])
             drawdown = float(row["drawdown"])
 
-            score = 0
-            score += 0 if vix_pct < params.vix_pct_calm else (1 if vix_pct < params.vix_pct_stress else 2)
-            score += 0 if rv20_pct < params.rv20_pct_calm else (1 if rv20_pct < params.rv20_pct_stress else 2)
-            score += 0 if drawdown < params.drawdown_calm else (1 if drawdown < params.drawdown_stress else 2)
+            event_score = float(event_scores_by_date.get(idx.date(), 0.0))
+            stress_proxy_score = _stress_proxy_score(params.stress_proxy_ticker, rv20_pct)
 
-            regime_label = "Calm" if score <= 2 else ("Transition" if score <= 4 else "Stress")
+            component_levels = {
+                "vix": _level_from_thresholds(vix_pct, params.vix_pct_calm, params.vix_pct_stress),
+                "rv20": _level_from_thresholds(rv20_pct, params.rv20_pct_calm, params.rv20_pct_stress),
+                "drawdown": _level_from_thresholds(
+                    drawdown,
+                    params.drawdown_calm,
+                    params.drawdown_stress,
+                ),
+                "event": _level_from_thresholds(event_score, 0.5, 1.0),
+                "stress_proxy": _level_from_thresholds(stress_proxy_score, 0.5, 1.0),
+            }
+            weights = {
+                "vix": params.weight_vix,
+                "rv20": params.weight_rv20,
+                "drawdown": params.weight_drawdown,
+                "event": params.weight_event,
+                "stress_proxy": params.weight_stress_proxy,
+            }
+            weight_sum = sum(weights.values()) or 1.0
+            contributions = {
+                name: component_levels[name] * weights[name]
+                for name in component_levels
+            }
+            normalized_score = sum(contributions.values()) / weight_sum
+
+            if normalized_score <= params.score_calm_max:
+                regime_label = "Calm"
+            elif normalized_score >= params.score_stress_min:
+                regime_label = "Stress"
+            else:
+                regime_label = "Transition"
+
+            decomposition = {
+                "features": {
+                    "vix_percentile": vix_pct,
+                    "rv20_percentile": rv20_pct,
+                    "drawdown_percent": drawdown,
+                    "event_score": event_score,
+                    "stress_proxy_score": stress_proxy_score,
+                    "stress_proxy_ticker": params.stress_proxy_ticker,
+                },
+                "levels": component_levels,
+                "weights": weights,
+                "contributions": contributions,
+                "normalized_score": normalized_score,
+                "thresholds": {
+                    "score_calm_max": params.score_calm_max,
+                    "score_stress_min": params.score_stress_min,
+                },
+                "label": regime_label,
+            }
 
             conn.execute(
                 """
                 INSERT INTO regime_state (
                     regime_date, vix_percentile, rv20_percentile, drawdown_percent,
-                    regime_score, regime_label, regime_config_hash
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    regime_score, regime_label, regime_config_hash,
+                    vix_spot, rv20_value, drawdown_value,
+                    event_score, stress_proxy_score, decomposition
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(regime_date) DO UPDATE SET
                     vix_percentile=excluded.vix_percentile,
                     rv20_percentile=excluded.rv20_percentile,
                     drawdown_percent=excluded.drawdown_percent,
                     regime_score=excluded.regime_score,
                     regime_label=excluded.regime_label,
-                    regime_config_hash=excluded.regime_config_hash
+                    regime_config_hash=excluded.regime_config_hash,
+                    vix_spot=excluded.vix_spot,
+                    rv20_value=excluded.rv20_value,
+                    drawdown_value=excluded.drawdown_value,
+                    event_score=excluded.event_score,
+                    stress_proxy_score=excluded.stress_proxy_score,
+                    decomposition=excluded.decomposition
                 """,
                 (
                     idx.date(),
                     vix_pct,
                     rv20_pct,
                     drawdown,
-                    score,
+                    int(round(normalized_score * 100)),
                     regime_label,
                     thresholds_hash,
+                    None,
+                    float(row["rv20"]),
+                    drawdown,
+                    event_score,
+                    stress_proxy_score,
+                    json.dumps(decomposition, sort_keys=True, separators=(",", ":")),
                 ),
             )
             inserts += 1

@@ -233,9 +233,12 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         persisted_regime_hash = regime_row[1] if regime_row and len(regime_row) > 1 else None
         if persisted_regime_hash and persisted_regime_hash != current_regime_hash:
             logger.warning(
-                "Regime threshold hash mismatch for snapshot_id=%s. "
+                "Regime threshold hash mismatch for snapshot_id=%s; "
+                "persisted_hash=%s current_hash=%s. "
                 "Recompute regime_state with current config before relying on history.",
                 snapshot_id,
+                persisted_regime_hash,
+                current_regime_hash,
             )
         quotes = conn.execute(
             "SELECT expiry, strike, option_right, bid, ask FROM option_quotes WHERE snapshot_id = ?",
