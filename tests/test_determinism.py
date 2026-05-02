@@ -30,7 +30,17 @@ def test_compute_for_snapshot_is_repeatable(monkeypatch):
         """
     )
     conn.execute(
-        "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', NULL)"
+        """
+        INSERT INTO regime_state (
+            regime_date,
+            vix_percentile,
+            rv20_percentile,
+            drawdown_percent,
+            regime_score,
+            regime_label,
+            regime_config_hash
+        ) VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', NULL)
+        """
     )
 
     class ConnWrapper:
