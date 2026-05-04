@@ -93,14 +93,23 @@ def _validate_structure_delta_support(
         )
 
 
-def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float]:
-    row = conn.execute(
-        "SELECT ts, spot FROM snapshots WHERE snapshot_id = ?",
-        (snapshot_id,),
-    ).fetchone()
+def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float, int | None]:
+    row = None
+    try:
+        row = conn.execute(
+            "SELECT ts, spot, run_id FROM snapshots WHERE snapshot_id = ?",
+            (snapshot_id,),
+        ).fetchone()
+    except Exception:
+        row = conn.execute(
+            "SELECT ts, spot FROM snapshots WHERE snapshot_id = ?",
+            (snapshot_id,),
+        ).fetchone()
     if not row:
         raise ValueError("snapshot not found")
-    return row[0], float(row[1])
+    if len(row) >= 3:
+        return row[0], float(row[1]), row[2]
+    return row[0], float(row[1]), None
 
 
 def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
@@ -113,6 +122,107 @@ def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
     conn.execute("DELETE FROM iv_points WHERE snapshot_id = ?", (snapshot_id,))
 
 
+def _worst_case_coherent(
+    zscore_mid: float | None,
+    zscore_worst: float | None,
+    threshold: float,
+) -> bool:
+    if zscore_mid is None or zscore_worst is None:
+        return False
+    mid = float(zscore_mid)
+    worst = float(zscore_worst)
+    if abs(worst) < threshold:
+        return False
+    if mid == 0.0:
+        return True
+    return (mid > 0.0) == (worst > 0.0)
+
+
+def _determine_signal_state(
+    alert: dict,
+    tier: str | None,
+    regime_label: str,
+    tradability_score: float,
+    surface_qc_passed: bool,
+    surface_quality_score: float,
+    threshold: float,
+    regime_hash_mismatch: bool,
+    min_fit_confidence_validated: float,
+    min_fit_confidence_execution: float,
+    require_full_tier_for_execution: bool,
+) -> dict:
+    alert_type = str(alert.get("alert_type") or "")
+    zscore_mid = alert.get("zscore_mid")
+    zscore_worst = alert.get("zscore_worst")
+
+    quality_blockers: list[str] = []
+    if tier is None:
+        quality_blockers.append("tier_missing")
+    if not surface_qc_passed:
+        quality_blockers.append("surface_qc_failed")
+    if regime_hash_mismatch:
+        quality_blockers.append("regime_hash_mismatch")
+    if alert_type == "RR_EXTREME" and regime_label == "Stress":
+        quality_blockers.append("rr_extreme_blocked_in_stress")
+    worst_case_ok = _worst_case_coherent(zscore_mid, zscore_worst, threshold)
+    if not worst_case_ok:
+        quality_blockers.append("worst_case_incoherent")
+    if surface_quality_score < min_fit_confidence_validated:
+        quality_blockers.append("fit_confidence_below_validated")
+
+    uncertainty_score = 0.0
+    if not worst_case_ok:
+        uncertainty_score += 0.35
+    if tier is None:
+        uncertainty_score += 0.20
+    elif tier == "Core":
+        uncertainty_score += 0.10
+    if not surface_qc_passed:
+        uncertainty_score += 0.35
+    if regime_hash_mismatch:
+        uncertainty_score += 0.25
+    if surface_quality_score < min_fit_confidence_validated:
+        uncertainty_score += 0.20
+    uncertainty_score = min(1.0, uncertainty_score)
+
+    if quality_blockers:
+        return {
+            "signal_state": "Candidate",
+            "transition_reason_code": quality_blockers[0],
+            "quality_blockers": quality_blockers,
+            "execution_blockers": [],
+            "worst_case_coherent": worst_case_ok,
+            "uncertainty_score": uncertainty_score,
+        }
+
+    execution_blockers: list[str] = []
+    if tradability_score <= 0.0:
+        execution_blockers.append("non_positive_tradability")
+    if surface_quality_score < min_fit_confidence_execution:
+        execution_blockers.append("fit_confidence_below_execution")
+    if require_full_tier_for_execution and tier != "Full":
+        execution_blockers.append("tier_not_full")
+
+    if execution_blockers:
+        return {
+            "signal_state": "Validated",
+            "transition_reason_code": execution_blockers[0],
+            "quality_blockers": [],
+            "execution_blockers": execution_blockers,
+            "worst_case_coherent": worst_case_ok,
+            "uncertainty_score": uncertainty_score,
+        }
+
+    return {
+        "signal_state": "ExecutionReady",
+        "transition_reason_code": "execution_ready",
+        "quality_blockers": [],
+        "execution_blockers": [],
+        "worst_case_coherent": worst_case_ok,
+        "uncertainty_score": uncertainty_score,
+    }
+
+
 def _build_explain_payload(
     alert: dict,
     threshold: float,
@@ -123,6 +233,8 @@ def _build_explain_payload(
     surface_qc_passed: bool,
     surface_qc_reasons: list[str],
     surface_quality_score: float,
+    regime_hash_mismatch: bool,
+    lifecycle: dict,
 ) -> dict:
     zscore_mid = alert.get("zscore_mid")
     zscore_worst = alert.get("zscore_worst")
@@ -187,6 +299,37 @@ def _build_explain_payload(
                 "surface_quality_score": surface_quality_score,
                 "reasons": surface_qc_reasons,
             },
+            "worst_case_coherence": {
+                "status": "PASS" if lifecycle.get("worst_case_coherent") else "FAIL",
+                "reason_code": (
+                    "worst_case_coherent"
+                    if lifecycle.get("worst_case_coherent")
+                    else "worst_case_incoherent"
+                ),
+            },
+            "regime_hash": {
+                "status": "FAIL" if regime_hash_mismatch else "PASS",
+                "reason_code": (
+                    "regime_hash_mismatch" if regime_hash_mismatch else "regime_hash_aligned_or_missing"
+                ),
+            },
+        },
+        "score_method": {
+            "mid": alert.get("score_method_mid"),
+            "worst": alert.get("score_method_worst"),
+        },
+        "evidence_overlap": alert.get("evidence_overlap") or {
+            "detected": False,
+            "candidate_count": 1,
+            "suppressed_alert_types": [],
+            "strategy": "none",
+        },
+        "lifecycle": {
+            "signal_state": lifecycle.get("signal_state"),
+            "transition_reason_code": lifecycle.get("transition_reason_code"),
+            "quality_blockers": lifecycle.get("quality_blockers", []),
+            "execution_blockers": lifecycle.get("execution_blockers", []),
+            "uncertainty_score": lifecycle.get("uncertainty_score"),
         },
     }
 
@@ -199,6 +342,18 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
     threshold = config["alerts"]["z_threshold"]
     persistence = config["alerts"]["persistence_snapshots"]
     pessimistic_gate = bool(config["alerts"].get("pessimistic_gate", True))
+    history_scope = str(config["alerts"].get("history_scope", "global")).lower()
+    emit_non_execution_states = bool(config["alerts"].get("emit_non_execution_states", False))
+    lifecycle_cfg = config["alerts"].get("lifecycle", {})
+    min_fit_confidence_validated = float(
+        lifecycle_cfg.get("min_fit_confidence_validated", 0.55)
+    )
+    min_fit_confidence_execution = float(
+        lifecycle_cfg.get("min_fit_confidence_execution", 0.70)
+    )
+    require_full_tier_for_execution = bool(
+        lifecycle_cfg.get("require_full_tier_for_execution", False)
+    )
     spread_gate_pct = config["quality"]["spread_gate_pct"]
     qc_cfg = config.get("qc", {})
     no_arb_epsilon = float(qc_cfg.get("no_arb_epsilon", 0.0))
@@ -215,7 +370,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
 
     conn = connect()
     try:
-        ts, spot = _load_snapshot(conn, snapshot_id)
+        ts, spot, snapshot_run_id = _load_snapshot(conn, snapshot_id)
         if purge_existing:
             _clear_snapshot_outputs(conn, snapshot_id)
         logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
@@ -231,6 +386,9 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         regime_label = regime_row[0] if regime_row else "Neutral"
         current_regime_hash = regime_threshold_hash(regime_params_from_config(config))
         persisted_regime_hash = regime_row[1] if regime_row and len(regime_row) > 1 else None
+        regime_hash_mismatch = bool(
+            persisted_regime_hash and persisted_regime_hash != current_regime_hash
+        )
         if persisted_regime_hash and persisted_regime_hash != current_regime_hash:
             logger.warning(
                 "Regime threshold hash mismatch for snapshot_id=%s; "
@@ -359,14 +517,26 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 ),
             )
 
-        metric_series = conn.execute(
-            """
-            SELECT s.ts, m.expiry_bucket, m.rr25_mid, m.fly25_mid, m.term_slope_mid,
-                   m.rr25_worst, m.fly25_worst, m.term_slope_worst
-            FROM surface_metrics m
-            JOIN snapshots s ON s.snapshot_id = m.snapshot_id
-            """
-        ).fetchdf()
+        if history_scope == "run" and snapshot_run_id is not None:
+            metric_series = conn.execute(
+                """
+                SELECT s.ts, m.expiry_bucket, m.rr25_mid, m.fly25_mid, m.term_slope_mid,
+                       m.rr25_worst, m.fly25_worst, m.term_slope_worst
+                FROM surface_metrics m
+                JOIN snapshots s ON s.snapshot_id = m.snapshot_id
+                WHERE s.run_id = ?
+                """,
+                (snapshot_run_id,),
+            ).fetchdf()
+        else:
+            metric_series = conn.execute(
+                """
+                SELECT s.ts, m.expiry_bucket, m.rr25_mid, m.fly25_mid, m.term_slope_mid,
+                       m.rr25_worst, m.fly25_worst, m.term_slope_worst
+                FROM surface_metrics m
+                JOIN snapshots s ON s.snapshot_id = m.snapshot_id
+                """
+            ).fetchdf()
         alerts = compute_alerts(
             metric_series,
             window,
@@ -376,12 +546,22 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
         )
         logger.info("alerts=%s", len(alerts))
         for alert in alerts:
-            if not surface_qc.passed:
-                continue
             tier = tier_by_bucket.get(alert["expiry_bucket"])
-            if tier is None:
-                continue
-            if alert["alert_type"] == "RR_EXTREME" and regime_label == "Stress":
+            lifecycle = _determine_signal_state(
+                alert=alert,
+                tier=tier,
+                regime_label=regime_label,
+                tradability_score=tradability_score,
+                surface_qc_passed=surface_qc.passed,
+                surface_quality_score=surface_qc.quality_score,
+                threshold=threshold,
+                regime_hash_mismatch=regime_hash_mismatch,
+                min_fit_confidence_validated=min_fit_confidence_validated,
+                min_fit_confidence_execution=min_fit_confidence_execution,
+                require_full_tier_for_execution=require_full_tier_for_execution,
+            )
+            signal_state = lifecycle["signal_state"]
+            if signal_state != "ExecutionReady" and not emit_non_execution_states:
                 continue
             explain = _build_explain_payload(
                 alert=alert,
@@ -393,29 +573,38 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 surface_qc_passed=surface_qc.passed,
                 surface_qc_reasons=list(surface_qc.reason_codes),
                 surface_quality_score=surface_qc.quality_score,
+                regime_hash_mismatch=regime_hash_mismatch,
+                lifecycle=lifecycle,
             )
+            severity = float(alert.get("effective_severity") or abs(alert["zscore_mid"]))
             conn.execute(
                 """
                 INSERT INTO alerts (
                     alert_id, snapshot_id, alert_type, expiry_bucket, severity,
                     zscore_mid, zscore_worst, tradability_score,
-                    confidence_tier, persistence_count, regime_label, explain
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    confidence_tier, persistence_count, regime_label,
+                    signal_state, transition_reason_code, explain
+                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
                     alert["alert_type"],
                     alert["expiry_bucket"],
-                    abs(alert["zscore_mid"]),
+                    severity,
                     alert["zscore_mid"],
                     alert["zscore_worst"],
                     tradability_score,
-                    tier,
+                    tier or "Unknown",
                     alert["persistence"],
                     regime_label,
+                    signal_state,
+                    lifecycle["transition_reason_code"],
                     json.dumps(explain),
                 ),
             )
+
+            if signal_state != "ExecutionReady":
+                continue
 
             alert_id = conn.execute("SELECT MAX(alert_id) FROM alerts").fetchone()[0]
             bucket_days = int(alert["expiry_bucket"].replace("D", ""))

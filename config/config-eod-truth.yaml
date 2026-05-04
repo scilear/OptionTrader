@@ -1,4 +1,4 @@
-# v1 configuration for Streamlit single-user mode
+# EOD truth configuration for S4-03 runbook workflow
 
 app:
   mode: streamlit
@@ -13,22 +13,20 @@ data:
   dte_min: 14
   dte_max: 60
   snapshot_tags: [eod, open, mid, event]
-  source: ib  # ib tries IB hosts then falls back to yfinance; set to yfinance to skip IB entirely
+  source: yfinance
   capture_all_expiries: true
 
 ib:
-  hosts:
-    - wendy.local
-    - hal.local
+  hosts: []
   port: 7496
   client_id: 10
   timeout_seconds: 10
-  strike_pct_range: 0.25  # ±25% around spot
-  max_strikes_per_right: 40  # nearest-to-spot calls/puts per expiry
+  strike_pct_range: 0.25
+  max_strikes_per_right: 40
 
 storage:
-  engine: duckdb  # sqlite or duckdb
-  path: data/optiontrader.duckdb
+  engine: duckdb
+  path: data/optiontrader_eod_truth.duckdb
 
 pricing:
   rate: 0.0
@@ -49,7 +47,7 @@ alerts:
   z_threshold: 2.0
   persistence_snapshots: 2
   pessimistic_gate: true
-  history_scope: global
+  history_scope: run
   emit_non_execution_states: false
   lifecycle:
     min_fit_confidence_validated: 0.55

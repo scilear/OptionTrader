@@ -46,6 +46,12 @@ alerts:
   z_threshold: 2.0
   persistence_snapshots: 2
   pessimistic_gate: true
+  history_scope: global
+  emit_non_execution_states: false
+  lifecycle:
+    min_fit_confidence_validated: 0.55
+    min_fit_confidence_execution: 0.70
+    require_full_tier_for_execution: false
 
 qc:
   no_arb_epsilon: 0.005

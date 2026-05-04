@@ -1,7 +1,7 @@
 # OptionTrader Sprint 4 Execution Plan
 
 Date: 2026-04-30
-Last updated: 2026-05-03 (post-review correction)
+Last updated: 2026-05-04 (S4-03 EOD execution + evidence run completed)
 Sprint window: Weeks 5-6
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_3_2_Execution_Plan.md`
@@ -111,6 +111,18 @@ Locked lift gate for retention decisions:
 - Secondary metric: false-positive density in Transition regime must not worsen by more than `+0.02`.
 - If thresholds are not met, feature fails ablation gate and is removed or disabled.
 
+S4-03 evidence-mode update (2026-05-04):
+
+- Methodology validation path:
+  - synthetic deterministic scenarios per
+    `docs/roadmap/OptionTrader_S4_03_Synthetic_Methodology_Protocol.md`.
+- Production evidence path:
+  - EOD source-of-truth ingestion from `/mnt/Data/OPTION_DATA` per
+    `docs/roadmap/OptionTrader_S4_03_EOD_Source_Truth_Spec.md`.
+  - maintain separate EOD truth DB (recommended `data/optiontrader_eod_truth.duckdb`) from intraday
+    runtime DB.
+  - no production threshold relaxation in production evidence mode.
+
 ### S4-04 Regime Drift and Config Safety Guardrails
 
 Goal:
@@ -164,8 +176,10 @@ Sprint 4 is done only when all are true:
   - mismatch/non-mismatch warning tests added.
 - S4-03 currently blocked pending valid precision/outcome evidence:
   - artifact: `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md`.
-  - status: baseline/candidate lineages are now computed from real tracks, but precision/transition
-    gates remain blocked until outcome labels are persisted.
+  - EOD validation report: `docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md`.
+  - EOD evidence pack: `docs/roadmap/OptionTrader_S4_03_EOD_Evidence_Pack.md`.
+  - status: baseline/candidate lineages are now computed from real EOD tracks, but sampled 2023 run
+    still produced zero alerts and zero outcomes; gates remain unsatisfied.
   - interim runtime safety posture: `event` and `stress_proxy` remain disabled by default
     (`regime.weights.event=0.00`, `regime.weights.stress_proxy=0.00`) until gate evidence is valid.
 

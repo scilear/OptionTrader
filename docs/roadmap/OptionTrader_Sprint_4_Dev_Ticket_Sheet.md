@@ -11,7 +11,7 @@ Sprint: Weeks 5-6
 | S4-00 | Regime feature contract + data plumbing | P0 | Done | `src/db/schema.sql`, `src/db/init_db.py`, `tests/test_schema.py` |
 | S4-01 | Multi-signal scoring engine | P0 | Done | `src/core/regime.py`, `tests/test_regime.py` |
 | S4-02 | Event + cross-domain stress inputs | P0 | Done | `config/regime_events_v1.yaml`, `src/core/regime.py`, `tests/test_regime.py` |
-| S4-03 | Ablation and incremental value gate | P0 | Blocked | `scripts/generate_regime_ablation_artifact.py`, `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md` |
+| S4-03 | Ablation and incremental value gate | P0 | Blocked | `scripts/materialize_s4_tracks_from_eod.py`, `scripts/generate_regime_ablation_artifact.py`, `docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md`, `docs/roadmap/OptionTrader_S4_03_EOD_Evidence_Pack.md` |
 | S4-04 | Drift/config safety guardrails | P1 | Done | `src/core/compute_snapshot.py`, `tests/test_regime_filter.py` |
 
 ## Ticket Details
@@ -73,17 +73,29 @@ Sprint: Weeks 5-6
   - Enforce falsification discipline before accepting new regime complexity.
 - Files:
   - `src/core/replay.py` (or helper scripts)
+  - `docs/roadmap/OptionTrader_S4_03_Synthetic_Methodology_Protocol.md`
+  - `docs/roadmap/OptionTrader_S4_03_EOD_Source_Truth_Spec.md`
   - `docs/roadmap/OptionTrader_Sprint_4_Execution_Plan.md`
 - Tasks:
-  - Run RV-only baseline vs multi-signal variant.
+  - Complete methodology validation with deterministic synthetic scenarios.
+  - Build EOD source-of-truth ingestion/validation path from `/mnt/Data/OPTION_DATA`.
+  - Materialize true baseline vs candidate tracks on EOD truth DB.
+  - Run outcomes and ablation artifact on EOD truth DB.
   - Generate feature-ablation table and conclusion.
   - Record retention/removal decisions for each feature.
 - Acceptance:
-  - [ ] Ablation artifact is published and reproducible.
+  - [x] Ablation artifact is published and reproducible.
+  - [ ] Synthetic methodology artifact is published as non-production evidence.
+  - [x] EOD ingestion validation hard checks pass (schema/timestamps/quotes/idempotency).
   - [ ] Minimum sample met: `>=50` alerts total and `>=10` per active regime bucket.
   - [ ] Primary lift gate met: precision delta `>= +0.03` with volume within `[-15%, +15%]`.
   - [ ] Transition false-positive density does not worsen by more than `+0.02`.
   - [ ] Each retained feature has explicit incremental-value evidence.
+
+Current note (2026-05-04):
+
+- EOD path is executable and validated, but sampled 2023 window produced `0` alerts / `0` outcomes on
+  both lineages, so S4-03 remains blocked on objective gates.
 
 ### S4-04 - Regime Drift and Config Safety Guardrails
 
