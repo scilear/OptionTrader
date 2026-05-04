@@ -11,7 +11,7 @@ Sprint: Weeks 5-6
 | S4-00 | Regime feature contract + data plumbing | P0 | Done | `src/db/schema.sql`, `src/db/init_db.py`, `tests/test_schema.py` |
 | S4-01 | Multi-signal scoring engine | P0 | Done | `src/core/regime.py`, `tests/test_regime.py` |
 | S4-02 | Event + cross-domain stress inputs | P0 | Done | `config/regime_events_v1.yaml`, `src/core/regime.py`, `tests/test_regime.py` |
-| S4-03 | Ablation and incremental value gate | P0 | Done | `scripts/generate_regime_ablation_artifact.py`, `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md` |
+| S4-03 | Ablation and incremental value gate | P0 | Blocked | `scripts/generate_regime_ablation_artifact.py`, `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md` |
 | S4-04 | Drift/config safety guardrails | P1 | Done | `src/core/compute_snapshot.py`, `tests/test_regime_filter.py` |
 
 ## Ticket Details

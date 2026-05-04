@@ -1,6 +1,6 @@
 # OptionTrader Sprint 4 Ablation Artifact
 
-Generated at: 2026-05-02T17:25:24.039434Z
+Generated at: 2026-05-04T07:12:41.527910Z
 Source script: `scripts/generate_regime_ablation_artifact.py`
 
 ## Locked Gate Evaluation
@@ -11,21 +11,26 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
 - Transition FP density worsening (`<= +0.02`): FAIL
 - Overall retention gate: FAIL
 
+## Baseline vs Candidate Lineages
+
+- Baseline lineage: `3b024c9`
+- Candidate lineage: `5128e8e`
+
 ## Summary Payload
 
 ```json
 {
-  "baseline_track": "rv_only_reference",
-  "candidate_track": "multi_signal_s4",
+  "baseline_track": "3b024c9",
+  "candidate_track": "5128e8e",
   "feature_decisions": [
     {
-      "evidence": "insufficient alert sample and no precision labels",
+      "evidence": "insufficient or blocked gate evidence",
       "feature": "event",
       "reason": "s4_03_gate_failed",
       "status": "disabled"
     },
     {
-      "evidence": "insufficient alert sample and no precision labels",
+      "evidence": "insufficient or blocked gate evidence",
       "feature": "stress_proxy",
       "reason": "s4_03_gate_failed",
       "status": "disabled"
@@ -34,6 +39,7 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
   "gates": {
     "min_sample_pass": false,
     "overall_pass": false,
+    "precision_blocked_reason": "missing_outcome_labels",
     "precision_delta": null,
     "precision_gate_pass": false,
     "transition_false_positive_density_worsening": null,
@@ -42,9 +48,14 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
     "volume_gate_pass": false
   },
   "sample": {
-    "alerts_by_regime": {},
-    "alerts_total": 0
+    "baseline_alerts_by_regime": {},
+    "baseline_alerts_total": 0,
+    "baseline_snapshot_count": 0,
+    "candidate_alerts_by_regime": {},
+    "candidate_alerts_total": 0,
+    "candidate_snapshot_count": 0
   },
+  "status": "blocked_pending_precision_labels",
   "window": {
     "end_ts": "2026-04-15T23:59:59Z",
     "start_ts": "2026-04-01T00:00:00Z",
@@ -61,5 +72,6 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
 ## Notes
 
 - This run uses the locked S3.2 window by default.
-- Precision and transition false-positive density require outcome labels that are not
-  currently persisted in v1 schema; gates are treated as failed until evidence is available.
+- Baseline/candidate counts are computed from real snapshot lineages (no hardcoded baseline).
+- Precision and transition false-positive density require persisted realized outcomes;
+  S4-03 remains blocked until outcome labels are available.

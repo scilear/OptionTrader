@@ -1,7 +1,7 @@
 # OptionTrader Sprint 4 Execution Plan
 
 Date: 2026-04-30
-Last updated: 2026-05-02 (Sprint 4 execution closure)
+Last updated: 2026-05-03 (post-review correction)
 Sprint window: Weeks 5-6
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_3_2_Execution_Plan.md`
@@ -150,7 +150,7 @@ Sprint 4 is done only when all are true:
 3. Ablation evidence exists and justifies retained features.
 4. Config and stale-state guardrails prevent silent drift.
 
-## Execution Outcome (2026-05-02)
+## Execution Outcome (Provisional)
 
 - S4-00 completed:
   - additive `regime_state` plumbing validated for fresh + migrated DBs.
@@ -162,11 +162,12 @@ Sprint 4 is done only when all are true:
 - S4-04 completed:
   - drift warning path hardened with explicit persisted/current hash output.
   - mismatch/non-mismatch warning tests added.
-- S4-03 completed with gate-enforced disable outcome:
+- S4-03 currently blocked pending valid precision/outcome evidence:
   - artifact: `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md`.
-  - result: locked gate failed due insufficient sample/outcome labels in window.
-  - retention decision: disable `event` and `stress_proxy` in runtime defaults
-    (`regime.weights.event=0.00`, `regime.weights.stress_proxy=0.00`).
+  - status: baseline/candidate lineages are now computed from real tracks, but precision/transition
+    gates remain blocked until outcome labels are persisted.
+  - interim runtime safety posture: `event` and `stress_proxy` remain disabled by default
+    (`regime.weights.event=0.00`, `regime.weights.stress_proxy=0.00`) until gate evidence is valid.
 
 ## Validation Commands
 
