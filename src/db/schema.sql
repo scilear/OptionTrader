@@ -123,6 +123,20 @@ CREATE TABLE IF NOT EXISTS alerts (
   FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
 );
 
+CREATE TABLE IF NOT EXISTS alert_outcomes (
+  alert_id INTEGER PRIMARY KEY,
+  horizon_days INTEGER NOT NULL,
+  outcome_label TEXT NOT NULL,
+  resolved_snapshot_id INTEGER,
+  resolved_ts TIMESTAMP,
+  base_metric_value DOUBLE,
+  resolved_metric_value DOUBLE,
+  reversion_ratio DOUBLE,
+  outcome_source TEXT,
+  evaluated_at TIMESTAMP NOT NULL,
+  FOREIGN KEY(alert_id) REFERENCES alerts(alert_id)
+);
+
 CREATE TABLE IF NOT EXISTS trade_ideas (
   trade_id INTEGER PRIMARY KEY DEFAULT nextval('trade_ideas_id_seq'),
   alert_id INTEGER NOT NULL,
@@ -138,3 +152,4 @@ CREATE TABLE IF NOT EXISTS trade_ideas (
 
 CREATE INDEX IF NOT EXISTS idx_iv_points_snapshot_id ON iv_points(snapshot_id);
 CREATE INDEX IF NOT EXISTS idx_surface_metrics_snapshot_id ON surface_metrics(snapshot_id);
+CREATE INDEX IF NOT EXISTS idx_alert_outcomes_label ON alert_outcomes(outcome_label);

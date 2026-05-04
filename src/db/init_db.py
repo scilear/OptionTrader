@@ -79,9 +79,51 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_pass BOOLEAN")
         if "qc_reason_codes" not in surface_columns:
             conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_reason_codes TEXT")
+        if "alert_outcomes" not in {
+            row[0] for row in conn.execute("SHOW TABLES").fetchall()
+        }:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS alert_outcomes (
+                    alert_id INTEGER PRIMARY KEY,
+                    horizon_days INTEGER NOT NULL,
+                    outcome_label TEXT NOT NULL,
+                    resolved_snapshot_id INTEGER,
+                    resolved_ts TIMESTAMP,
+                    base_metric_value DOUBLE,
+                    resolved_metric_value DOUBLE,
+                    reversion_ratio DOUBLE,
+                    outcome_source TEXT,
+                    evaluated_at TIMESTAMP NOT NULL,
+                    FOREIGN KEY(alert_id) REFERENCES alerts(alert_id)
+                )
+                """
+            )
+        alert_outcome_columns = _table_columns(conn, "alert_outcomes")
+        if "horizon_days" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN horizon_days INTEGER")
+        if "outcome_label" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN outcome_label TEXT")
+        if "resolved_snapshot_id" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN resolved_snapshot_id INTEGER")
+        if "resolved_ts" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN resolved_ts TIMESTAMP")
+        if "base_metric_value" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN base_metric_value DOUBLE")
+        if "resolved_metric_value" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN resolved_metric_value DOUBLE")
+        if "reversion_ratio" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN reversion_ratio DOUBLE")
+        if "outcome_source" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN outcome_source TEXT")
+        if "evaluated_at" not in alert_outcome_columns:
+            conn.execute("ALTER TABLE alert_outcomes ADD COLUMN evaluated_at TIMESTAMP")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_iv_points_snapshot_id ON iv_points(snapshot_id)")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_surface_metrics_snapshot_id ON surface_metrics(snapshot_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_alert_outcomes_label ON alert_outcomes(outcome_label)"
         )
     finally:
         conn.close()

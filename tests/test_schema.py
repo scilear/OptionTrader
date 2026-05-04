@@ -14,6 +14,7 @@ def test_schema_executes():
         tables = conn.execute("SHOW TABLES").fetchall()
         assert ("option_quotes",) in tables
         assert ("pipeline_runs",) in tables
+        assert ("alert_outcomes",) in tables
         cols = conn.execute("DESCRIBE option_quotes").fetchall()
         col_names = {c[0] for c in cols}
         assert "option_right" in col_names
@@ -58,6 +59,7 @@ def test_schema_executes():
         }
         assert ("idx_iv_points_snapshot_id", "iv_points") in indexes
         assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
+        assert ("idx_alert_outcomes_label", "alert_outcomes") in indexes
     finally:
         conn.close()
 
@@ -180,6 +182,7 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
         }
         assert ("idx_iv_points_snapshot_id", "iv_points") in indexes
         assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
+        assert ("idx_alert_outcomes_label", "alert_outcomes") in indexes
     finally:
         migrated.close()
 

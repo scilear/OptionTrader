@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import sys
+from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root) not in sys.path:
@@ -15,6 +16,8 @@ from src.core.bootstrap import ensure_repo_root_on_path
 ensure_repo_root_on_path()
 
 from src.db.connection import connect
+from src.db.init_db import init_db
+from scripts.evaluate_alert_outcomes import evaluate_alert_outcomes
 
 
 DEFAULT_START_TS = "2026-04-01T00:00:00Z"
@@ -79,6 +82,84 @@ def _fetch_alert_stats(
     return int(total), {str(k): int(v) for k, v in by_bucket_rows}, int(snapshot_count)
 
 
+def _fetch_precision_metrics(
+    underlying: str,
+    start_ts: str,
+    end_ts: str,
+    lineage_prefix: str,
+    horizon_days: int,
+) -> dict[str, Any]:
+    conn = connect()
+    try:
+        outcome_rows = conn.execute(
+            """
+            SELECT
+              ao.outcome_label,
+              COALESCE(a.regime_label, 'Unknown') AS regime_label,
+              COUNT(*)
+            FROM alert_outcomes ao
+            JOIN alerts a ON a.alert_id = ao.alert_id
+            JOIN snapshots s ON s.snapshot_id = a.snapshot_id
+            JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            WHERE s.underlying = ?
+              AND s.ts >= ?
+              AND s.ts <= ?
+              AND pr.code_version LIKE ?
+              AND ao.horizon_days = ?
+            GROUP BY 1, 2
+            """,
+            (underlying, start_ts, end_ts, f"{lineage_prefix}%", horizon_days),
+        ).fetchall()
+
+        total_rows = conn.execute(
+            """
+            SELECT
+              COUNT(*) AS total_alerts,
+              SUM(CASE WHEN COALESCE(a.regime_label, 'Unknown') = 'Transition' THEN 1 ELSE 0 END) AS transition_alerts
+            FROM alerts a
+            JOIN snapshots s ON s.snapshot_id = a.snapshot_id
+            JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            WHERE s.underlying = ?
+              AND s.ts >= ?
+              AND s.ts <= ?
+              AND pr.code_version LIKE ?
+            """,
+            (underlying, start_ts, end_ts, f"{lineage_prefix}%"),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    tp = 0
+    fp = 0
+    transition_fp = 0
+    outcomes_observed = 0
+    for label, regime_label, count in outcome_rows:
+        lbl = str(label).lower()
+        c = int(count)
+        outcomes_observed += c
+        if lbl == "tp":
+            tp += c
+        elif lbl == "fp":
+            fp += c
+            if str(regime_label) == "Transition":
+                transition_fp += c
+
+    precision = (tp / (tp + fp)) if (tp + fp) > 0 else None
+    transition_alerts = int(total_rows[1] or 0)
+    transition_fp_density = (
+        (transition_fp / transition_alerts) if transition_alerts > 0 else None
+    )
+    return {
+        "tp": tp,
+        "fp": fp,
+        "outcomes_observed": outcomes_observed,
+        "precision": precision,
+        "transition_alerts": transition_alerts,
+        "transition_fp": transition_fp,
+        "transition_fp_density": transition_fp_density,
+    }
+
+
 def _pct_delta(candidate: int, baseline: int) -> float | None:
     if baseline == 0:
         return None
@@ -100,8 +181,15 @@ def main() -> None:
     parser.add_argument("--underlying", default=DEFAULT_UNDERLYING)
     parser.add_argument("--baseline-lineage", default=DEFAULT_BASELINE_LINEAGE)
     parser.add_argument("--candidate-lineage", default=DEFAULT_CANDIDATE_LINEAGE)
+    parser.add_argument("--horizon-days", type=int, default=5)
+    parser.add_argument("--skip-outcome-refresh", action="store_true")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     args = parser.parse_args()
+
+    init_db()
+
+    if not args.skip_outcome_refresh:
+        evaluate_alert_outcomes(horizon_days=args.horizon_days, overwrite=False)
 
     baseline_alert_count, baseline_buckets, baseline_snapshot_count = _fetch_alert_stats(
         args.underlying,
@@ -116,18 +204,52 @@ def main() -> None:
         args.candidate_lineage,
     )
 
+    baseline_precision = _fetch_precision_metrics(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.baseline_lineage,
+        args.horizon_days,
+    )
+    candidate_precision = _fetch_precision_metrics(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.candidate_lineage,
+        args.horizon_days,
+    )
+
     min_sample_pass = candidate_alert_count >= 50 and candidate_buckets and all(
         count >= 10 for count in candidate_buckets.values()
     )
-    precision_blocked_reason = "missing_outcome_labels"
     precision_delta = None
     precision_gate_pass = False
+    precision_blocked_reason = None
+    if (
+        baseline_precision["precision"] is None
+        or candidate_precision["precision"] is None
+    ):
+        precision_blocked_reason = "missing_outcome_labels"
+    else:
+        precision_delta = (
+            float(candidate_precision["precision"]) - float(baseline_precision["precision"])
+        )
+        precision_gate_pass = precision_delta >= 0.03
     volume_delta_pct = _pct_delta(candidate_alert_count, baseline_alert_count)
     volume_gate_pass = (
         volume_delta_pct is not None and -15.0 <= volume_delta_pct <= 15.0
     )
     transition_fp_worsening = None
     transition_fp_gate_pass = False
+    if (
+        baseline_precision["transition_fp_density"] is not None
+        and candidate_precision["transition_fp_density"] is not None
+    ):
+        transition_fp_worsening = (
+            float(candidate_precision["transition_fp_density"])
+            - float(baseline_precision["transition_fp_density"])
+        )
+        transition_fp_gate_pass = transition_fp_worsening <= 0.02
 
     overall_gate_pass = all(
         [
@@ -168,6 +290,8 @@ def main() -> None:
             "candidate_alerts_total": candidate_alert_count,
             "baseline_alerts_by_regime": baseline_buckets,
             "candidate_alerts_by_regime": candidate_buckets,
+            "baseline_outcomes": baseline_precision,
+            "candidate_outcomes": candidate_precision,
         },
         "gates": {
             "min_sample_pass": min_sample_pass,
@@ -181,7 +305,15 @@ def main() -> None:
             "overall_pass": overall_gate_pass,
         },
         "feature_decisions": feature_decisions,
-        "status": "blocked_pending_precision_labels",
+        "status": (
+            "passed"
+            if overall_gate_pass
+            else (
+                "blocked_pending_precision_labels"
+                if precision_blocked_reason
+                else "failed_gate"
+            )
+        ),
     }
 
     lines = [
