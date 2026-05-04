@@ -118,6 +118,14 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE alert_outcomes ADD COLUMN outcome_source TEXT")
         if "evaluated_at" not in alert_outcome_columns:
             conn.execute("ALTER TABLE alert_outcomes ADD COLUMN evaluated_at TIMESTAMP")
+        alert_columns = _table_columns(conn, "alerts")
+        if "signal_state" not in alert_columns:
+            conn.execute("ALTER TABLE alerts ADD COLUMN signal_state TEXT")
+        if "transition_reason_code" not in alert_columns:
+            conn.execute("ALTER TABLE alerts ADD COLUMN transition_reason_code TEXT")
+        conn.execute(
+            "UPDATE alerts SET signal_state = 'ExecutionReady' WHERE signal_state IS NULL"
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_iv_points_snapshot_id ON iv_points(snapshot_id)")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_surface_metrics_snapshot_id ON surface_metrics(snapshot_id)"

@@ -119,6 +119,8 @@ CREATE TABLE IF NOT EXISTS alerts (
   confidence_tier TEXT NOT NULL,
   persistence_count INTEGER NOT NULL,
   regime_label TEXT NOT NULL,
+  signal_state TEXT NOT NULL,
+  transition_reason_code TEXT,
   explain TEXT,
   FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
 );

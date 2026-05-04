@@ -72,6 +72,8 @@ def test_compute_for_snapshot_passes_configured_pricing_inputs(monkeypatch, tmp_
     config["storage"]["path"] = str(tmp_path / "pricing.duckdb")
     config["pricing"]["rate"] = 0.03
     config["pricing"]["dividend_yield"] = 0.01
+    config["alerts"]["lifecycle"]["min_fit_confidence_validated"] = 0.0
+    config["alerts"]["lifecycle"]["min_fit_confidence_execution"] = 0.0
     config_path = tmp_path / "config.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False))
     monkeypatch.setenv("OPTIONTRADER_CONFIG", str(config_path))
@@ -83,7 +85,7 @@ def test_compute_for_snapshot_passes_configured_pricing_inputs(monkeypatch, tmp_
         CREATE TABLE option_quotes (snapshot_id INTEGER, expiry DATE, strike DOUBLE, option_right TEXT, bid DOUBLE, ask DOUBLE);
         CREATE TABLE iv_points (iv_id INTEGER, snapshot_id INTEGER, expiry DATE, delta_bucket TEXT, iv_mid DOUBLE, iv_bid DOUBLE, iv_ask DOUBLE, solve_status TEXT, quality_score DOUBLE, fit_model_id TEXT, fit_residual DOUBLE, fit_support INTEGER, fit_confidence DOUBLE, fit_reason_codes TEXT);
         CREATE TABLE surface_metrics (metric_id INTEGER, snapshot_id INTEGER, expiry_bucket TEXT, atm_iv_mid DOUBLE, rr25_mid DOUBLE, rr10_mid DOUBLE, fly25_mid DOUBLE, fly10_mid DOUBLE, term_slope_mid DOUBLE, atm_iv_worst DOUBLE, rr25_worst DOUBLE, rr10_worst DOUBLE, fly25_worst DOUBLE, fly10_worst DOUBLE, term_slope_worst DOUBLE, fit_model_id TEXT, fit_residual DOUBLE, fit_support INTEGER, fit_confidence DOUBLE, surface_quality_score DOUBLE, qc_pass BOOLEAN, qc_reason_codes TEXT);
-        CREATE TABLE alerts (alert_id INTEGER, snapshot_id INTEGER, alert_type TEXT, expiry_bucket TEXT, severity DOUBLE, zscore_mid DOUBLE, zscore_worst DOUBLE, tradability_score DOUBLE, confidence_tier TEXT, persistence_count INTEGER, regime_label TEXT, explain TEXT);
+        CREATE TABLE alerts (alert_id INTEGER, snapshot_id INTEGER, alert_type TEXT, expiry_bucket TEXT, severity DOUBLE, zscore_mid DOUBLE, zscore_worst DOUBLE, tradability_score DOUBLE, confidence_tier TEXT, persistence_count INTEGER, regime_label TEXT, signal_state TEXT, transition_reason_code TEXT, explain TEXT);
         CREATE TABLE trade_ideas (trade_id INTEGER, alert_id INTEGER, template TEXT, legs TEXT, price_mid DOUBLE, price_worst DOUBLE, greeks TEXT, scenarios TEXT, risk_flags TEXT);
         CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT, regime_config_hash TEXT);
         """
@@ -136,6 +138,7 @@ def test_compute_for_snapshot_passes_configured_pricing_inputs(monkeypatch, tmp_
                 "zscore_mid": 2.5,
                 "zscore_worst": 2.2,
                 "persistence": 2,
+                "effective_severity": 2.5,
             }
         ]
 
@@ -152,6 +155,7 @@ def test_compute_for_snapshot_passes_configured_pricing_inputs(monkeypatch, tmp_
     )
     monkeypatch.setattr("src.core.compute_snapshot.compute_alerts", fake_compute_alerts)
     monkeypatch.setattr("src.core.compute_snapshot.build_trade_ideas", fake_build_trade_ideas)
+    monkeypatch.setattr("src.core.compute_snapshot.compute_tradability_score", lambda *_a, **_k: 0.7)
 
     compute_for_snapshot(1, purge_existing=True)
 

@@ -133,7 +133,8 @@ def test_compute_for_snapshot_is_repeatable(monkeypatch):
     first_alerts = conn.execute(
         """
         SELECT alert_type, expiry_bucket, severity, zscore_mid, zscore_worst,
-               tradability_score, confidence_tier, persistence_count, regime_label, explain
+               tradability_score, confidence_tier, persistence_count, regime_label,
+               signal_state, transition_reason_code, explain
         FROM alerts
         ORDER BY alert_type, expiry_bucket
         """
@@ -159,7 +160,8 @@ def test_compute_for_snapshot_is_repeatable(monkeypatch):
     second_alerts = conn.execute(
         """
         SELECT alert_type, expiry_bucket, severity, zscore_mid, zscore_worst,
-               tradability_score, confidence_tier, persistence_count, regime_label, explain
+               tradability_score, confidence_tier, persistence_count, regime_label,
+               signal_state, transition_reason_code, explain
         FROM alerts
         ORDER BY alert_type, expiry_bucket
         """

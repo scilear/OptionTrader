@@ -20,6 +20,15 @@ def test_explain_payload_schema_pass_path():
         surface_qc_passed=True,
         surface_qc_reasons=[],
         surface_quality_score=0.9,
+        regime_hash_mismatch=False,
+        lifecycle={
+            "signal_state": "ExecutionReady",
+            "transition_reason_code": "execution_ready",
+            "quality_blockers": [],
+            "execution_blockers": [],
+            "worst_case_coherent": True,
+            "uncertainty_score": 0.0,
+        },
     )
 
     encoded = json.dumps(payload)
@@ -32,8 +41,11 @@ def test_explain_payload_schema_pass_path():
         "regime",
         "tradability",
         "surface_qc",
+        "worst_case_coherence",
+        "regime_hash",
     }
     assert all(gate["status"] == "PASS" for gate in decoded["gates"].values())
+    assert decoded["lifecycle"]["signal_state"] == "ExecutionReady"
 
 
 def test_explain_payload_schema_block_path():
@@ -53,6 +65,15 @@ def test_explain_payload_schema_block_path():
         surface_qc_passed=False,
         surface_qc_reasons=["degraded_surface_fit"],
         surface_quality_score=0.1,
+        regime_hash_mismatch=True,
+        lifecycle={
+            "signal_state": "Candidate",
+            "transition_reason_code": "surface_qc_failed",
+            "quality_blockers": ["surface_qc_failed"],
+            "execution_blockers": [],
+            "worst_case_coherent": False,
+            "uncertainty_score": 1.0,
+        },
     )
 
     assert payload["gates"]["zscore"]["status"] == "FAIL"
@@ -61,3 +82,5 @@ def test_explain_payload_schema_block_path():
     assert payload["gates"]["regime"]["status"] == "FAIL"
     assert payload["gates"]["tradability"]["status"] == "FAIL"
     assert payload["gates"]["surface_qc"]["status"] == "FAIL"
+    assert payload["gates"]["worst_case_coherence"]["status"] == "FAIL"
+    assert payload["gates"]["regime_hash"]["status"] == "FAIL"

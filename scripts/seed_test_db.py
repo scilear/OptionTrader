@@ -89,10 +89,11 @@ def seed(conn: duckdb.DuckDBPyConnection) -> None:
         INSERT INTO alerts (
             alert_id, snapshot_id, alert_type, expiry_bucket, severity,
             zscore_mid, zscore_worst, tradability_score,
-            confidence_tier, persistence_count, regime_label, explain
+            confidence_tier, persistence_count, regime_label,
+            signal_state, transition_reason_code, explain
         ) VALUES
-          (DEFAULT, ?, 'RR_EXTREME', '30D', 2.5, 2.5, 2.1, 0.7, 'Core', 2, 'Transition', ?),
-          (DEFAULT, ?, 'FLY_EXTREME', '30D', 2.7, 2.7, 2.2, 0.8, 'Full', 2, 'Transition', ?)
+          (DEFAULT, ?, 'RR_EXTREME', '30D', 2.5, 2.5, 2.1, 0.7, 'Core', 2, 'Transition', 'ExecutionReady', 'execution_ready', ?),
+          (DEFAULT, ?, 'FLY_EXTREME', '30D', 2.7, 2.7, 2.2, 0.8, 'Full', 2, 'Transition', 'ExecutionReady', 'execution_ready', ?)
         """,
         (snapshot_ids[2], explain_rr, snapshot_ids[2], explain_fly),
     )

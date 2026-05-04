@@ -51,6 +51,11 @@ def test_schema_executes():
         snapshot_col_names = {c[0] for c in snapshot_cols}
         assert "run_id" in snapshot_col_names
 
+        alert_cols = conn.execute("DESCRIBE alerts").fetchall()
+        alert_col_names = {c[0] for c in alert_cols}
+        assert "signal_state" in alert_col_names
+        assert "transition_reason_code" in alert_col_names
+
         indexes = {
             (row[0], row[1])
             for row in conn.execute(
@@ -180,6 +185,12 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
                 "SELECT index_name, table_name FROM duckdb_indexes()"
             ).fetchall()
         }
+
+        alert_cols = migrated.execute("DESCRIBE alerts").fetchall()
+        alert_col_names = {col[0] for col in alert_cols}
+        assert "signal_state" in alert_col_names
+        assert "transition_reason_code" in alert_col_names
+
         assert ("idx_iv_points_snapshot_id", "iv_points") in indexes
         assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
         assert ("idx_alert_outcomes_label", "alert_outcomes") in indexes

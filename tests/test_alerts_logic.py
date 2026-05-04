@@ -38,9 +38,12 @@ def test_alert_emits_when_signal_and_persistence_pass():
             "rr25_worst": [0.0, 0.0, 3.0, 3.1, 3.2],
         }
     )
-    alerts = compute_alerts(data, window=5, threshold=0.5, persistence_required=2)
+    alerts = compute_alerts(data, window=5, threshold=0.25, persistence_required=2)
     assert len(alerts) == 1
     assert alerts[0]["alert_type"] == "RR_EXTREME"
+    assert alerts[0]["score_method_mid"] in {"mad", "iqr", "std"}
+    assert alerts[0]["score_method_worst"] in {"mad", "iqr", "std"}
+    assert alerts[0]["evidence_overlap"]["detected"] is False
 
 
 def test_pessimistic_gate_toggle_allows_mid_only_signal_when_disabled():
@@ -61,3 +64,90 @@ def test_pessimistic_gate_toggle_allows_mid_only_signal_when_disabled():
     )
     assert len(alerts) == 1
     assert alerts[0]["alert_type"] == "RR_EXTREME"
+
+
+def test_sparse_and_flat_series_emit_no_alert():
+    sparse = pd.DataFrame(
+        {
+            "ts": pd.date_range("2026-01-01", periods=2, freq="D"),
+            "expiry_bucket": ["30D"] * 2,
+            "rr25_mid": [0.0, 3.0],
+            "rr25_worst": [0.0, 3.0],
+        }
+    )
+    flat = pd.DataFrame(
+        {
+            "ts": pd.date_range("2026-01-01", periods=6, freq="D"),
+            "expiry_bucket": ["30D"] * 6,
+            "rr25_mid": [1.0] * 6,
+            "rr25_worst": [1.0] * 6,
+        }
+    )
+
+    sparse_alerts = compute_alerts(
+        sparse,
+        window=6,
+        threshold=2.0,
+        persistence_required=1,
+    )
+    flat_alerts = compute_alerts(
+        flat,
+        window=6,
+        threshold=2.0,
+        persistence_required=1,
+    )
+
+    assert sparse_alerts == []
+    assert flat_alerts == []
+
+
+def test_overlap_guardrail_keeps_only_dominant_signal():
+    data = pd.DataFrame(
+        {
+            "ts": pd.date_range("2026-01-01", periods=6, freq="D"),
+            "expiry_bucket": ["30D"] * 6,
+            "rr25_mid": [0.0, 0.0, 0.0, 2.0, 2.1, 2.2],
+            "rr25_worst": [0.0, 0.0, 0.0, 2.0, 2.1, 2.2],
+            "fly25_mid": [0.0, 0.0, 0.0, 1.7, 1.8, 1.9],
+            "fly25_worst": [0.0, 0.0, 0.0, 1.7, 1.8, 1.9],
+        }
+    )
+    alerts = compute_alerts(
+        data,
+        window=6,
+        threshold=0.50,
+        persistence_required=1,
+    )
+
+    assert len(alerts) == 1
+    assert alerts[0]["alert_type"] in {"RR_EXTREME", "FLY_EXTREME"}
+    overlap = alerts[0]["evidence_overlap"]
+    assert overlap["detected"] is True
+    assert overlap["candidate_count"] == 2
+    assert set(overlap["suppressed_alert_types"]) == {"RR_EXTREME", "FLY_EXTREME"} - {
+        alerts[0]["alert_type"]
+    }
+    assert alerts[0]["effective_severity"] < abs(alerts[0]["zscore_mid"])
+
+
+def test_overlap_guardrail_does_not_merge_opposing_signals():
+    data = pd.DataFrame(
+        {
+            "ts": pd.date_range("2026-01-01", periods=6, freq="D"),
+            "expiry_bucket": ["30D"] * 6,
+            "rr25_mid": [0.0, 0.0, 0.0, 2.0, 2.1, 2.2],
+            "rr25_worst": [0.0, 0.0, 0.0, 2.0, 2.1, 2.2],
+            "fly25_mid": [0.0, 0.0, 0.0, -1.7, -1.8, -1.9],
+            "fly25_worst": [0.0, 0.0, 0.0, -1.7, -1.8, -1.9],
+        }
+    )
+    alerts = compute_alerts(
+        data,
+        window=6,
+        threshold=0.50,
+        persistence_required=1,
+    )
+
+    assert len(alerts) == 2
+    assert {alert["alert_type"] for alert in alerts} == {"RR_EXTREME", "FLY_EXTREME"}
+    assert all(alert["evidence_overlap"]["detected"] is False for alert in alerts)

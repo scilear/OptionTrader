@@ -222,7 +222,8 @@ def alerts_page():
     alerts = query_df(
         """
         SELECT alert_id, alert_type, expiry_bucket, severity, tradability_score,
-               regime_label, confidence_tier, zscore_mid, zscore_worst,
+               regime_label, confidence_tier, signal_state,
+               transition_reason_code, zscore_mid, zscore_worst,
                persistence_count
         FROM alerts
         ORDER BY severity DESC
@@ -235,10 +236,12 @@ def alerts_page():
     types = ["All"] + sorted(alerts["alert_type"].unique().tolist())
     tiers = ["All"] + sorted(alerts["confidence_tier"].unique().tolist())
     regimes = ["All"] + sorted(alerts["regime_label"].unique().tolist())
+    states = ["All"] + sorted(alerts["signal_state"].unique().tolist())
 
     sel_type = st.sidebar.selectbox("Type", types)
     sel_tier = st.sidebar.selectbox("Tier", tiers)
     sel_regime = st.sidebar.selectbox("Regime", regimes)
+    sel_state = st.sidebar.selectbox("Signal state", states)
     min_severity = st.sidebar.slider("Min severity", 0.0, 5.0, 2.0, 0.1)
     min_tradability = st.sidebar.slider("Min tradability", 0.0, 1.0, 0.0, 0.05)
 
@@ -249,6 +252,8 @@ def alerts_page():
         filtered = filtered[filtered["confidence_tier"] == sel_tier]
     if sel_regime != "All":
         filtered = filtered[filtered["regime_label"] == sel_regime]
+    if sel_state != "All":
+        filtered = filtered[filtered["signal_state"] == sel_state]
     filtered = filtered[
         (filtered["severity"] >= min_severity)
         & (filtered["tradability_score"] >= min_tradability)
@@ -389,7 +394,8 @@ def alert_detail_page():
     detail = query_df(
         """
         SELECT alert_id, snapshot_id, alert_type, expiry_bucket, severity, zscore_mid, zscore_worst,
-               tradability_score, confidence_tier, persistence_count, regime_label, explain
+               tradability_score, confidence_tier, persistence_count, regime_label,
+               signal_state, transition_reason_code, explain
         FROM alerts
         WHERE alert_id = ?
         """,
