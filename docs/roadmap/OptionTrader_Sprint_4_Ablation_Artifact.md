@@ -1,6 +1,6 @@
 # OptionTrader Sprint 4 Ablation Artifact
 
-Generated at: 2026-05-04T09:02:32.976648Z
+Generated at: 2026-05-04T12:39:27.150819Z
 Source script: `scripts/generate_regime_ablation_artifact.py`
 
 ## Locked Gate Evaluation
@@ -59,7 +59,7 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
       "transition_fp": 0,
       "transition_fp_density": null
     },
-    "baseline_snapshot_count": 0,
+    "baseline_snapshot_count": 32,
     "candidate_alerts_by_regime": {},
     "candidate_alerts_total": 0,
     "candidate_outcomes": {
@@ -71,7 +71,7 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
       "transition_fp": 0,
       "transition_fp_density": null
     },
-    "candidate_snapshot_count": 0
+    "candidate_snapshot_count": 32
   },
   "status": "blocked_pending_precision_labels",
   "window": {
