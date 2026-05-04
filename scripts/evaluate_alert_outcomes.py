@@ -45,7 +45,8 @@ def evaluate_alert_outcomes(horizon_days: int = 5, overwrite: bool = False) -> i
               a.alert_type,
               a.expiry_bucket,
               a.snapshot_id,
-              s.ts
+              s.ts,
+              s.underlying
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             ORDER BY a.alert_id
@@ -53,7 +54,7 @@ def evaluate_alert_outcomes(horizon_days: int = 5, overwrite: bool = False) -> i
         ).fetchall()
 
         inserted = 0
-        for alert_id, alert_type, expiry_bucket, snapshot_id, snapshot_ts in rows:
+        for alert_id, alert_type, expiry_bucket, snapshot_id, snapshot_ts, underlying in rows:
             metric_col = METRIC_BY_ALERT_TYPE.get(str(alert_type))
             if metric_col is None:
                 continue
@@ -84,12 +85,13 @@ def evaluate_alert_outcomes(horizon_days: int = 5, overwrite: bool = False) -> i
                 FROM snapshots s
                 JOIN surface_metrics sm ON sm.snapshot_id = s.snapshot_id
                 WHERE s.ts >= (? + (? * INTERVAL '1 day'))
+                  AND s.underlying = ?
                   AND sm.expiry_bucket = ?
                   AND sm.{metric_col} IS NOT NULL
                 ORDER BY s.ts ASC
                 LIMIT 1
                 """,
-                (snapshot_ts, horizon_days, expiry_bucket),
+                (snapshot_ts, horizon_days, underlying, expiry_bucket),
             ).fetchone()
             if not resolved_row:
                 continue
