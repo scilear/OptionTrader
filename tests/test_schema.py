@@ -1,4 +1,5 @@
 import duckdb
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.db.init_db import init_db
@@ -35,6 +36,15 @@ def test_schema_executes():
         assert "surface_quality_score" in surface_col_names
         assert "qc_pass" in surface_col_names
         assert "qc_reason_codes" in surface_col_names
+
+        regime_cols = conn.execute("DESCRIBE regime_state").fetchall()
+        regime_col_names = {c[0] for c in regime_cols}
+        assert "vix_spot" in regime_col_names
+        assert "rv20_value" in regime_col_names
+        assert "drawdown_value" in regime_col_names
+        assert "event_score" in regime_col_names
+        assert "stress_proxy_score" in regime_col_names
+        assert "decomposition" in regime_col_names
 
         snapshot_cols = conn.execute("DESCRIBE snapshots").fetchall()
         snapshot_col_names = {c[0] for c in snapshot_cols}
@@ -172,3 +182,33 @@ def test_init_db_migrates_existing_snapshots_table(monkeypatch, tmp_path):
         assert ("idx_surface_metrics_snapshot_id", "surface_metrics") in indexes
     finally:
         migrated.close()
+
+
+def test_fresh_init_db_supports_compute_regime_state(monkeypatch, tmp_path):
+    db_path = tmp_path / "fresh_compute.duckdb"
+    config = yaml.safe_load(Path("config/config-test.yaml").read_text())
+    config["storage"]["path"] = str(db_path)
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump(config, sort_keys=False))
+    monkeypatch.setenv("OPTIONTRADER_CONFIG", str(config_path))
+
+    init_db()
+
+    conn = duckdb.connect(str(db_path))
+    try:
+        start = datetime(2026, 1, 1)
+        for day in range(1, 85):
+            conn.execute(
+                """
+                INSERT INTO snapshots (
+                    snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
+                ) VALUES (DEFAULT, NULL, ?, 'SPX', ?, 'test', 'mid', NULL)
+                """,
+                (start + timedelta(days=day - 1), 100.0 + day),
+            )
+    finally:
+        conn.close()
+
+    from src.core.regime import compute_regime_state
+
+    assert compute_regime_state() > 0

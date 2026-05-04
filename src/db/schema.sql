@@ -98,7 +98,13 @@ CREATE TABLE IF NOT EXISTS regime_state (
   drawdown_percent DOUBLE NOT NULL,
   regime_score INTEGER NOT NULL,
   regime_label TEXT NOT NULL,
-  regime_config_hash TEXT
+  regime_config_hash TEXT,
+  vix_spot DOUBLE,
+  rv20_value DOUBLE,
+  drawdown_value DOUBLE,
+  event_score DOUBLE,
+  stress_proxy_score DOUBLE,
+  decomposition TEXT
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
