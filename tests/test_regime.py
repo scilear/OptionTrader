@@ -2,8 +2,9 @@ import duckdb
 import pandas as pd
 import json
 from pathlib import Path
+import logging
 
-from src.core.regime import RegimeParams, compute_regime_state
+from src.core.regime import RegimeParams, compute_regime_state, regime_threshold_hash
 
 
 def _create_regime_state_table(conn):
@@ -259,6 +260,15 @@ def test_regime_stress_proxy_signal_can_change_label(monkeypatch):
 
     monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
 
+    def proxy_fetch(ticker, date_index):
+        if ticker == "^VIX":
+            return {d: 10.0 for d in date_index}
+        if ticker:
+            return {d: float(i + 1) for i, d in enumerate(date_index)}
+        return {}
+
+    monkeypatch.setattr("src.core.regime._fetch_ticker_close_series", proxy_fetch)
+
     no_proxy_params = RegimeParams(
         weight_vix=0.0,
         weight_rv20=0.0,
@@ -291,3 +301,97 @@ def test_regime_stress_proxy_signal_can_change_label(monkeypatch):
 
     assert no_proxy_label == "Calm"
     assert with_proxy_label in {"Transition", "Stress"}
+
+
+def test_regime_warmup_logs_warning(monkeypatch, caplog):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    # Deliberately below rolling windows.
+    dates = pd.date_range("2026-01-01", periods=5, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute(
+            "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
+            (d.to_pydatetime(), 100 + i),
+        )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+    with caplog.at_level(logging.WARNING, logger="regime"):
+        assert compute_regime_state() == 0
+    assert "Regime warm-up incomplete" in caplog.text
+
+
+def test_regime_hash_normalizes_equivalent_event_paths(tmp_path):
+    event_file = tmp_path / "events.yaml"
+    event_file.write_text("events: []\n")
+    params_a = RegimeParams(event_path=str(event_file))
+    params_b = RegimeParams(event_path=str(event_file.resolve()))
+    assert regime_threshold_hash(params_a) == regime_threshold_hash(params_b)
+
+
+def test_regime_vix_signal_changes_label_independent_of_rv(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    dates = pd.date_range("2026-01-01", periods=90, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), 100 + i))
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+
+    params = RegimeParams(
+        vix_pct_calm=60,
+        vix_pct_stress=90,
+        weight_vix=1.0,
+        weight_rv20=0.0,
+        weight_drawdown=0.0,
+        weight_event=0.0,
+        weight_stress_proxy=0.0,
+        score_calm_max=0.5,
+        score_stress_min=1.1,
+    )
+
+    def low_vix_fetch(ticker, date_index):
+        if ticker == "^VIX":
+            return {d: 10.0 for d in date_index}
+        return {}
+
+    def high_vix_fetch(ticker, date_index):
+        if ticker == "^VIX":
+            return {d: float(i + 1) for i, d in enumerate(date_index)}
+        return {}
+
+    monkeypatch.setattr("src.core.regime._fetch_ticker_close_series", low_vix_fetch)
+    compute_regime_state(params=params)
+    low_label = conn.execute(
+        "SELECT regime_label FROM regime_state ORDER BY regime_date DESC LIMIT 1"
+    ).fetchone()[0]
+
+    monkeypatch.setattr("src.core.regime._fetch_ticker_close_series", high_vix_fetch)
+    compute_regime_state(params=params)
+    high_label = conn.execute(
+        "SELECT regime_label FROM regime_state ORDER BY regime_date DESC LIMIT 1"
+    ).fetchone()[0]
+
+    assert low_label == "Calm"
+    assert high_label in {"Transition", "Stress"}

@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 import yaml
@@ -58,7 +59,28 @@ def regime_params_from_config(config: dict | None = None) -> RegimeParams:
     )
 
 
+def _normalize_event_path(path_value: str) -> str:
+    path = Path(path_value).expanduser()
+    try:
+        resolved = path.resolve(strict=False)
+        repo_root = Path(__file__).resolve().parents[2]
+        try:
+            return str(resolved.relative_to(repo_root))
+        except ValueError:
+            return str(resolved)
+    except Exception:
+        return str(path)
+
+
+def _event_file_digest(path_value: str) -> str | None:
+    path = Path(path_value)
+    if not path.exists() or not path.is_file():
+        return None
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def regime_threshold_hash(params: RegimeParams) -> str:
+    normalized_event_path = _normalize_event_path(params.event_path)
     payload = {
         "vix_pct_calm": params.vix_pct_calm,
         "vix_pct_stress": params.vix_pct_stress,
@@ -73,7 +95,8 @@ def regime_threshold_hash(params: RegimeParams) -> str:
         "weight_stress_proxy": params.weight_stress_proxy,
         "score_calm_max": params.score_calm_max,
         "score_stress_min": params.score_stress_min,
-        "event_path": params.event_path,
+        "event_path": normalized_event_path,
+        "event_file_digest": _event_file_digest(params.event_path),
         "stress_proxy_ticker": params.stress_proxy_ticker,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -112,12 +135,60 @@ def _load_event_scores(event_path: str) -> dict[date, float]:
     return scores
 
 
-def _stress_proxy_score(proxy_ticker: str, rv20_pct: float) -> float:
-    if not proxy_ticker:
+def _fetch_ticker_close_series(
+    ticker: str,
+    dates: Iterable[date],
+) -> dict[date, float]:
+    if not ticker:
+        return {}
+    date_list = sorted(set(dates))
+    if not date_list:
+        return {}
+    start = pd.Timestamp(date_list[0]) - pd.Timedelta(days=5)
+    end = pd.Timestamp(date_list[-1]) + pd.Timedelta(days=5)
+    try:
+        import yfinance as yf  # local import to keep runtime optional
+
+        data = yf.download(
+            ticker,
+            start=start.strftime("%Y-%m-%d"),
+            end=end.strftime("%Y-%m-%d"),
+            progress=False,
+            auto_adjust=False,
+        )
+    except Exception:
+        return {}
+    if data is None or data.empty or "Close" not in data.columns:
+        return {}
+    close = data["Close"].dropna()
+    if isinstance(close, pd.DataFrame):
+        if close.empty:
+            return {}
+        close = close.iloc[:, 0]
+    if close.empty:
+        return {}
+    return {
+        pd.Timestamp(ts).date(): float(value)
+        for ts, value in close.items()
+    }
+
+
+def _percentiles_from_daily_values(values: dict[date, float]) -> dict[date, float]:
+    if not values:
+        return {}
+    series = pd.Series(values).sort_index()
+    pct = series.rank(pct=True) * 100.0
+    return {idx: float(val) for idx, val in pct.items()}
+
+
+def _stress_proxy_score(stress_proxy_pct: float | None) -> float:
+    if stress_proxy_pct is None:
         return 0.0
-    # S4-02 v1 path: deterministic proxy derived from volatility percentile.
-    # External market fetch adapters are deferred; this remains reproducible and testable.
-    return max(0.0, min(2.0, float(rv20_pct) / 50.0))
+    if stress_proxy_pct < 40.0:
+        return 0.0
+    if stress_proxy_pct < 80.0:
+        return 1.0
+    return 2.0
 
 
 def compute_regime_state(params: RegimeParams | None = None) -> int:
@@ -168,18 +239,35 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
         daily["dd_pct"] = dd_pct
         event_scores_by_date = _load_event_scores(params.event_path)
 
+        date_index = [idx.date() for idx in daily.index]
+        vix_values = _fetch_ticker_close_series("^VIX", date_index)
+        vix_pct_by_date = _percentiles_from_daily_values(vix_values)
+        stress_values = _fetch_ticker_close_series(params.stress_proxy_ticker, date_index)
+        stress_pct_by_date = _percentiles_from_daily_values(stress_values)
+
+        if daily["rv20"].isna().all() or daily["drawdown"].isna().all():
+            logger.warning(
+                "Regime warm-up incomplete: insufficient lookback history for rolling features "
+                "(rv_window=%s, dd_window=%s).",
+                params.rv_window,
+                params.dd_window,
+            )
+
         inserts = 0
         for idx, row in daily.iterrows():
             if pd.isna(row["rv20"]) or pd.isna(row["drawdown"]):
                 continue
 
-            # S4-01 keeps vix percentile as rv proxy until S4-02 wires external source.
-            vix_pct = float(row["rv_pct"])
+            vix_pct = float(vix_pct_by_date.get(idx.date(), float(row["dd_pct"])))
             rv20_pct = float(row["rv_pct"])
             drawdown = float(row["drawdown"])
+            vix_spot = vix_values.get(idx.date())
 
             event_score = float(event_scores_by_date.get(idx.date(), 0.0))
-            stress_proxy_score = _stress_proxy_score(params.stress_proxy_ticker, rv20_pct)
+            stress_proxy_pct = stress_pct_by_date.get(idx.date())
+            if stress_proxy_pct is None and params.stress_proxy_ticker:
+                stress_proxy_pct = float(row["dd_pct"])
+            stress_proxy_score = _stress_proxy_score(stress_proxy_pct)
 
             component_levels = {
                 "vix": _level_from_thresholds(vix_pct, params.vix_pct_calm, params.vix_pct_stress),
@@ -220,6 +308,8 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                     "drawdown_percent": drawdown,
                     "event_score": event_score,
                     "stress_proxy_score": stress_proxy_score,
+                    "stress_proxy_percentile": stress_proxy_pct,
+                    "vix_spot": vix_spot,
                     "stress_proxy_ticker": params.stress_proxy_ticker,
                 },
                 "levels": component_levels,
@@ -263,7 +353,7 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                     int(round(normalized_score * 100)),
                     regime_label,
                     thresholds_hash,
-                    None,
+                    vix_spot,
                     float(row["rv20"]),
                     drawdown,
                     event_score,
@@ -272,6 +362,14 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                 ),
             )
             inserts += 1
+
+        if inserts == 0:
+            logger.warning(
+                "Regime warm-up incomplete: no regime rows emitted yet; add more snapshot history "
+                "to satisfy rolling lookback windows (rv_window=%s, dd_window=%s).",
+                params.rv_window,
+                params.dd_window,
+            )
 
         logger.info("regime rows updated=%s", inserts)
         return inserts
