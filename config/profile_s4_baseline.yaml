@@ -1,0 +1,10 @@
+profile_id: baseline_rv_only
+
+overrides:
+  regime:
+    weights:
+      vix: 0.50
+      rv20: 0.50
+      drawdown: 0.00
+      event: 0.00
+      stress_proxy: 0.00

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 import logging
+from pathlib import Path
 
 from src.core.bootstrap import ensure_repo_root_on_path
 
@@ -93,23 +94,31 @@ def _validate_structure_delta_support(
         )
 
 
-def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float, int | None]:
+def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float, int | None, str | None]:
     row = None
     try:
         row = conn.execute(
-            "SELECT ts, spot, run_id FROM snapshots WHERE snapshot_id = ?",
+            "SELECT ts, spot, run_id, underlying FROM snapshots WHERE snapshot_id = ?",
             (snapshot_id,),
         ).fetchone()
     except Exception:
-        row = conn.execute(
-            "SELECT ts, spot FROM snapshots WHERE snapshot_id = ?",
-            (snapshot_id,),
-        ).fetchone()
+        try:
+            row = conn.execute(
+                "SELECT ts, spot, run_id FROM snapshots WHERE snapshot_id = ?",
+                (snapshot_id,),
+            ).fetchone()
+        except Exception:
+            row = conn.execute(
+                "SELECT ts, spot FROM snapshots WHERE snapshot_id = ?",
+                (snapshot_id,),
+            ).fetchone()
     if not row:
         raise ValueError("snapshot not found")
+    if len(row) >= 4:
+        return row[0], float(row[1]), row[2], row[3]
     if len(row) >= 3:
-        return row[0], float(row[1]), row[2]
-    return row[0], float(row[1]), None
+        return row[0], float(row[1]), row[2], None
+    return row[0], float(row[1]), None, None
 
 
 def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
@@ -334,15 +343,21 @@ def _build_explain_payload(
     }
 
 
-def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
+def compute_for_snapshot(
+    snapshot_id: int,
+    purge_existing: bool = True,
+    config_path: Path | str | None = None,
+) -> None:
     logger = logging.getLogger("compute")
-    config = load_config()
+    resolved_config_path = Path(config_path) if config_path is not None else None
+    config = load_config(path=resolved_config_path)
     buckets = config["metrics"]["expiry_buckets_days"]
     window = config["metrics"]["zscore_window_days"]
     threshold = config["alerts"]["z_threshold"]
     persistence = config["alerts"]["persistence_snapshots"]
     pessimistic_gate = bool(config["alerts"].get("pessimistic_gate", True))
     history_scope = str(config["alerts"].get("history_scope", "global")).lower()
+    metric_series_qc_only = bool(config["alerts"].get("metric_series_qc_only", True))
     emit_non_execution_states = bool(config["alerts"].get("emit_non_execution_states", False))
     lifecycle_cfg = config["alerts"].get("lifecycle", {})
     min_fit_confidence_validated = float(
@@ -370,7 +385,7 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
 
     conn = connect()
     try:
-        ts, spot, snapshot_run_id = _load_snapshot(conn, snapshot_id)
+        ts, spot, snapshot_run_id, snapshot_underlying = _load_snapshot(conn, snapshot_id)
         if purge_existing:
             _clear_snapshot_outputs(conn, snapshot_id)
         logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
@@ -517,25 +532,36 @@ def compute_for_snapshot(snapshot_id: int, purge_existing: bool = True) -> None:
                 ),
             )
 
+        qc_clause = "AND m.qc_pass = TRUE" if metric_series_qc_only else ""
         if history_scope == "run" and snapshot_run_id is not None:
             metric_series = conn.execute(
-                """
+                f"""
                 SELECT s.ts, m.expiry_bucket, m.rr25_mid, m.fly25_mid, m.term_slope_mid,
                        m.rr25_worst, m.fly25_worst, m.term_slope_worst
                 FROM surface_metrics m
                 JOIN snapshots s ON s.snapshot_id = m.snapshot_id
                 WHERE s.run_id = ?
+                  AND s.ts <= ?
+                  {qc_clause}
                 """,
-                (snapshot_run_id,),
+                (snapshot_run_id, ts),
             ).fetchdf()
         else:
+            underlying_clause = "AND s.underlying = ?" if snapshot_underlying else ""
+            params: tuple = (ts,)
+            if snapshot_underlying:
+                params = (ts, snapshot_underlying)
             metric_series = conn.execute(
-                """
+                f"""
                 SELECT s.ts, m.expiry_bucket, m.rr25_mid, m.fly25_mid, m.term_slope_mid,
                        m.rr25_worst, m.fly25_worst, m.term_slope_worst
                 FROM surface_metrics m
                 JOIN snapshots s ON s.snapshot_id = m.snapshot_id
-                """
+                WHERE s.ts <= ?
+                  {underlying_clause}
+                  {qc_clause}
+                """,
+                params,
             ).fetchdf()
         alerts = compute_alerts(
             metric_series,

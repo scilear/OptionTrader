@@ -48,7 +48,8 @@ alerts:
   persistence_snapshots: 2
   pessimistic_gate: true
   history_scope: run
-  emit_non_execution_states: false
+  metric_series_qc_only: true
+  emit_non_execution_states: true
   lifecycle:
     min_fit_confidence_validated: 0.55
     min_fit_confidence_execution: 0.70

@@ -1,7 +1,7 @@
 # OptionTrader Sprint 5 Execution Plan
 
 Date: 2026-05-04
-Last updated: 2026-05-04 (initial sprint plan)
+Last updated: 2026-05-05 (S5 closure evidence + promotion decision)
 Sprint window: Weeks 7-8
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_4_Execution_Plan.md`
@@ -12,6 +12,25 @@ Ticket sheet: `docs/roadmap/OptionTrader_Sprint_5_Dev_Ticket_Sheet.md`
 Redesign the signal engine so alerts are robust, regime-aware, uncertainty-aware, and
 promotable through an explicit lifecycle (`Candidate -> Validated -> ExecutionReady`) instead of a
 single static z-score gate.
+
+## S5 Locked Evaluation Contract (Versioned)
+
+Contract ID: `S5-CONTRACT-v1`
+
+- Underlying: `SPX`
+- Window: `2010-01-01T00:00:00Z` to `2023-12-31T23:59:59Z`
+- Config path: `config/config-eod-truth.yaml`
+- Baseline lineage: `3b024c9`
+- Candidate lineage: `5128e8e`
+- Outcome horizon: `5` days
+- Volume guardrail: `candidate_vs_baseline_alert_delta_pct <= +15.0%`
+- Transition FP density rule: `candidate_transition_fp_density < baseline_transition_fp_density`
+- State distribution sanity: emitted states must be subset of
+  `Candidate, Validated, ExecutionReady` and include `ExecutionReady` observations.
+
+Versioned baseline capture:
+
+- `docs/roadmap/OptionTrader_Sprint_5_Baseline_Capture_v1.json`
 
 ## Carryover Context from Sprint 4
 
@@ -48,10 +67,12 @@ Deliverables:
 
 - S5 evaluation contract section in roadmap docs (window, lineages, metrics, reporting format).
 - Baseline signal snapshot from current mainline behavior.
+- Versioned baseline capture JSON for reproducible re-checks.
 
 Acceptance:
 
 - S5 metrics are reproducible from one command set with no manual interpretation.
+- Baseline output is captured and checked in under `docs/roadmap/`.
 
 ### S5-01 Robust Scoring Core
 
@@ -129,12 +150,38 @@ Deliverables:
 
 - S5 replay artifact comparing baseline vs redesigned signal engine.
 - False-positive density and volume delta summary by regime.
+- Replay artifact generator script:
+  - `scripts/generate_s5_replay_artifact.py`
+- Evidence artifact:
+  - `docs/roadmap/OptionTrader_Sprint_5_Replay_Artifact.md`
 
 Acceptance:
 
 - Transition-regime false-positive density is lower than baseline on the locked S5 evaluation contract.
 - Alert volume inflation is bounded by the agreed guardrail in the S5 contract.
 - Promotion decision documented as pass/fail with machine-readable evidence.
+
+## Sprint 5 Closure Outcome (2026-05-05)
+
+Evidence run output:
+
+- Artifact: `docs/roadmap/OptionTrader_Sprint_5_Replay_Artifact.md`
+- Recommendation: `not_promotable`
+
+Gate snapshot from artifact payload:
+
+- `min_sample_gate_pass`: `true`
+- `volume_guardrail_pass`: `true` (`volume_delta_pct=0.0`)
+- `state_distribution_sanity_pass`: `true`
+- `precision_non_regression_pass`: `true`
+- `transition_fp_density_improved_pass`: `false` (`missing_transition_alerts`)
+- `overall_pass`: `false`
+
+Interpretation:
+
+- S5 implementation and replay evidence generation are complete.
+- Promotion is withheld due to missing transition-regime sample for the strict transition FP gate,
+  not due to volume inflation or state-sanity failure.
 
 ## Expected Files
 
@@ -159,10 +206,16 @@ Sprint 5 is done only when all are true:
 4. Replay evidence shows quality improvement without unsafe alert-volume inflation.
 5. Promotion decision is documented with reproducible artifact output.
 
+Closure rule applied for this sprint handoff:
+
+- If promotion gates do not pass, sprint still closes when reproducible evidence and a clear
+  non-promotion recommendation are published, with follow-up data requirements explicitly recorded.
+
 ## Validation Commands
 
 ```bash
 source .venv/bin/activate
 pytest tests/test_alerts_logic.py tests/test_regime_filter.py -q
 pytest -q
+python scripts/generate_s5_replay_artifact.py --config-path config/config-eod-truth.yaml
 ```

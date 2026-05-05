@@ -22,9 +22,20 @@ from src.db.connection import connect
 from src.db.init_db import init_db
 
 
+from src.db.ingest_tracking import (
+    load_processed_files,
+    mark_file_complete,
+    init_ingest_tracking_table,
+)
+
+
+BATCH_SIZE = 2000
+
+
 @dataclass
 class IngestSummary:
     files_processed: int = 0
+    files_skipped: int = 0
     rows_read: int = 0
     snapshots_inserted: int = 0
     snapshots_reused: int = 0
@@ -113,7 +124,7 @@ def _load_existing_snapshots(
 def _resolve_snapshot(
     conn,
     snapshots_by_key: dict[tuple[str, float], int],
-    cleared_snapshot_ids: set[int],
+    pending_clears: list[int],
     summary: IngestSummary,
     *,
     quote_readtime: str,
@@ -127,9 +138,8 @@ def _resolve_snapshot(
     existing = snapshots_by_key.get(key)
     if existing is not None:
         summary.snapshots_reused += 1
-        if existing not in cleared_snapshot_ids:
-            conn.execute("DELETE FROM option_quotes WHERE snapshot_id = ?", (existing,))
-            cleared_snapshot_ids.add(existing)
+        if existing not in pending_clears:
+            pending_clears.append(existing)
         return existing
 
     row = conn.execute(
@@ -147,6 +157,23 @@ def _resolve_snapshot(
     return snapshot_id
 
 
+def _flush_quote_batch(conn, batch: list[tuple]) -> int:
+    if not batch:
+        return 0
+    conn.executemany(
+        """
+        INSERT INTO option_quotes (
+            quote_id, snapshot_id, expiry, strike, option_right,
+            bid, ask, last, bid_size, ask_size, oi, volume, flags
+        ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        batch,
+    )
+    inserted = len(batch)
+    batch.clear()
+    return inserted
+
+
 def ingest_spx_eod_option_data(
     input_dir: Path,
     glob_pattern: str,
@@ -154,6 +181,7 @@ def ingest_spx_eod_option_data(
     source_tag: str = "eod",
     session_tag: str = "eod",
     max_files: int | None = None,
+    resume: bool = False,
 ) -> IngestSummary:
     config = load_config()
     allow_zero_bid = bool(config["quality"]["allow_zero_bid"])
@@ -164,17 +192,36 @@ def ingest_spx_eod_option_data(
         file_paths = file_paths[:max_files]
 
     init_db()
+    init_ingest_tracking_table()
+
+    processed_files: set[Path] = set()
+    if resume:
+        processed_files = load_processed_files(glob_pattern, underlying)
+        print(f"[RESUME] Found {len(processed_files)} already-processed files")
+
     summary = IngestSummary()
     conn = connect()
     try:
         snapshots_by_key = _load_existing_snapshots(conn, underlying, source_tag, session_tag)
-        cleared_snapshot_ids: set[int] = set()
+        pending_clears: list[int] = []
 
-        for file_path in file_paths:
+        quote_batch: list[tuple] = []
+
+        total_files = len(file_paths)
+        for idx, file_path in enumerate(file_paths):
+            if file_path in processed_files:
+                print(f"[SKIP] {idx+1}/{total_files} {file_path.name} (already processed)")
+                summary.files_skipped += 1
+                continue
+
+            print(f"[PROC] {idx+1}/{total_files} {file_path.name}...")
             rows = _iter_quote_rows(file_path)
             summary.files_processed += 1
+            row_count = 0
+
             for row in rows:
                 summary.rows_read += 1
+                row_count += 1
                 quote_readtime = row.get("quote_readtime")
                 expiry_raw = row.get("expire_date")
                 strike = _parse_float(row.get("strike"))
@@ -190,7 +237,7 @@ def ingest_spx_eod_option_data(
                 snapshot_id = _resolve_snapshot(
                     conn,
                     snapshots_by_key,
-                    cleared_snapshot_ids,
+                    pending_clears,
                     summary,
                     quote_readtime=quote_readtime,
                     ts=ts,
@@ -216,29 +263,42 @@ def ingest_spx_eod_option_data(
                         summary.quotes_rejected += 1
                         continue
                     bid_size, ask_size = _parse_size(row.get(f"{right.lower()}_size"))
-                    conn.execute(
-                        """
-                        INSERT INTO option_quotes (
-                            quote_id, snapshot_id, expiry, strike, option_right,
-                            bid, ask, last, bid_size, ask_size, oi, volume, flags
-                        ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            snapshot_id,
-                            expiry,
-                            strike,
-                            right,
-                            bid,
-                            ask,
-                            _parse_float(row.get(f"{right.lower()}_last")) or 0.0,
-                            bid_size,
-                            ask_size,
-                            0,
-                            _parse_int(row.get(f"{right.lower()}_volume")),
-                            json.dumps(flags, sort_keys=True),
-                        ),
-                    )
+                    quote_batch.append((
+                        snapshot_id,
+                        expiry,
+                        strike,
+                        right,
+                        bid,
+                        ask,
+                        _parse_float(row.get(f"{right.lower()}_last")) or 0.0,
+                        bid_size,
+                        ask_size,
+                        0,
+                        _parse_int(row.get(f"{right.lower()}_volume")),
+                        json.dumps(flags, sort_keys=True),
+                    ))
                     summary.quotes_inserted += 1
+
+                    if len(quote_batch) >= BATCH_SIZE:
+                        _flush_quote_batch(conn, quote_batch)
+
+            if pending_clears:
+                placeholders = ",".join("?" * len(pending_clears))
+                conn.execute(f"DELETE FROM option_quotes WHERE snapshot_id IN ({placeholders})", pending_clears)
+                pending_clears.clear()
+
+            if quote_batch:
+                _flush_quote_batch(conn, quote_batch)
+
+            mark_file_complete(
+                file_path,
+                glob_pattern,
+                underlying,
+                file_size_bytes=file_path.stat().st_size,
+                row_count=row_count,
+            )
+            print(f"  -> {row_count} rows, {summary.quotes_inserted - summary.quotes_rejected} quotes inserted")
+
     finally:
         conn.close()
 
@@ -253,6 +313,9 @@ def main() -> None:
     parser.add_argument("--source-tag", default="eod")
     parser.add_argument("--session-tag", default="eod")
     parser.add_argument("--max-files", type=int, default=None)
+    parser.add_argument("--resume", action="store_true", default=False,
+                        help="Skip files already processed (for script-level resume)")
+    parser.add_argument("--no-resume", action="store_false", dest="resume")
     args = parser.parse_args()
 
     summary = ingest_spx_eod_option_data(
@@ -262,6 +325,7 @@ def main() -> None:
         source_tag=args.source_tag,
         session_tag=args.session_tag,
         max_files=args.max_files,
+        resume=args.resume,
     )
     print(json.dumps(summary.__dict__, sort_keys=True, indent=2))
 

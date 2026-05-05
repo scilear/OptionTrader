@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
+
+import yaml
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root) not in sys.path:
@@ -15,19 +18,20 @@ from src.core.bootstrap import ensure_repo_root_on_path
 ensure_repo_root_on_path()
 
 from src.core.compute_snapshot import compute_for_snapshot
+from src.core.config import config_digest, get_config_path
 from src.db.connection import connect
 from src.db.init_db import init_db
 
 
-def _create_pipeline_run(conn, code_version: str) -> int:
+def _create_pipeline_run(conn, code_version: str, config_hash: str) -> int:
     row = conn.execute(
         """
         INSERT INTO pipeline_runs (
             run_id, started_at, finished_at, status, config_hash, code_version, error_message
-        ) VALUES (DEFAULT, NOW(), NOW(), 'success', NULL, ?, NULL)
+        ) VALUES (DEFAULT, NOW(), NOW(), 'success', ?, ?, NULL)
         RETURNING run_id
         """,
-        (code_version,),
+        (config_hash, code_version),
     ).fetchone()
     return int(row[0])
 
@@ -44,6 +48,50 @@ def _resolve_commit(commit_ref: str) -> str:
         return resolved or commit_ref
     except Exception:
         return commit_ref
+
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    merged = dict(base)
+    for key, value in override.items():
+        base_value = merged.get(key)
+        if isinstance(base_value, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(base_value, value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _build_profile_config(
+    *,
+    base_config_path: Path,
+    profile_path: Path,
+) -> tuple[Path, str, str]:
+    profile_payload = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(profile_payload, dict):
+        raise ValueError(f"Invalid profile file format: {profile_path}")
+
+    profile_id = str(profile_payload.get("profile_id") or profile_path.stem)
+    overrides = profile_payload.get("overrides", profile_payload)
+    if not isinstance(overrides, dict):
+        raise ValueError(f"Invalid overrides section in profile file: {profile_path}")
+
+    base_cfg = yaml.safe_load(base_config_path.read_text(encoding="utf-8")) or {}
+    merged_cfg = _deep_merge(base_cfg, overrides)
+    digest = config_digest(merged_cfg)
+
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=f"_{profile_id}.yaml",
+        prefix="s4_track_profile_",
+        delete=False,
+        encoding="utf-8",
+    )
+    try:
+        yaml.safe_dump(merged_cfg, tmp, sort_keys=False)
+        tmp_path = Path(tmp.name)
+    finally:
+        tmp.close()
+    return tmp_path, profile_id, digest
 
 
 def _load_source_snapshots(conn, underlying: str, start_ts: str, end_ts: str) -> list[tuple[int, object, float]]:
@@ -129,8 +177,9 @@ def _purge_existing_tracks(
     lineage_prefixes: list[str],
 ) -> None:
     for lineage in lineage_prefixes:
-        snapshot_rows = conn.execute(
+        conn.execute(
             """
+            CREATE OR REPLACE TEMP TABLE _track_snapshot_ids AS
             SELECT s.snapshot_id
             FROM snapshots s
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
@@ -142,30 +191,68 @@ def _purge_existing_tracks(
               AND pr.code_version LIKE ?
             """,
             (underlying, start_ts, end_ts, f"{lineage}%"),
-        ).fetchall()
-        snapshot_ids = [int(row[0]) for row in snapshot_rows]
-        if not snapshot_ids:
+        )
+        snapshot_count = int(conn.execute("SELECT COUNT(*) FROM _track_snapshot_ids").fetchone()[0])
+        if snapshot_count == 0:
             continue
-        placeholders = ",".join(["?"] * len(snapshot_ids))
-        alert_rows = conn.execute(
-            f"SELECT alert_id FROM alerts WHERE snapshot_id IN ({placeholders})",
-            snapshot_ids,
-        ).fetchall()
-        alert_ids = [int(row[0]) for row in alert_rows]
-        if alert_ids:
-            alert_ph = ",".join(["?"] * len(alert_ids))
-            conn.execute(f"DELETE FROM alert_outcomes WHERE alert_id IN ({alert_ph})", alert_ids)
-            conn.execute(f"DELETE FROM trade_ideas WHERE alert_id IN ({alert_ph})", alert_ids)
-        conn.execute(f"DELETE FROM alerts WHERE snapshot_id IN ({placeholders})", snapshot_ids)
-        conn.execute(f"DELETE FROM surface_metrics WHERE snapshot_id IN ({placeholders})", snapshot_ids)
-        conn.execute(f"DELETE FROM iv_points WHERE snapshot_id IN ({placeholders})", snapshot_ids)
-        conn.execute(f"DELETE FROM option_quotes WHERE snapshot_id IN ({placeholders})", snapshot_ids)
-        conn.execute(f"DELETE FROM snapshots WHERE snapshot_id IN ({placeholders})", snapshot_ids)
+        conn.execute(
+            """
+            DELETE FROM alert_outcomes
+            WHERE alert_id IN (
+                SELECT a.alert_id
+                FROM alerts a
+                JOIN _track_snapshot_ids t ON t.snapshot_id = a.snapshot_id
+            )
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM trade_ideas
+            WHERE alert_id IN (
+                SELECT a.alert_id
+                FROM alerts a
+                JOIN _track_snapshot_ids t ON t.snapshot_id = a.snapshot_id
+            )
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM alerts
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM surface_metrics
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM iv_points
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM option_quotes
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
+        conn.execute(
+            """
+            UPDATE snapshots
+            SET run_id = NULL,
+                source = 'eod_purged',
+                session_tag = 'track_purged',
+                notes = COALESCE(notes, '') || ' [track_purged]'
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
 
     conn.execute(
         """
-        DELETE FROM pipeline_runs
-        WHERE run_id NOT IN (SELECT DISTINCT run_id FROM snapshots WHERE run_id IS NOT NULL)
+        DROP TABLE IF EXISTS _track_snapshot_ids
         """
     )
 
@@ -177,8 +264,26 @@ def materialize_s4_tracks_from_eod(
     end_ts: str,
     baseline_lineage: str,
     candidate_lineage: str,
+    baseline_profile_path: Path,
+    candidate_profile_path: Path,
 ) -> dict:
     init_db()
+    base_config_path = get_config_path().resolve()
+    baseline_cfg_path, baseline_profile_id, baseline_cfg_hash = _build_profile_config(
+        base_config_path=base_config_path,
+        profile_path=baseline_profile_path,
+    )
+    candidate_cfg_path, candidate_profile_id, candidate_cfg_hash = _build_profile_config(
+        base_config_path=base_config_path,
+        profile_path=candidate_profile_path,
+    )
+
+    if baseline_cfg_hash == candidate_cfg_hash:
+        raise ValueError(
+            "Baseline and candidate profiles resolve to identical config hash; "
+            "ablation requires behaviorally distinct profiles"
+        )
+
     conn = connect()
     try:
         _purge_existing_tracks(
@@ -193,8 +298,11 @@ def materialize_s4_tracks_from_eod(
         if not source_snapshot_ids:
             raise ValueError("No source EOD snapshots found for requested window")
 
-        baseline_run_id = _create_pipeline_run(conn, _resolve_commit(baseline_lineage))
-        candidate_run_id = _create_pipeline_run(conn, _resolve_commit(candidate_lineage))
+        baseline_code_version = f"{_resolve_commit(baseline_lineage)}+profile:{baseline_profile_id}"
+        candidate_code_version = f"{_resolve_commit(candidate_lineage)}+profile:{candidate_profile_id}"
+
+        baseline_run_id = _create_pipeline_run(conn, baseline_code_version, baseline_cfg_hash)
+        candidate_run_id = _create_pipeline_run(conn, candidate_code_version, candidate_cfg_hash)
 
         baseline_snapshot_ids = _clone_snapshots_for_run(
             conn,
@@ -211,10 +319,14 @@ def materialize_s4_tracks_from_eod(
     finally:
         conn.close()
 
-    for snapshot_id in baseline_snapshot_ids:
-        compute_for_snapshot(snapshot_id, purge_existing=True)
-    for snapshot_id in candidate_snapshot_ids:
-        compute_for_snapshot(snapshot_id, purge_existing=True)
+    try:
+        for snapshot_id in baseline_snapshot_ids:
+            compute_for_snapshot(snapshot_id, purge_existing=True, config_path=baseline_cfg_path)
+        for snapshot_id in candidate_snapshot_ids:
+            compute_for_snapshot(snapshot_id, purge_existing=True, config_path=candidate_cfg_path)
+    finally:
+        baseline_cfg_path.unlink(missing_ok=True)
+        candidate_cfg_path.unlink(missing_ok=True)
 
     result = {
         "underlying": underlying,
@@ -223,6 +335,8 @@ def materialize_s4_tracks_from_eod(
         "source_snapshot_count": len(source_snapshot_ids),
         "baseline": {
             "lineage": baseline_lineage,
+            "profile_id": baseline_profile_id,
+            "config_hash": baseline_cfg_hash,
             "run_id": baseline_run_id,
             "snapshot_count": len(baseline_snapshot_ids),
             "first_snapshot_id": baseline_snapshot_ids[0] if baseline_snapshot_ids else None,
@@ -230,6 +344,8 @@ def materialize_s4_tracks_from_eod(
         },
         "candidate": {
             "lineage": candidate_lineage,
+            "profile_id": candidate_profile_id,
+            "config_hash": candidate_cfg_hash,
             "run_id": candidate_run_id,
             "snapshot_count": len(candidate_snapshot_ids),
             "first_snapshot_id": candidate_snapshot_ids[0] if candidate_snapshot_ids else None,
@@ -244,6 +360,16 @@ def main() -> None:
     parser.add_argument("--db-path", default=None)
     parser.add_argument("--baseline-lineage", required=True)
     parser.add_argument("--candidate-lineage", required=True)
+    parser.add_argument(
+        "--baseline-profile",
+        default="config/profile_s4_baseline.yaml",
+        help="YAML profile with baseline overrides",
+    )
+    parser.add_argument(
+        "--candidate-profile",
+        default="config/profile_s4_candidate.yaml",
+        help="YAML profile with candidate overrides",
+    )
     parser.add_argument("--start-ts", required=True)
     parser.add_argument("--end-ts", required=True)
     parser.add_argument("--underlying", default="SPX")
@@ -260,6 +386,8 @@ def main() -> None:
         end_ts=args.end_ts,
         baseline_lineage=args.baseline_lineage,
         candidate_lineage=args.candidate_lineage,
+        baseline_profile_path=Path(args.baseline_profile),
+        candidate_profile_path=Path(args.candidate_profile),
     )
     print(json.dumps(result, indent=2, sort_keys=True))
 

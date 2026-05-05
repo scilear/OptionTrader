@@ -1,0 +1,48 @@
+{
+  "baseline": {
+    "alerts_by_state": {
+      "Candidate": 683,
+      "ExecutionReady": 12
+    },
+    "alerts_total": 695,
+    "invalid_signal_states": [],
+    "outcomes": {
+      "fp": 630,
+      "horizon_days": 5,
+      "outcomes_observed": 683,
+      "precision": 0.07759882869692533,
+      "tp": 53,
+      "transition_alerts": 0,
+      "transition_fp": 0,
+      "transition_fp_density": null
+    },
+    "snapshot_count": 1063
+  },
+  "captured_at": "2026-05-05T21:11:32.436009Z",
+  "contract": {
+    "baseline_lineage": "3b024c9",
+    "candidate_lineage": "5128e8e",
+    "config_path": "config/config-eod-truth.yaml",
+    "horizon_days": 5,
+    "max_volume_inflation_pct": 15.0,
+    "state_sanity_required_states": [
+      "Candidate",
+      "ExecutionReady",
+      "Validated"
+    ],
+    "transition_fp_density_rule": "candidate < baseline"
+  },
+  "lineage_metadata": {
+    "baseline": {
+      "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
+      "config_hash": "e6a5ea43d46b2b414cd2ae0cc7d31da804253bfb4e7917f46031f42e1a273af1",
+      "profile_id": "baseline_rv_only",
+      "run_id": 19
+    }
+  },
+  "window": {
+    "end_ts": "2023-12-31T23:59:59Z",
+    "start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX"
+  }
+}

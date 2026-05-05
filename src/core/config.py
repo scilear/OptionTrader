@@ -39,6 +39,7 @@ ACTIVE_CONFIG_KEYS = frozenset(
         "alerts.persistence_snapshots",
         "alerts.pessimistic_gate",
         "alerts.history_scope",
+        "alerts.metric_series_qc_only",
         "alerts.emit_non_execution_states",
         "alerts.lifecycle.min_fit_confidence_validated",
         "alerts.lifecycle.min_fit_confidence_execution",
@@ -103,6 +104,7 @@ HIGH_IMPACT_ACTIVE_KEYS = frozenset(
         "quality.min_valid_points_core",
         "alerts.pessimistic_gate",
         "alerts.history_scope",
+        "alerts.metric_series_qc_only",
         "alerts.emit_non_execution_states",
         "alerts.lifecycle.min_fit_confidence_validated",
         "alerts.lifecycle.min_fit_confidence_execution",
@@ -143,6 +145,9 @@ CONTRACT_TEST_COVERAGE: dict[str, tuple[str, ...]] = {
     "quality.min_valid_points_core": ("tests/test_tier_logic.py",),
     "alerts.pessimistic_gate": ("tests/test_alerts_logic.py",),
     "alerts.history_scope": (
+        "tests/test_regime_filter.py",
+    ),
+    "alerts.metric_series_qc_only": (
         "tests/test_regime_filter.py",
     ),
     "alerts.emit_non_execution_states": (

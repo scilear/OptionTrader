@@ -82,6 +82,59 @@ def _fetch_alert_stats(
     return int(total), {str(k): int(v) for k, v in by_bucket_rows}, int(snapshot_count)
 
 
+def _parse_profile_id(code_version: str | None) -> str | None:
+    if not code_version:
+        return None
+    marker = "+profile:"
+    if marker not in code_version:
+        return None
+    _, suffix = code_version.split(marker, 1)
+    return suffix.strip() or None
+
+
+def _fetch_lineage_run_metadata(
+    underlying: str,
+    start_ts: str,
+    end_ts: str,
+    lineage_prefix: str,
+) -> dict[str, Any]:
+    conn = connect()
+    try:
+        row = conn.execute(
+            """
+            SELECT pr.run_id, pr.code_version, pr.config_hash
+            FROM pipeline_runs pr
+            JOIN snapshots s ON s.run_id = pr.run_id
+            WHERE s.underlying = ?
+              AND s.ts >= ?
+              AND s.ts <= ?
+              AND pr.code_version LIKE ?
+            GROUP BY pr.run_id, pr.code_version, pr.config_hash
+            ORDER BY pr.run_id DESC
+            LIMIT 1
+            """,
+            (underlying, start_ts, end_ts, f"{lineage_prefix}%"),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        return {
+            "run_id": None,
+            "code_version": None,
+            "config_hash": None,
+            "profile_id": None,
+        }
+
+    run_id, code_version, config_hash = row
+    return {
+        "run_id": int(run_id),
+        "code_version": str(code_version) if code_version is not None else None,
+        "config_hash": str(config_hash) if config_hash is not None else None,
+        "profile_id": _parse_profile_id(str(code_version) if code_version is not None else None),
+    }
+
+
 def _fetch_precision_metrics(
     underlying: str,
     start_ts: str,
@@ -203,6 +256,18 @@ def main() -> None:
         args.end_ts,
         args.candidate_lineage,
     )
+    baseline_run_meta = _fetch_lineage_run_metadata(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.baseline_lineage,
+    )
+    candidate_run_meta = _fetch_lineage_run_metadata(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.candidate_lineage,
+    )
 
     baseline_precision = _fetch_precision_metrics(
         args.underlying,
@@ -283,6 +348,10 @@ def main() -> None:
         },
         "baseline_track": args.baseline_lineage,
         "candidate_track": args.candidate_lineage,
+        "lineage_metadata": {
+            "baseline": baseline_run_meta,
+            "candidate": candidate_run_meta,
+        },
         "sample": {
             "baseline_snapshot_count": baseline_snapshot_count,
             "candidate_snapshot_count": candidate_snapshot_count,
@@ -335,6 +404,8 @@ def main() -> None:
         "",
         f"- Baseline lineage: `{args.baseline_lineage}`",
         f"- Candidate lineage: `{args.candidate_lineage}`",
+        f"- Baseline run/profile/hash: `run_id={baseline_run_meta['run_id']}` `profile={baseline_run_meta['profile_id']}` `config_hash={baseline_run_meta['config_hash']}`",
+        f"- Candidate run/profile/hash: `run_id={candidate_run_meta['run_id']}` `profile={candidate_run_meta['profile_id']}` `config_hash={candidate_run_meta['config_hash']}`",
         "",
         "## Summary Payload",
         "",
