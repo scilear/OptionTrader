@@ -69,6 +69,11 @@ ACTIVE_CONFIG_KEYS = frozenset(
         "structures.calendar.front_dte_max",
         "structures.calendar.back_dte_min",
         "structures.calendar.back_dte_max",
+        "structures.execution_costs.transaction_cost_bps",
+        "structures.execution_costs.impact_cost_bps",
+        "structures.execution_costs.impact_exponent",
+        "structures.execution_costs.hedge_turnover_bps",
+        "structures.execution_costs.size_tiers",
     }
 )
 
@@ -134,6 +139,11 @@ HIGH_IMPACT_ACTIVE_KEYS = frozenset(
         "structures.calendar.front_dte_max",
         "structures.calendar.back_dte_min",
         "structures.calendar.back_dte_max",
+        "structures.execution_costs.transaction_cost_bps",
+        "structures.execution_costs.impact_cost_bps",
+        "structures.execution_costs.impact_exponent",
+        "structures.execution_costs.hedge_turnover_bps",
+        "structures.execution_costs.size_tiers",
     }
 )
 
@@ -191,6 +201,11 @@ CONTRACT_TEST_COVERAGE: dict[str, tuple[str, ...]] = {
     "structures.calendar.front_dte_max": ("tests/test_trade_ideas.py",),
     "structures.calendar.back_dte_min": ("tests/test_trade_ideas.py",),
     "structures.calendar.back_dte_max": ("tests/test_trade_ideas.py",),
+    "structures.execution_costs.transaction_cost_bps": ("tests/test_trade_pricing.py",),
+    "structures.execution_costs.impact_cost_bps": ("tests/test_trade_pricing.py",),
+    "structures.execution_costs.impact_exponent": ("tests/test_trade_pricing.py",),
+    "structures.execution_costs.hedge_turnover_bps": ("tests/test_trade_pricing.py",),
+    "structures.execution_costs.size_tiers": ("tests/test_trade_pricing.py",),
 }
 
 EXPECTED_CONFIG_KEYS = ACTIVE_CONFIG_KEYS | DEPRECATED_CONFIG_KEYS

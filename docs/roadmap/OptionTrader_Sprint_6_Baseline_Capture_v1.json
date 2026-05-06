@@ -1,0 +1,39 @@
+{
+  "baseline": {
+    "alerts_by_state": {
+      "Candidate": 231,
+      "ExecutionReady": 5
+    },
+    "alerts_total": 236,
+    "blocked_reason_counts": {},
+    "execution_ready_with_non_positive_edge": 0,
+    "ideas_total": 5,
+    "ideas_with_cost_decomposition": 5,
+    "mean_edge_after_cost": 17013.489688957932,
+    "median_edge_after_cost": 19815.91661472227,
+    "monotonic_size_violations": 0,
+    "non_positive_edge_count": 0,
+    "promote_eligible_count": 5,
+    "stable_rank_fraction": 1.0
+  },
+  "captured_at": "2026-05-06T10:26:54.269245Z",
+  "contract": {
+    "baseline_lineage": "3b024c9",
+    "candidate_lineage": "5128e8e",
+    "config_path": "config/config-eod-truth.yaml",
+    "id": "S6-CONTRACT-v1"
+  },
+  "lineage_metadata": {
+    "baseline": {
+      "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
+      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+      "profile_id": "baseline_rv_only",
+      "run_id": 23
+    }
+  },
+  "window": {
+    "end_ts": "2023-12-31T23:59:59Z",
+    "start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX"
+  }
+}

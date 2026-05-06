@@ -655,10 +655,30 @@ def compute_for_snapshot(
                 iv_ask=iv_ask,
                 expiry=target_expiry,
                 config=config,
+                alert_severity=severity,
+                alert_zscore_mid=alert["zscore_mid"],
+                tradability_score=tradability_score,
             )
             _validate_structure_delta_support(context, logger, alert["expiry_bucket"])
             ideas = build_trade_ideas(alert["alert_type"], alert["expiry_bucket"], context)
+            promote_eligible_idea_exists = False
+            ranked_idea_seen = False
+            blocked_reason_for_gate = None
             for idea in ideas:
+                scenarios_obj = {}
+                try:
+                    scenarios_obj = json.loads(idea.get("scenarios") or "{}")
+                except Exception:
+                    scenarios_obj = {}
+                ranking = scenarios_obj.get("ranking") if isinstance(scenarios_obj, dict) else None
+                if isinstance(ranking, dict):
+                    ranked_idea_seen = True
+                    blocked_reason = ranking.get("blocked_reason")
+                    if blocked_reason_for_gate is None and blocked_reason:
+                        blocked_reason_for_gate = blocked_reason
+                    if ranking.get("promote_eligible") is True:
+                        promote_eligible_idea_exists = True
+
                 conn.execute(
                     """
                     INSERT INTO trade_ideas (
@@ -677,6 +697,21 @@ def compute_for_snapshot(
                         idea["risk_flags"],
                     ),
                 )
+
+            if signal_state == "ExecutionReady" and ranked_idea_seen and not promote_eligible_idea_exists:
+                if emit_non_execution_states:
+                    conn.execute(
+                        """
+                        UPDATE alerts
+                        SET signal_state = 'Validated',
+                            transition_reason_code = ?
+                        WHERE alert_id = ?
+                        """,
+                        (blocked_reason_for_gate or "non_positive_edge_after_cost", alert_id),
+                    )
+                else:
+                    conn.execute("DELETE FROM trade_ideas WHERE alert_id = ?", (alert_id,))
+                    conn.execute("DELETE FROM alerts WHERE alert_id = ?", (alert_id,))
     finally:
         conn.close()
 

@@ -1,6 +1,7 @@
 # OptionTrader Sprint 6 Dev Ticket Sheet
 
 Date: 2026-05-05
+Last updated: 2026-05-06 (replay evidence complete)
 Source plan: `docs/roadmap/OptionTrader_Sprint_6_Execution_Plan.md`
 Sprint: Weeks 9-10
 
@@ -8,13 +9,13 @@ Sprint: Weeks 9-10
 
 | Ticket | Objective | Priority | Status | Evidence |
 |---|---|---|---|---|
-| S6-00 | Cost model contract + baseline capture | P0 | Ready | `docs/roadmap/OptionTrader_Sprint_6_Execution_Plan.md` |
-| S6-01 | Candidate edge component normalization | P0 | Ready | `src/core/trade_ideas.py`, `tests/test_trade_ideas.py` |
-| S6-02 | Friction-adjusted edge engine | P0 | Ready | `src/core/trade_ideas.py`, `src/core/tradability.py`, tests |
-| S6-03 | Nonlinear size-impact model | P0 | Ready | `src/core/tradability.py`, pricing/ranking tests |
-| S6-04 | Hedge-path cost approximation | P1 | Ready | `src/core/trade_ideas.py`, `tests/test_trade_pricing.py` |
-| S6-05 | Explainability + Streamlit exposure | P1 | Ready | `src/app/streamlit_app.py`, explainability tests |
-| S6-06 | Replay evidence + promotion gate | P0 | Ready | S6 artifact script + roadmap evidence doc |
+| S6-00 | Cost model contract + baseline capture | P0 | Done | `docs/roadmap/OptionTrader_Sprint_6_Execution_Plan.md`, `docs/roadmap/OptionTrader_Sprint_6_Baseline_Capture_v1.json` |
+| S6-01 | Candidate edge component normalization | P0 | Done | `src/core/trade_ideas.py`, `tests/test_trade_ideas.py` |
+| S6-02 | Friction-adjusted edge engine | P0 | Done | `src/core/trade_ideas.py`, `src/core/tradability.py`, `tests/test_trade_pricing.py` |
+| S6-03 | Nonlinear size-impact model | P0 | Done | `src/core/tradability.py`, `tests/test_trade_pricing.py` |
+| S6-04 | Hedge-path cost approximation | P1 | Done | `src/core/trade_ideas.py`, `tests/test_trade_pricing.py` |
+| S6-05 | Explainability + Streamlit exposure | P1 | Done | `src/app/streamlit_app.py` |
+| S6-06 | Replay evidence + promotion gate | P0 | Done | `scripts/generate_s6_replay_artifact.py`, `docs/roadmap/OptionTrader_Sprint_6_Replay_Artifact.md` |
 
 ## Ticket Details
 
@@ -29,8 +30,8 @@ Sprint: Weeks 9-10
   - Define explicit cost assumptions and replay contract.
   - Capture and version baseline ranking output before S6 changes.
 - Acceptance:
-  - [ ] Contract is explicit, versioned, and reproducible.
-  - [ ] Baseline capture artifact is committed.
+  - [x] Contract is explicit, versioned, and reproducible.
+  - [x] Baseline capture artifact is committed.
 
 ### S6-01 - Candidate Generation and Edge Component Normalization
 
@@ -43,7 +44,7 @@ Sprint: Weeks 9-10
   - Add normalized component fields required for cost engine.
   - Reject incomplete candidates with explicit blocker reasons.
 - Acceptance:
-  - [ ] Candidate payload completeness is test-covered.
+  - [x] Candidate payload completeness is test-covered.
 
 ### S6-02 - Friction-Adjusted Edge Engine
 
@@ -57,8 +58,8 @@ Sprint: Weeks 9-10
   - Implement cost decomposition and net-edge calculation.
   - Integrate deterministic block on non-positive net edge.
 - Acceptance:
-  - [ ] `edge_after_cost <= 0` always blocks promotion.
-  - [ ] Cost decomposition fields are machine-readable and tested.
+  - [x] `edge_after_cost <= 0` always blocks promotion.
+  - [x] Cost decomposition fields are machine-readable and tested.
 
 ### S6-03 - Nonlinear Size and Impact Model
 
@@ -71,8 +72,8 @@ Sprint: Weeks 9-10
   - Add nonlinear impact function by size tiers.
   - Validate monotonicity and ranking coherence under size scaling.
 - Acceptance:
-  - [ ] Cost curves are monotonic non-decreasing with size.
-  - [ ] Ranking shifts are deterministic and explainable in tests.
+  - [x] Cost curves are monotonic non-decreasing with size.
+  - [x] Ranking shifts are deterministic and explainable in tests.
 
 ### S6-04 - Hedge-Path Cost Approximation
 
@@ -85,7 +86,7 @@ Sprint: Weeks 9-10
   - Add hedge-path approximation component.
   - Emit uncertainty/risk flags for hedge-path estimates.
 - Acceptance:
-  - [ ] Hedge-path component appears where applicable and is test-covered.
+  - [x] Hedge-path component appears where applicable and is test-covered.
 
 ### S6-05 - Explainability and UI Exposure
 
@@ -98,7 +99,7 @@ Sprint: Weeks 9-10
   - Display edge decomposition and blocker reasons per candidate.
   - Ensure UI view matches exported payload semantics.
 - Acceptance:
-  - [ ] UI and payload rankings are consistent for same input.
+  - [x] UI and payload rankings are consistent for same input.
 
 ### S6-06 - Replay Evidence and Promotion Gate
 
@@ -111,8 +112,30 @@ Sprint: Weeks 9-10
   - Compare baseline vs candidate under S6 contract.
   - Emit machine-readable gate payload and recommendation.
 - Acceptance:
-  - [ ] Artifact reproducible from committed command block.
-  - [ ] Promotion recommendation is explicit and evidence-backed.
+  - [x] Artifact reproducible from committed command block.
+  - [x] Promotion recommendation is explicit and evidence-backed.
+
+## Progress Notes (2026-05-06)
+
+- Completed implementation for S6-01 through S6-04.
+- Added partial S6-05 UI exposure: cost-aware ranking table and blocked reason fields in alert
+  detail page.
+- Added S6 replay artifact generator:
+  - `scripts/generate_s6_replay_artifact.py`
+
+Validation run:
+
+```bash
+source .venv/bin/activate
+pytest tests/test_trade_ideas.py tests/test_trade_pricing.py -q
+```
+
+Result: `12 passed`.
+
+Replay outcome:
+
+- Evidence run completed after lock release.
+- Final recommendation from artifact: `promotable`.
 
 ## Suggested Delivery Order
 

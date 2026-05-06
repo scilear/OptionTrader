@@ -1,7 +1,7 @@
 # OptionTrader Sprint 6 Execution Plan
 
 Date: 2026-05-05
-Last updated: 2026-05-05 (initial sprint 6 plan)
+Last updated: 2026-05-06 (S6 replay evidence generated)
 Sprint window: Weeks 9-10
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_5_Execution_Plan.md`
@@ -48,6 +48,18 @@ Contract ID: `S6-CONTRACT-v1`
   - edge-after-cost,
   - size-impact sensitivity,
   - risk flags used in gating
+
+Cost assumptions (v1):
+
+- transaction cost: `5.0 bps`
+- impact base: `3.0 bps`
+- impact exponent: `1.35`
+- hedge turnover: `2.0 bps`
+- size tiers for sensitivity: `[1.0, 3.0, 5.0]`
+
+Baseline capture target file:
+
+- `docs/roadmap/OptionTrader_Sprint_6_Baseline_Capture_v1.json`
 
 Gate principles:
 
@@ -166,6 +178,45 @@ Acceptance:
 - Replay artifact is reproducible from committed command block.
 - No unsafe ranking regressions versus baseline contract.
 - Promotion recommendation is explicit and evidence-backed.
+
+## Progress Update (2026-05-06)
+
+Implemented so far:
+
+- `S6-01`: trade idea payload now emits normalized edge components and explicit blocker reasons.
+- `S6-02`: friction-adjusted decomposition fields added (`edge_before_cost`, `transaction_cost`,
+  `size_impact_cost`, `hedge_path_cost`, `total_friction_cost`, `edge_after_cost`) and promotion
+  eligibility flag in idea scenarios.
+- `S6-03`: nonlinear size-impact sensitivity embedded with monotonicity checks.
+- `S6-04`: hedge-path estimate integrated for convex templates with risk flag
+  `hedge_path_estimated`.
+- `S6-05` (partial): Streamlit alert detail now shows cost-aware ranking table and blocked reasons.
+- `S6-06`: replay script implemented and artifact generated.
+
+Validation completed:
+
+- `pytest tests/test_trade_ideas.py tests/test_trade_pricing.py -q` -> pass (`12 passed`).
+- `python scripts/generate_s6_replay_artifact.py --config-path config/config-eod-truth.yaml`
+  -> artifact generated.
+
+S6 replay outcome:
+
+- Baseline metadata: `run_id=23`, `profile=baseline_rv_only`.
+- Candidate metadata: `run_id=24`, `profile=candidate_multi_signal`.
+- Gate summary: all gates `PASS`.
+- Recommendation: `promotable`.
+
+Generated evidence files:
+
+- `docs/roadmap/OptionTrader_Sprint_6_Replay_Artifact.md`
+- `docs/roadmap/OptionTrader_Sprint_6_Baseline_Capture_v1.json`
+
+Repro command:
+
+```bash
+source .venv/bin/activate
+python scripts/generate_s6_replay_artifact.py --config-path config/config-eod-truth.yaml
+```
 
 ## Expected Files
 

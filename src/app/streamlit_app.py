@@ -441,12 +441,52 @@ def alert_detail_page():
     ideas = ideas.copy()
     ideas["risk_flags"] = ideas["risk_flags"].apply(parse_json)
     ideas["legs"] = ideas["legs"].apply(parse_json)
+    ideas["scenarios"] = ideas["scenarios"].apply(parse_json)
 
-    display = ideas.drop(columns=["legs", "risk_flags"]).copy()
+    def ranking_from_scenarios(value):
+        if isinstance(value, dict):
+            return value.get("ranking", {})
+        return {}
+
+    ideas["ranking"] = ideas["scenarios"].apply(ranking_from_scenarios)
+    ideas["blocked_reason"] = ideas["ranking"].apply(
+        lambda r: r.get("blocked_reason") if isinstance(r, dict) else None
+    )
+    ideas["edge_after_cost"] = ideas["ranking"].apply(
+        lambda r: r.get("edge_after_cost") if isinstance(r, dict) else None
+    )
+    ideas["total_friction_cost"] = ideas["ranking"].apply(
+        lambda r: r.get("total_friction_cost") if isinstance(r, dict) else None
+    )
+    ideas["promote_eligible"] = ideas["ranking"].apply(
+        lambda r: r.get("promote_eligible") if isinstance(r, dict) else None
+    )
+
+    display = ideas.drop(columns=["legs", "risk_flags", "scenarios", "ranking"]).copy()
     display["risk_flags"] = ideas["risk_flags"].apply(
         lambda v: ", ".join(v) if isinstance(v, list) else (v or "")
     )
     st.dataframe(display, use_container_width=True)
+
+    ranking_rows = []
+    for _, row in ideas.iterrows():
+        ranking = row.get("ranking") or {}
+        if not isinstance(ranking, dict):
+            continue
+        ranking_rows.append(
+            {
+                "template": row.get("template"),
+                "edge_before_cost": ranking.get("edge_before_cost"),
+                "total_friction_cost": ranking.get("total_friction_cost"),
+                "edge_after_cost": ranking.get("edge_after_cost"),
+                "promote_eligible": ranking.get("promote_eligible"),
+                "blocked_reason": ranking.get("blocked_reason"),
+            }
+        )
+
+    if ranking_rows:
+        st.subheader("Cost-Aware Ranking")
+        st.dataframe(pd.DataFrame(ranking_rows), use_container_width=True)
 
     for i, row in ideas.iterrows():
         st.subheader(f"Legs — {row['template']}")

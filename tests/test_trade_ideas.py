@@ -1,3 +1,5 @@
+import json
+
 from src.core.trade_ideas import build_trade_ideas, IdeaContext
 
 
@@ -55,6 +57,43 @@ def test_trade_ideas_structure_config_changes_legs():
     assert '"delta": -0.3' in fly["legs"]
     assert '"dte_min": 10' in cal["legs"]
     assert '"dte_max": 70' in cal["legs"]
+
+
+def test_trade_idea_rejects_incomplete_edge_components():
+    ctx = IdeaContext(
+        spot=100,
+        t_years=30 / 365,
+        rate=0.0,
+        div=0.0,
+        iv_mid={0.25: 0.2, -0.25: 0.22, 0.10: 0.24, -0.10: 0.25},
+        iv_bid={0.25: 0.19, -0.25: 0.21, 0.10: 0.23, -0.10: 0.24},
+        iv_ask={0.25: 0.21, -0.25: 0.23, 0.10: 0.25, -0.10: 0.26},
+    )
+    idea = build_trade_ideas("RR_EXTREME", "30D", ctx)[0]
+    ranking = json.loads(idea["scenarios"])["ranking"]
+    assert ranking["promote_eligible"] is False
+    assert "incomplete_edge_components" in ranking["blocked_reasons"]
+
+
+def test_trade_idea_payload_complete_when_context_has_edge_components():
+    ctx = IdeaContext(
+        spot=100,
+        t_years=30 / 365,
+        rate=0.0,
+        div=0.0,
+        iv_mid={0.25: 0.2, -0.25: 0.22, 0.10: 0.24, -0.10: 0.25},
+        iv_bid={0.25: 0.19, -0.25: 0.21, 0.10: 0.23, -0.10: 0.24},
+        iv_ask={0.25: 0.21, -0.25: 0.23, 0.10: 0.25, -0.10: 0.26},
+        alert_severity=2.3,
+        alert_zscore_mid=2.4,
+        tradability_score=0.8,
+    )
+    idea = build_trade_ideas("RR_EXTREME", "30D", ctx)[0]
+    ranking = json.loads(idea["scenarios"])["ranking"]
+    assert ranking["normalized_edge_components"]["severity"] is not None
+    assert ranking["normalized_edge_components"]["zscore"] is not None
+    assert ranking["normalized_edge_components"]["tradability"] is not None
+    assert ranking["normalized_edge_components"]["pricing_spread"] is not None
 
 
 def test_compute_snapshot_iv_lookup_parses_dynamic_delta_buckets() -> None:
