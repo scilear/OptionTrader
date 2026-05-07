@@ -59,3 +59,8 @@ def test_deprecated_keys_are_detected() -> None:
     assert "app.mode" in result["deprecated_present"]
     assert "data.snapshot_tags" in result["deprecated_present"]
     assert "storage.engine" in result["deprecated_present"]
+
+
+def test_s7_release_validator_exists() -> None:
+    path = Path("scripts/validate_release.py")
+    assert path.exists()

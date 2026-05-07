@@ -4,7 +4,9 @@ from datetime import datetime
 
 import pandas as pd
 
+from src.core.alerts import compute_alerts
 from src.core.metrics import compute_iv_points
+from src.core.metrics import compute_surface_metrics
 
 
 def _quotes_for_chain(strikes: list[float], base_bid: float = 1.0, spread: float = 0.2) -> pd.DataFrame:
@@ -94,3 +96,72 @@ def test_sparse_wings_emit_degraded_status(monkeypatch) -> None:
     status_by_bucket = {p.delta_bucket: p.solve_status for p in points}
     assert status_by_bucket["+0.10C"] == "degraded"
     assert status_by_bucket["-0.10P"] == "degraded"
+
+
+def test_stale_books_emit_no_alert() -> None:
+    data = pd.DataFrame(
+        {
+            "ts": pd.date_range("2026-01-01", periods=6, freq="D"),
+            "expiry_bucket": ["30D"] * 6,
+            "rr25_mid": [0.0, 0.0, 0.0, 0.0, 0.0, 3.0],
+            "rr25_worst": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0],
+        }
+    )
+    alerts = compute_alerts(
+        data,
+        window=6,
+        threshold=2.0,
+        persistence_required=1,
+        pessimistic_gate=True,
+    )
+    assert alerts == []
+
+
+def test_missing_tenors_term_slope_remains_null() -> None:
+    ts = datetime(2026, 2, 13)
+    quotes = _quotes_for_chain([90.0, 100.0, 110.0])
+    points = compute_iv_points(
+        quotes,
+        ts,
+        100.0,
+        spread_gate_pct=0.5,
+        delta_points=[0.10, 0.25],
+    )
+    metrics = compute_surface_metrics(
+        points,
+        ts,
+        buckets=[21, 30, 45],
+        min_valid_points_core=3,
+        min_valid_points_full=5,
+    )
+    assert len(metrics) == 1
+    assert metrics[0]["term_slope_mid"] is None
+    assert metrics[0]["term_slope_worst"] is None
+
+
+def test_discontinuous_chain_snapshots_emit_no_false_alert() -> None:
+    data = pd.DataFrame(
+        {
+            "ts": pd.to_datetime(
+                [
+                    "2026-01-01",
+                    "2026-01-02",
+                    "2026-01-10",
+                    "2026-01-11",
+                    "2026-01-20",
+                    "2026-01-21",
+                ]
+            ),
+            "expiry_bucket": ["30D"] * 6,
+            "rr25_mid": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            "rr25_worst": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+        }
+    )
+    alerts = compute_alerts(
+        data,
+        window=6,
+        threshold=2.0,
+        persistence_required=1,
+        pessimistic_gate=True,
+    )
+    assert alerts == []
