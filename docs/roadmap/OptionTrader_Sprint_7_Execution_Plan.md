@@ -1,7 +1,7 @@
 # OptionTrader Sprint 7 Execution Plan
 
 Date: 2026-05-07
-Last updated: 2026-05-07 (S7-01/S7-02 complete, S7-03/S7-04 partial)
+Last updated: 2026-05-08 (canonical validation completed)
 Sprint window: Weeks 11-12
 Parent roadmap: `docs/roadmap/OptionTrader_Next_Level_Plan.md`
 Prior sprint: `docs/roadmap/OptionTrader_Sprint_6_Execution_Plan.md`
@@ -218,3 +218,27 @@ Pending in next pass:
 - Deepen regime falsification gate thresholds once lineage window has sufficient observed outcomes
   (`S7-04`).
 - Complete final report and process integration wiring (`S7-05`, `S7-06`).
+
+## Resume Update (2026-05-08)
+
+Canonical validation completed after lock release:
+
+```bash
+source .venv/bin/activate
+python scripts/validate_release.py --config-path config/config-eod-truth.yaml
+```
+
+Outcome:
+
+- Walk-forward gate: PASS
+- Adversarial gate: PASS
+- Ablation ledger gate: PASS
+- Regime falsification gate: FAIL
+- Overall gate: FAIL
+- Recommendation: `not_promotable`
+
+Blocking rationale captured by script payload:
+
+- Required regime coverage (`Calm`, `Transition`, `Stress`) not satisfied for candidate window
+  (observed regime labels contain only `Neutral`).
+- Transition false-positive density comparison unavailable due to missing transition alerts.

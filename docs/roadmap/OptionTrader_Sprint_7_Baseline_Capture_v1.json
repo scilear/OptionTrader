@@ -1,0 +1,47 @@
+{
+  "captured_at": "2026-05-08T05:06:14.689420Z",
+  "contract": {
+    "baseline_lineage": "3b024c9",
+    "candidate_lineage": "5128e8e",
+    "config_path": "config/config-test.yaml",
+    "end_ts": "2010-02-28T23:59:59Z",
+    "horizon_days": 5,
+    "id": "S7-CONTRACT-v1",
+    "start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "walk_forward": {
+      "step_size": 5,
+      "test_size": 5,
+      "train_size": 10
+    }
+  },
+  "lineage_metadata": {
+    "baseline": {
+      "code_version": null,
+      "config_hash": null,
+      "profile_id": null,
+      "run_id": null
+    }
+  },
+  "regime_falsification": {
+    "baseline": {
+      "fp": 0,
+      "outcomes_observed": 0,
+      "precision": null,
+      "tp": 0,
+      "transition_alerts": 0,
+      "transition_fp": 0,
+      "transition_fp_density": null
+    },
+    "baseline_by_regime": {}
+  },
+  "walk_forward": {
+    "deterministic_schedule": false,
+    "pass": false,
+    "split_count": 0,
+    "step_size": 5,
+    "test_size": 5,
+    "test_window_lengths": [],
+    "train_size": 10
+  }
+}

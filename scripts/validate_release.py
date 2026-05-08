@@ -35,6 +35,7 @@ DEFAULT_CANDIDATE_LINEAGE = "5128e8e"
 DEFAULT_CONFIG_PATH = "config/config-eod-truth.yaml"
 DEFAULT_OUTPUT_PATH = "docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md"
 DEFAULT_JSON_OUTPUT_PATH = "docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json"
+DEFAULT_BASELINE_CAPTURE_PATH = "docs/roadmap/OptionTrader_Sprint_7_Baseline_Capture_v1.json"
 
 
 def _lineage_meta(underlying: str, start_ts: str, end_ts: str, lineage_prefix: str) -> dict[str, Any]:
@@ -220,11 +221,16 @@ def _regime_gate(
         and candidate_precision is not None
         and float(candidate_precision) >= float(baseline_precision)
     )
-    transition_ok = (
+    transition_blocked_reason = None
+    transition_ok = False
+    if (
         baseline.get("transition_fp_density") is not None
         and candidate.get("transition_fp_density") is not None
-        and float(candidate["transition_fp_density"]) <= float(baseline["transition_fp_density"])
-    )
+    ):
+        transition_ok = float(candidate["transition_fp_density"]) <= float(baseline["transition_fp_density"])
+    else:
+        transition_blocked_reason = "missing_transition_alerts"
+
     baseline_by_regime = _regime_stratified_summary(
         underlying=underlying,
         start_ts=start_ts,
@@ -239,16 +245,24 @@ def _regime_gate(
         lineage_prefix=candidate_lineage,
         horizon_days=horizon_days,
     )
-    regime_coverage_pass = len(candidate_by_regime) > 0
+    required_regimes = ["Calm", "Transition", "Stress"]
+    observed_regimes = sorted(candidate_by_regime.keys())
+    missing_regimes = [name for name in required_regimes if name not in candidate_by_regime]
+    regime_coverage_pass = len(missing_regimes) == 0
+
     return {
         "horizon_days": horizon_days,
         "baseline": baseline,
         "candidate": candidate,
         "baseline_by_regime": baseline_by_regime,
         "candidate_by_regime": candidate_by_regime,
+        "required_regimes": required_regimes,
+        "observed_regimes": observed_regimes,
+        "missing_regimes": missing_regimes,
         "regime_coverage_pass": regime_coverage_pass,
         "precision_non_regression": precision_non_regression,
         "transition_fp_density_non_worsening": transition_ok,
+        "transition_fp_density_blocked_reason": transition_blocked_reason,
         "pass": regime_coverage_pass and precision_non_regression and transition_ok,
     }
 
@@ -479,6 +493,7 @@ def main() -> None:
     parser.add_argument("--horizon-days", type=int, default=5)
     parser.add_argument("--report-path", default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--payload-path", default=DEFAULT_JSON_OUTPUT_PATH)
+    parser.add_argument("--baseline-capture-path", default=DEFAULT_BASELINE_CAPTURE_PATH)
     parser.add_argument("--skip-outcome-refresh", action="store_true")
     args = parser.parse_args()
 
@@ -518,9 +533,29 @@ def main() -> None:
     payload_path.parent.mkdir(parents=True, exist_ok=True)
     payload_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+    baseline_capture = {
+        "captured_at": payload["generated_at"],
+        "contract": payload["contract"],
+        "lineage_metadata": {
+            "baseline": payload["lineage_metadata"]["baseline"],
+        },
+        "walk_forward": payload["walk_forward"],
+        "regime_falsification": {
+            "baseline": payload["regime_falsification"]["baseline"],
+            "baseline_by_regime": payload["regime_falsification"].get("baseline_by_regime", {}),
+        },
+    }
+    baseline_capture_path = Path(args.baseline_capture_path)
+    baseline_capture_path.parent.mkdir(parents=True, exist_ok=True)
+    baseline_capture_path.write_text(
+        json.dumps(baseline_capture, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
     print(json.dumps(payload, indent=2, sort_keys=True))
     print(f"report_written={report_path}")
     print(f"payload_written={payload_path}")
+    print(f"baseline_capture_written={baseline_capture_path}")
     if _is_missing_lineage(payload):
         raise SystemExit(3)
     if payload["gates"]["overall_pass"]:

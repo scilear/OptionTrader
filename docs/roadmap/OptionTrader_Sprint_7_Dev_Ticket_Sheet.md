@@ -1,7 +1,7 @@
 # OptionTrader Sprint 7 Dev Ticket Sheet
 
 Date: 2026-05-07
-Last updated: 2026-05-07 (S7-01/S7-02 done, S7-03/S7-04 partial)
+Last updated: 2026-05-08 (canonical validation rerun)
 Source plan: `docs/roadmap/OptionTrader_Sprint_7_Execution_Plan.md`
 Sprint: Weeks 11-12
 
@@ -9,12 +9,12 @@ Sprint: Weeks 11-12
 
 | Ticket | Objective | Priority | Status | Evidence |
 |---|---|---|---|---|
-| S7-00 | Validation contract freeze + baseline capture | P0 | In progress | `docs/roadmap/OptionTrader_Sprint_7_Execution_Plan.md` |
+| S7-00 | Validation contract freeze + baseline capture | P0 | Done | `docs/roadmap/OptionTrader_Sprint_7_Execution_Plan.md`, `docs/roadmap/OptionTrader_Sprint_7_Baseline_Capture_v1.json` |
 | S7-01 | Walk-forward replay hooks | P0 | Done | `src/core/replay.py`, `tests/test_s7_walk_forward.py` |
 | S7-02 | Automated release validator | P0 | Done | `scripts/validate_release.py`, `tests/test_validate_release.py` |
-| S7-03 | Adversarial suite hardening | P0 | In progress | `tests/test_surface_adversarial.py`, validator adversarial gate checks |
+| S7-03 | Adversarial suite hardening | P0 | Done | `tests/test_surface_adversarial.py`, validator adversarial gate checks |
 | S7-04 | Regime falsification + ablation ledger | P0 | In progress | regime-stratified payload + component ledger in validator output |
-| S7-05 | Final release report + recommendation | P0 | In progress | `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md`, `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json` |
+| S7-05 | Final release report + recommendation | P0 | Done | `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md`, `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json` |
 | S7-06 | CI/process gate integration | P1 | In progress | `scripts/run_release_gate.sh`, release checklist |
 
 ## Ticket Details
@@ -30,8 +30,8 @@ Sprint: Weeks 11-12
   - Version contract (`S7-CONTRACT-v1`) with gate schema and threshold definitions.
   - Capture baseline payload and version in roadmap docs.
 - Acceptance:
-  - [ ] Contract is explicit and versioned.
-  - [ ] Baseline capture artifact is committed.
+  - [x] Contract is explicit and versioned.
+  - [x] Baseline capture artifact is committed.
 
 ### S7-01 - Walk-Forward Evaluation Hooks
 
@@ -94,7 +94,7 @@ Sprint: Weeks 11-12
   - Summarize gate results and final recommendation label.
   - Include exact command blocks and payload references.
 - Acceptance:
-  - [ ] Report is self-contained and decision-ready.
+  - [x] Report is self-contained and decision-ready.
 
 ### S7-06 - CI/Process Gate Integration
 
@@ -147,3 +147,23 @@ python scripts/validate_release.py --config-path config/config-eod-truth.yaml
 - Wired validator adversarial gate to run those exact scenario tests via pytest selectors.
 - Added regime-stratified payload sections and component ablation ledger extraction in validator.
 - Added release gate wrapper command: `scripts/run_release_gate.sh`.
+
+## Resume Update (2026-05-08)
+
+- Canonical command rerun after DB lock release:
+  - `python scripts/validate_release.py --config-path config/config-eod-truth.yaml`
+- Generated/updated artifacts:
+  - `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md`
+  - `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json`
+  - `docs/roadmap/OptionTrader_Sprint_7_Baseline_Capture_v1.json`
+- Gate results from canonical run:
+  - `walk_forward_pass`: PASS
+  - `adversarial_resilience_pass`: PASS
+  - `ablation_ledger_pass`: PASS
+  - `regime_falsification_pass`: FAIL
+  - `overall_pass`: FAIL
+- Recommendation: `not_promotable`.
+- Blocking conditions in payload:
+  - `missing_regimes`: required `Calm`, `Transition`, `Stress` not all present in observed data
+    (observed: `Neutral` only).
+  - `transition_fp_density_blocked_reason`: `missing_transition_alerts`.

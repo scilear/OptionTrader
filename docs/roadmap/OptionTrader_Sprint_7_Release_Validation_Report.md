@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-07T14:35:04.373273Z
+Generated at: 2026-05-08T05:06:14.689420Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -9,7 +9,7 @@ Source script: `scripts/validate_release.py`
 - Config path: `config/config-test.yaml`
 - Underlying: `SPX`
 - Start: `2010-01-01T00:00:00Z`
-- End: `2023-12-31T23:59:59Z`
+- End: `2010-02-28T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
 
@@ -69,7 +69,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.65s"
+          "1 passed in 0.64s"
         ]
       },
       "missing_tenors": {
@@ -77,7 +77,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.66s"
+          "1 passed in 0.70s"
         ]
       },
       "sparse_wings": {
@@ -85,7 +85,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.67s"
+          "1 passed in 0.59s"
         ]
       },
       "stale_books": {
@@ -109,15 +109,15 @@ Source script: `scripts/validate_release.py`
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-test.yaml",
-    "end_ts": "2023-12-31T23:59:59Z",
+    "end_ts": "2010-02-28T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
     "start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
-      "step_size": 63,
-      "test_size": 63,
-      "train_size": 252
+      "step_size": 5,
+      "test_size": 5,
+      "train_size": 10
     }
   },
   "gates": {
@@ -127,7 +127,7 @@ Source script: `scripts/validate_release.py`
     "regime_falsification_pass": false,
     "walk_forward_pass": false
   },
-  "generated_at": "2026-05-07T14:35:04.373273Z",
+  "generated_at": "2026-05-08T05:06:14.689420Z",
   "lineage_metadata": {
     "baseline": {
       "code_version": null,
@@ -165,19 +165,31 @@ Source script: `scripts/validate_release.py`
     },
     "candidate_by_regime": {},
     "horizon_days": 5,
+    "missing_regimes": [
+      "Calm",
+      "Transition",
+      "Stress"
+    ],
+    "observed_regimes": [],
     "pass": false,
     "precision_non_regression": false,
     "regime_coverage_pass": false,
+    "required_regimes": [
+      "Calm",
+      "Transition",
+      "Stress"
+    ],
+    "transition_fp_density_blocked_reason": "missing_transition_alerts",
     "transition_fp_density_non_worsening": false
   },
   "walk_forward": {
     "deterministic_schedule": false,
     "pass": false,
     "split_count": 0,
-    "step_size": 63,
-    "test_size": 63,
+    "step_size": 5,
+    "test_size": 5,
     "test_window_lengths": [],
-    "train_size": 252
+    "train_size": 10
   }
 }
 ```
@@ -186,6 +198,6 @@ Source script: `scripts/validate_release.py`
 
 ```bash
 source .venv/bin/activate
-python scripts/validate_release.py --config-path config/config-test.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2023-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
+python scripts/validate_release.py --config-path config/config-test.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2010-02-28T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 10 --test-size 5 --step-size 5 --horizon-days 5
 ```
 
