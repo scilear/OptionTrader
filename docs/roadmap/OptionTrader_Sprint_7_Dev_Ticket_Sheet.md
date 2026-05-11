@@ -13,9 +13,9 @@ Sprint: Weeks 11-12
 | S7-01 | Walk-forward replay hooks | P0 | Done | `src/core/replay.py`, `tests/test_s7_walk_forward.py` |
 | S7-02 | Automated release validator | P0 | Done | `scripts/validate_release.py`, `tests/test_validate_release.py` |
 | S7-03 | Adversarial suite hardening | P0 | Done | `tests/test_surface_adversarial.py`, validator adversarial gate checks |
-| S7-04 | Regime falsification + ablation ledger | P0 | In progress | regime-stratified payload + component ledger in validator output |
+| S7-04 | Regime falsification + ablation ledger | P0 | Done | regime-stratified payload + component ledger in validator output |
 | S7-05 | Final release report + recommendation | P0 | Done | `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md`, `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json` |
-| S7-06 | CI/process gate integration | P1 | In progress | `scripts/run_release_gate.sh`, release checklist |
+| S7-06 | CI/process gate integration | P1 | Done | `scripts/run_release_gate.sh`, `docs/roadmap/OptionTrader_Release_Gate_Checklist.md` |
 
 ## Ticket Details
 
@@ -167,3 +167,15 @@ python scripts/validate_release.py --config-path config/config-eod-truth.yaml
   - `missing_regimes`: required `Calm`, `Transition`, `Stress` not all present in observed data
     (observed: `Neutral` only).
   - `transition_fp_density_blocked_reason`: `missing_transition_alerts`.
+
+## Update (2026-05-11)
+
+- Canonical validation rerun executed:
+  - `python scripts/validate_release.py --config-path config/config-eod-truth.yaml`
+- Artifacts refreshed in-place:
+  - `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md`
+  - `docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json`
+  - `docs/roadmap/OptionTrader_Sprint_7_Baseline_Capture_v1.json`
+- Release-process enforcement documented explicitly:
+  - `docs/roadmap/OptionTrader_Release_Gate_Checklist.md`
+- Sprint 7 GitHub issue closure completed for S7-00 through S7-05; S7-06 is now doc-complete.
