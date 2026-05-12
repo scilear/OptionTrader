@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -19,6 +20,7 @@ ensure_repo_root_on_path()
 
 from src.core.compute_snapshot import compute_for_snapshot
 from src.core.config import config_digest, get_config_path
+from src.core.regime import compute_regime_state
 from src.db.connection import connect
 from src.db.init_db import init_db
 
@@ -241,6 +243,12 @@ def _purge_existing_tracks(
         )
         conn.execute(
             """
+            DELETE FROM regime_snapshot_labels
+            WHERE snapshot_id IN (SELECT snapshot_id FROM _track_snapshot_ids)
+            """
+        )
+        conn.execute(
+            """
             UPDATE snapshots
             SET run_id = NULL,
                 source = 'eod_purged',
@@ -319,12 +327,24 @@ def materialize_s4_tracks_from_eod(
     finally:
         conn.close()
 
+    original_config_env = os.environ.get("OPTIONTRADER_CONFIG")
     try:
+        if baseline_cfg_path is not None:
+            os.environ["OPTIONTRADER_CONFIG"] = str(baseline_cfg_path)
+            compute_regime_state(run_id=baseline_run_id)
         for snapshot_id in baseline_snapshot_ids:
             compute_for_snapshot(snapshot_id, purge_existing=True, config_path=baseline_cfg_path)
+
+        if candidate_cfg_path is not None:
+            os.environ["OPTIONTRADER_CONFIG"] = str(candidate_cfg_path)
+            compute_regime_state(run_id=candidate_run_id)
         for snapshot_id in candidate_snapshot_ids:
             compute_for_snapshot(snapshot_id, purge_existing=True, config_path=candidate_cfg_path)
     finally:
+        if original_config_env is not None:
+            os.environ["OPTIONTRADER_CONFIG"] = original_config_env
+        elif "OPTIONTRADER_CONFIG" in os.environ:
+            del os.environ["OPTIONTRADER_CONFIG"]
         baseline_cfg_path.unlink(missing_ok=True)
         candidate_cfg_path.unlink(missing_ok=True)
 

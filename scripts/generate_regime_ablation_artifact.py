@@ -51,10 +51,18 @@ def _fetch_alert_stats(
         ).fetchone()[0]
         by_bucket_rows = conn.execute(
             """
-            SELECT COALESCE(a.regime_label, 'Unknown') AS regime_label, COUNT(*)
+            SELECT
+              CASE
+                WHEN a.regime_label IS NULL OR a.regime_label = 'Neutral' THEN
+                  COALESCE(rsl.regime_label, COALESCE(rs.regime_label, 'Unknown'))
+                ELSE a.regime_label
+              END AS regime_label,
+              COUNT(*)
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_snapshot_labels rsl ON rsl.snapshot_id = s.snapshot_id
+            LEFT JOIN regime_state rs ON rs.regime_date = CAST(s.ts AS DATE)
             WHERE s.underlying = ?
               AND s.ts >= ?
               AND s.ts <= ?
@@ -148,12 +156,18 @@ def _fetch_precision_metrics(
             """
             SELECT
               ao.outcome_label,
-              COALESCE(a.regime_label, 'Unknown') AS regime_label,
+              CASE
+                WHEN a.regime_label IS NULL OR a.regime_label = 'Neutral' THEN
+                  COALESCE(rsl.regime_label, COALESCE(rs.regime_label, 'Unknown'))
+                ELSE a.regime_label
+              END AS regime_label,
               COUNT(*)
             FROM alert_outcomes ao
             JOIN alerts a ON a.alert_id = ao.alert_id
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_snapshot_labels rsl ON rsl.snapshot_id = s.snapshot_id
+            LEFT JOIN regime_state rs ON rs.regime_date = CAST(s.ts AS DATE)
             WHERE s.underlying = ?
               AND s.ts >= ?
               AND s.ts <= ?
@@ -168,10 +182,24 @@ def _fetch_precision_metrics(
             """
             SELECT
               COUNT(*) AS total_alerts,
-              SUM(CASE WHEN COALESCE(a.regime_label, 'Unknown') = 'Transition' THEN 1 ELSE 0 END) AS transition_alerts
+              SUM(
+                CASE
+                  WHEN (
+                    CASE
+                      WHEN a.regime_label IS NULL OR a.regime_label = 'Neutral' THEN
+                        COALESCE(rsl.regime_label, COALESCE(rs.regime_label, 'Unknown'))
+                      ELSE a.regime_label
+                    END
+                  ) = 'Transition'
+                  THEN 1
+                  ELSE 0
+                END
+              ) AS transition_alerts
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_snapshot_labels rsl ON rsl.snapshot_id = s.snapshot_id
+            LEFT JOIN regime_state rs ON rs.regime_date = CAST(s.ts AS DATE)
             WHERE s.underlying = ?
               AND s.ts >= ?
               AND s.ts <= ?
@@ -211,6 +239,44 @@ def _fetch_precision_metrics(
         "transition_fp": transition_fp,
         "transition_fp_density": transition_fp_density,
     }
+
+
+def _fetch_per_regime_outcome_counts(
+    underlying: str,
+    start_ts: str,
+    end_ts: str,
+    lineage_prefix: str,
+    horizon_days: int,
+) -> dict[str, int]:
+    conn = connect()
+    try:
+        rows = conn.execute(
+            """
+            SELECT
+              CASE
+                WHEN a.regime_label IS NULL OR a.regime_label = 'Neutral' THEN
+                  COALESCE(rsl.regime_label, COALESCE(rs.regime_label, 'Unknown'))
+                ELSE a.regime_label
+              END AS regime_label,
+              COUNT(*)
+            FROM alert_outcomes ao
+            JOIN alerts a ON a.alert_id = ao.alert_id
+            JOIN snapshots s ON s.snapshot_id = a.snapshot_id
+            JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_snapshot_labels rsl ON rsl.snapshot_id = s.snapshot_id
+            LEFT JOIN regime_state rs ON rs.regime_date = CAST(s.ts AS DATE)
+            WHERE s.underlying = ?
+              AND s.ts >= ?
+              AND s.ts <= ?
+              AND pr.code_version LIKE ?
+              AND ao.horizon_days = ?
+            GROUP BY 1
+            """,
+            (underlying, start_ts, end_ts, f"{lineage_prefix}%", horizon_days),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {str(label): int(count) for label, count in rows}
 
 
 def _pct_delta(candidate: int, baseline: int) -> float | None:
@@ -277,6 +343,20 @@ def main() -> None:
         args.horizon_days,
     )
     candidate_precision = _fetch_precision_metrics(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.candidate_lineage,
+        args.horizon_days,
+    )
+    baseline_outcomes_by_regime = _fetch_per_regime_outcome_counts(
+        args.underlying,
+        args.start_ts,
+        args.end_ts,
+        args.baseline_lineage,
+        args.horizon_days,
+    )
+    candidate_outcomes_by_regime = _fetch_per_regime_outcome_counts(
         args.underlying,
         args.start_ts,
         args.end_ts,
@@ -361,6 +441,8 @@ def main() -> None:
             "candidate_alerts_by_regime": candidate_buckets,
             "baseline_outcomes": baseline_precision,
             "candidate_outcomes": candidate_precision,
+            "baseline_outcomes_by_regime": baseline_outcomes_by_regime,
+            "candidate_outcomes_by_regime": candidate_outcomes_by_regime,
         },
         "gates": {
             "min_sample_pass": min_sample_pass,

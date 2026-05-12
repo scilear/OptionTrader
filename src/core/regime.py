@@ -177,8 +177,30 @@ def _percentiles_from_daily_values(values: dict[date, float]) -> dict[date, floa
     if not values:
         return {}
     series = pd.Series(values).sort_index()
-    pct = series.rank(pct=True) * 100.0
-    return {idx: float(val) for idx, val in pct.items()}
+    history: list[float] = []
+    out: dict[date, float] = {}
+    for idx, raw_value in series.items():
+        value = float(raw_value)
+        history.append(value)
+        percentile = 100.0 * (sum(1 for sample in history if sample <= value) / len(history))
+        out[idx] = float(percentile)
+    return out
+
+
+def _trailing_percentile_series(series: pd.Series) -> pd.Series:
+    if series.empty:
+        return pd.Series(dtype=float)
+    history: list[float] = []
+    out: list[float] = []
+    for raw_value in series.tolist():
+        if pd.isna(raw_value):
+            out.append(float("nan"))
+            continue
+        value = float(raw_value)
+        history.append(value)
+        percentile = 100.0 * (sum(1 for sample in history if sample <= value) / len(history))
+        out.append(float(percentile))
+    return pd.Series(out, index=series.index, dtype=float)
 
 
 def _stress_proxy_score(stress_proxy_pct: float | None) -> float:
@@ -191,7 +213,7 @@ def _stress_proxy_score(stress_proxy_pct: float | None) -> float:
     return 2.0
 
 
-def compute_regime_state(params: RegimeParams | None = None) -> int:
+def compute_regime_state(params: RegimeParams | None = None, run_id: int | None = None) -> int:
     logger = logging.getLogger("regime")
     params = params or regime_params_from_config()
     thresholds_hash = regime_threshold_hash(params)
@@ -213,13 +235,24 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                 "before relying on historical comparisons."
             )
 
-        snapshots = conn.execute(
-            """
-            SELECT ts, spot
-            FROM snapshots
-            ORDER BY ts
-            """
-        ).fetchdf()
+        if run_id is None:
+            snapshots = conn.execute(
+                """
+                SELECT snapshot_id, run_id, ts, spot
+                FROM snapshots
+                ORDER BY ts, snapshot_id
+                """
+            ).fetchdf()
+        else:
+            snapshots = conn.execute(
+                """
+                SELECT snapshot_id, run_id, ts, spot
+                FROM snapshots
+                WHERE run_id = ?
+                ORDER BY ts, snapshot_id
+                """,
+                (run_id,),
+            ).fetchdf()
         if snapshots.empty:
             logger.info("no snapshots for regime")
             return 0
@@ -232,8 +265,8 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
         rolling_high = daily["spot"].rolling(params.dd_window).max()
         daily["drawdown"] = (daily["spot"] / rolling_high - 1.0) * -100.0
 
-        rv_pct = daily["rv20"].rank(pct=True) * 100.0
-        dd_pct = daily["drawdown"].rank(pct=True) * 100.0
+        rv_pct = _trailing_percentile_series(daily["rv20"])
+        dd_pct = _trailing_percentile_series(daily["drawdown"])
 
         daily["rv_pct"] = rv_pct
         daily["dd_pct"] = dd_pct
@@ -254,6 +287,7 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
             )
 
         inserts = 0
+        regime_by_date: dict[date, tuple[str, str, str]] = {}
         for idx, row in daily.iterrows():
             if pd.isna(row["rv20"]) or pd.isna(row["drawdown"]):
                 continue
@@ -361,7 +395,48 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                     json.dumps(decomposition, sort_keys=True, separators=(",", ":")),
                 ),
             )
+            regime_by_date[idx.date()] = (
+                regime_label,
+                thresholds_hash,
+                json.dumps(decomposition, sort_keys=True, separators=(",", ":")),
+            )
             inserts += 1
+
+        snapshot_label_inserts = 0
+        for snapshot_row in snapshots.itertuples(index=False):
+            snapshot_ts = pd.to_datetime(snapshot_row.ts)
+            regime_date = snapshot_ts.date()
+            mapping = regime_by_date.get(regime_date)
+            if mapping is None:
+                continue
+            mapped_label, mapped_hash, mapped_decomposition = mapping
+            conn.execute(
+                """
+                INSERT INTO regime_snapshot_labels (
+                    snapshot_id,
+                    run_id,
+                    regime_date,
+                    regime_label,
+                    regime_config_hash,
+                    decomposition
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(snapshot_id) DO UPDATE SET
+                    run_id=excluded.run_id,
+                    regime_date=excluded.regime_date,
+                    regime_label=excluded.regime_label,
+                    regime_config_hash=excluded.regime_config_hash,
+                    decomposition=excluded.decomposition
+                """,
+                (
+                    int(snapshot_row.snapshot_id),
+                    int(snapshot_row.run_id) if snapshot_row.run_id is not None else None,
+                    regime_date,
+                    mapped_label,
+                    mapped_hash,
+                    mapped_decomposition,
+                ),
+            )
+            snapshot_label_inserts += 1
 
         if inserts == 0:
             logger.warning(
@@ -371,7 +446,7 @@ def compute_regime_state(params: RegimeParams | None = None) -> int:
                 params.dd_window,
             )
 
-        logger.info("regime rows updated=%s", inserts)
+        logger.info("regime rows updated=%s snapshot_labels_updated=%s", inserts, snapshot_label_inserts)
         return inserts
     finally:
         conn.close()

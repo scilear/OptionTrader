@@ -18,6 +18,7 @@ def _seed_minimal_compute_schema(conn):
         CREATE TABLE alerts (alert_id INTEGER, snapshot_id INTEGER, alert_type TEXT, expiry_bucket TEXT, severity DOUBLE, zscore_mid DOUBLE, zscore_worst DOUBLE, tradability_score DOUBLE, confidence_tier TEXT, persistence_count INTEGER, regime_label TEXT, signal_state TEXT, transition_reason_code TEXT, explain TEXT);
         CREATE TABLE trade_ideas (trade_id INTEGER, alert_id INTEGER, template TEXT, legs TEXT, price_mid DOUBLE, price_worst DOUBLE, greeks TEXT, scenarios TEXT, risk_flags TEXT);
         CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT, regime_config_hash TEXT);
+        CREATE TABLE regime_snapshot_labels (snapshot_id INTEGER PRIMARY KEY, run_id INTEGER, regime_date DATE, regime_label TEXT, regime_config_hash TEXT, decomposition TEXT);
         """
     )
 
@@ -73,8 +74,73 @@ def _seed_minimal_compute_schema_with_underlying_run(conn):
         CREATE TABLE alerts (alert_id INTEGER, snapshot_id INTEGER, alert_type TEXT, expiry_bucket TEXT, severity DOUBLE, zscore_mid DOUBLE, zscore_worst DOUBLE, tradability_score DOUBLE, confidence_tier TEXT, persistence_count INTEGER, regime_label TEXT, signal_state TEXT, transition_reason_code TEXT, explain TEXT);
         CREATE TABLE trade_ideas (trade_id INTEGER, alert_id INTEGER, template TEXT, legs TEXT, price_mid DOUBLE, price_worst DOUBLE, greeks TEXT, scenarios TEXT, risk_flags TEXT);
         CREATE TABLE regime_state (regime_date DATE PRIMARY KEY, vix_percentile DOUBLE, rv20_percentile DOUBLE, drawdown_percent DOUBLE, regime_score INTEGER, regime_label TEXT, regime_config_hash TEXT);
+        CREATE TABLE regime_snapshot_labels (snapshot_id INTEGER PRIMARY KEY, run_id INTEGER, regime_date DATE, regime_label TEXT, regime_config_hash TEXT, decomposition TEXT);
         """
     )
+
+
+def test_unknown_regime_when_snapshot_label_missing(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema_with_underlying_run(conn)
+    conn.execute(
+        "INSERT INTO snapshots VALUES (1, ?, 100.0, 501, 'SPX')",
+        (datetime(2026, 2, 13),),
+    )
+    conn.execute(
+        "INSERT INTO option_quotes VALUES (1, '2026-03-15', 100.0, 'C', 1.0, 1.2)"
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.compute_snapshot.connect", lambda: ConnWrapper(conn))
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.load_config",
+        lambda path=None: _load_test_config_with_overrides(emit_non_execution_states=True),
+    )
+    monkeypatch.setattr("src.core.compute_snapshot.compute_iv_points", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_surface_metrics",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "tier": "Core",
+                "atm_iv_mid": 0.2,
+                "rr25_mid": 0.1,
+                "rr10_mid": 0.1,
+                "fly25_mid": 0.1,
+                "fly10_mid": 0.1,
+                "term_slope_mid": 0.0,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_alerts",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "alert_type": "TERM_KINK",
+                "zscore_mid": 2.5,
+                "zscore_worst": 2.2,
+                "persistence": 2,
+            }
+        ],
+    )
+    monkeypatch.setattr("src.core.compute_snapshot.regime_threshold_hash", lambda *_a, **_k: "same_hash")
+    monkeypatch.setattr("src.core.compute_snapshot.regime_params_from_config", lambda *_a, **_k: object())
+
+    compute_for_snapshot(1, purge_existing=True)
+    row = conn.execute(
+        "SELECT signal_state, transition_reason_code, regime_label FROM alerts LIMIT 1"
+    ).fetchone()
+    assert row == ("Candidate", "regime_missing", "Unknown")
 
 
 def test_regime_filter_blocks_rr(monkeypatch):
@@ -83,6 +149,9 @@ def test_regime_filter_blocks_rr(monkeypatch):
     conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 90, 90, 12, 6, 'Stress', NULL)"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Stress', NULL, NULL)"
     )
 
     class ConnWrapper:
@@ -124,6 +193,9 @@ def test_regime_hash_mismatch_logs_warning(monkeypatch, caplog):
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'stale_hash')"
     )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Neutral', 'stale_hash', NULL)"
+    )
 
     class ConnWrapper:
         def __init__(self, inner):
@@ -156,6 +228,9 @@ def test_regime_hash_match_has_no_warning(monkeypatch, caplog):
     conn.execute("INSERT INTO snapshots VALUES (1, ?, 100.0)", (datetime(2026, 2, 13),))
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Neutral', 'same_hash', NULL)"
     )
 
     class ConnWrapper:
@@ -190,6 +265,9 @@ def test_emit_non_execution_states_persists_candidate(monkeypatch):
     )
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Neutral', 'same_hash', NULL)"
     )
 
     class ConnWrapper:
@@ -255,6 +333,9 @@ def test_lifecycle_validated_state_when_execution_blocked(monkeypatch):
     )
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Neutral', 'same_hash', NULL)"
     )
 
     class ConnWrapper:
@@ -355,6 +436,9 @@ def test_metric_series_uses_qc_pass_rows_only(monkeypatch):
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
     )
     conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, 101, '2026-02-13', 'Neutral', 'same_hash', NULL)"
+    )
+    conn.execute(
         """
         INSERT INTO snapshots VALUES
             (2, '2026-02-10 16:00:00', 99.0, 101, 'SPX'),
@@ -436,6 +520,9 @@ def test_metric_series_filters_future_and_other_underlying(monkeypatch):
     )
     conn.execute(
         "INSERT INTO regime_state VALUES ('2026-02-13', 50, 50, 2, 0, 'Neutral', 'same_hash')"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, NULL, '2026-02-13', 'Neutral', 'same_hash', NULL)"
     )
     conn.execute(
         """

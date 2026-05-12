@@ -53,6 +53,32 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE regime_state ADD COLUMN stress_proxy_score DOUBLE")
         if "decomposition" not in regime_columns:
             conn.execute("ALTER TABLE regime_state ADD COLUMN decomposition TEXT")
+        existing_tables = {row[0] for row in conn.execute("SHOW TABLES").fetchall()}
+        if "regime_snapshot_labels" not in existing_tables:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS regime_snapshot_labels (
+                    snapshot_id INTEGER PRIMARY KEY,
+                    run_id INTEGER,
+                    regime_date DATE NOT NULL,
+                    regime_label TEXT NOT NULL,
+                    regime_config_hash TEXT,
+                    decomposition TEXT,
+                    FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
+                )
+                """
+            )
+        regime_snapshot_columns = _table_columns(conn, "regime_snapshot_labels")
+        if "run_id" not in regime_snapshot_columns:
+            conn.execute("ALTER TABLE regime_snapshot_labels ADD COLUMN run_id INTEGER")
+        if "regime_date" not in regime_snapshot_columns:
+            conn.execute("ALTER TABLE regime_snapshot_labels ADD COLUMN regime_date DATE")
+        if "regime_label" not in regime_snapshot_columns:
+            conn.execute("ALTER TABLE regime_snapshot_labels ADD COLUMN regime_label TEXT")
+        if "regime_config_hash" not in regime_snapshot_columns:
+            conn.execute("ALTER TABLE regime_snapshot_labels ADD COLUMN regime_config_hash TEXT")
+        if "decomposition" not in regime_snapshot_columns:
+            conn.execute("ALTER TABLE regime_snapshot_labels ADD COLUMN decomposition TEXT")
         iv_columns = _table_columns(conn, "iv_points")
         if "fit_model_id" not in iv_columns:
             conn.execute("ALTER TABLE iv_points ADD COLUMN fit_model_id TEXT")
@@ -79,9 +105,7 @@ def init_db(schema_path: Path | None = None) -> None:
             conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_pass BOOLEAN")
         if "qc_reason_codes" not in surface_columns:
             conn.execute("ALTER TABLE surface_metrics ADD COLUMN qc_reason_codes TEXT")
-        if "alert_outcomes" not in {
-            row[0] for row in conn.execute("SHOW TABLES").fetchall()
-        }:
+        if "alert_outcomes" not in existing_tables:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS alert_outcomes (

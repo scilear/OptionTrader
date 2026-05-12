@@ -1,26 +1,26 @@
 {
-  "captured_at": "2026-05-12T19:55:29.648643Z",
+  "captured_at": "2026-05-12T20:17:02.754893Z",
   "contract": {
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
-    "config_path": "config/config-test.yaml",
-    "end_ts": "2010-02-28T23:59:59Z",
+    "config_path": "config/config-eod-truth.yaml",
+    "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
-    "start_ts": "2010-01-01T00:00:00Z",
+    "start_ts": "2023-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
-      "step_size": 5,
-      "test_size": 5,
-      "train_size": 10
+      "step_size": 63,
+      "test_size": 63,
+      "train_size": 252
     }
   },
   "lineage_metadata": {
     "baseline": {
-      "code_version": null,
-      "config_hash": null,
-      "profile_id": null,
-      "run_id": null
+      "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
+      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+      "profile_id": "baseline_rv_only",
+      "run_id": 27
     }
   },
   "regime_falsification": {
@@ -39,9 +39,9 @@
     "deterministic_schedule": false,
     "pass": false,
     "split_count": 0,
-    "step_size": 5,
-    "test_size": 5,
+    "step_size": 63,
+    "test_size": 63,
     "test_window_lengths": [],
-    "train_size": 10
+    "train_size": 252
   }
 }

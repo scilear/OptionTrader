@@ -1,6 +1,6 @@
 # OptionTrader S4-03 Gate Attrition Report
 
-Generated at: 2026-05-05T17:50:16.951851Z
+Generated at: 2026-05-12T21:08:32.779027Z
 
 ## Window
 
@@ -11,28 +11,28 @@ Generated at: 2026-05-05T17:50:16.951851Z
 ## Baseline
 
 - Lineage: `3b024c9`
-- Run/Profile/Hash: `run_id=19` `profile=baseline_rv_only` `config_hash=e6a5ea43d46b2b414cd2ae0cc7d31da804253bfb4e7917f46031f42e1a273af1`
-- Snapshots: `1063`
-- Surface rows: `794`
-- QC pass: `57`
-- Z-score pass: `695`
-- Persistence pass: `695`
-- Regime pass: `695`
-- Tradability pass: `695`
-- ExecutionReady: `12`
+- Run/Profile/Hash: `run_id=29` `profile=baseline_rv_only` `config_hash=ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68`
+- Snapshots: `3499`
+- Surface rows: `29`
+- QC pass: `25`
+- Z-score pass: `0`
+- Persistence pass: `0`
+- Regime pass: `0`
+- Tradability pass: `0`
+- ExecutionReady: `0`
 
 ## Candidate
 
 - Lineage: `5128e8e`
-- Run/Profile/Hash: `run_id=20` `profile=candidate_multi_signal` `config_hash=1a7ffc0cf8fc05901c7747ea770dfcc08968dad8635232b95f208c13e314468b`
-- Snapshots: `1063`
-- Surface rows: `794`
-- QC pass: `57`
-- Z-score pass: `695`
-- Persistence pass: `695`
-- Regime pass: `695`
-- Tradability pass: `695`
-- ExecutionReady: `12`
+- Run/Profile/Hash: `run_id=30` `profile=candidate_multi_signal` `config_hash=b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36`
+- Snapshots: `3499`
+- Surface rows: `29`
+- QC pass: `25`
+- Z-score pass: `0`
+- Persistence pass: `0`
+- Regime pass: `0`
+- Tradability pass: `0`
+- ExecutionReady: `0`
 
 ## Raw Payload
 
@@ -40,45 +40,45 @@ Generated at: 2026-05-05T17:50:16.951851Z
 {
   "baseline": {
     "attrition": {
-      "alerts_total": 695,
-      "execution_ready": 12,
-      "persistence_pass": 695,
-      "qc_pass": 57,
-      "regime_pass": 695,
-      "snapshots": 1063,
-      "surface_rows": 794,
-      "tradability_pass": 695,
-      "zscore_pass": 695
+      "alerts_total": 0,
+      "execution_ready": 0,
+      "persistence_pass": 0,
+      "qc_pass": 25,
+      "regime_pass": 0,
+      "snapshots": 3499,
+      "surface_rows": 29,
+      "tradability_pass": 0,
+      "zscore_pass": 0
     },
     "lineage": "3b024c9",
     "meta": {
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
-      "config_hash": "e6a5ea43d46b2b414cd2ae0cc7d31da804253bfb4e7917f46031f42e1a273af1",
+      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 19
+      "run_id": 29
     }
   },
   "candidate": {
     "attrition": {
-      "alerts_total": 695,
-      "execution_ready": 12,
-      "persistence_pass": 695,
-      "qc_pass": 57,
-      "regime_pass": 695,
-      "snapshots": 1063,
-      "surface_rows": 794,
-      "tradability_pass": 695,
-      "zscore_pass": 695
+      "alerts_total": 0,
+      "execution_ready": 0,
+      "persistence_pass": 0,
+      "qc_pass": 25,
+      "regime_pass": 0,
+      "snapshots": 3499,
+      "surface_rows": 29,
+      "tradability_pass": 0,
+      "zscore_pass": 0
     },
     "lineage": "5128e8e",
     "meta": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
-      "config_hash": "1a7ffc0cf8fc05901c7747ea770dfcc08968dad8635232b95f208c13e314468b",
+      "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
       "profile_id": "candidate_multi_signal",
-      "run_id": 20
+      "run_id": 30
     }
   },
-  "generated_at": "2026-05-05T17:50:16.951851Z",
+  "generated_at": "2026-05-12T21:08:32.779027Z",
   "window": {
     "end_ts": "2023-12-31T23:59:59Z",
     "start_ts": "2010-01-01T00:00:00Z",

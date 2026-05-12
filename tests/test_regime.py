@@ -29,11 +29,27 @@ def _create_regime_state_table(conn):
     )
 
 
+def _create_regime_snapshot_labels_table(conn):
+    conn.execute(
+        """
+        CREATE TABLE regime_snapshot_labels (
+            snapshot_id INTEGER PRIMARY KEY,
+            run_id INTEGER,
+            regime_date DATE,
+            regime_label TEXT,
+            regime_config_hash TEXT,
+            decomposition TEXT
+        )
+        """
+    )
+
+
 def test_regime_handles_empty(monkeypatch):
     def fake_connect():
         conn = duckdb.connect(":memory:")
-        conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+        conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
         _create_regime_state_table(conn)
+        _create_regime_snapshot_labels_table(conn)
         return conn
 
     monkeypatch.setattr("src.core.regime.connect", fake_connect)
@@ -43,13 +59,14 @@ def test_regime_handles_empty(monkeypatch):
 def test_regime_inserts_rows(monkeypatch):
     def fake_connect():
         conn = duckdb.connect(":memory:")
-        conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+        conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
         _create_regime_state_table(conn)
+        _create_regime_snapshot_labels_table(conn)
         dates = pd.date_range("2026-01-01", periods=80, freq="D")
         for i, d in enumerate(dates):
             conn.execute(
-                "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
-                (d.to_pydatetime(), 100 + i),
+                "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+                (i + 1, 1, d.to_pydatetime(), 100 + i),
             )
         return conn
 
@@ -59,13 +76,14 @@ def test_regime_inserts_rows(monkeypatch):
 
 def test_regime_thresholds_from_params_change_labels(monkeypatch):
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
     dates = pd.date_range("2026-01-01", periods=80, freq="D")
     for i, d in enumerate(dates):
         conn.execute(
-            "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
-            (d.to_pydatetime(), 100 + i),
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), 100 + i),
         )
 
     class ConnWrapper:
@@ -117,13 +135,14 @@ def test_regime_thresholds_from_params_change_labels(monkeypatch):
 
 def test_regime_decomposition_payload_is_present(monkeypatch):
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
     dates = pd.date_range("2026-01-01", periods=80, freq="D")
     for i, d in enumerate(dates):
         conn.execute(
-            "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
-            (d.to_pydatetime(), 100 + i),
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), 100 + i),
         )
 
     class ConnWrapper:
@@ -169,15 +188,19 @@ events:
     )
 
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
 
     dates = pd.date_range("2026-01-01", periods=80, freq="D")
     for i, d in enumerate(dates):
         spot = 100 + i
         if d.date() == pd.to_datetime("2026-03-21").date():
             spot = 100
-        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), spot))
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), spot),
+        )
 
     class ConnWrapper:
         def __init__(self, inner):
@@ -239,14 +262,18 @@ events:
 
 def test_regime_stress_proxy_signal_can_change_label(monkeypatch):
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
 
     dates = pd.date_range("2026-01-01", periods=120, freq="D")
     for i, d in enumerate(dates):
         # Build a volatile path so rv percentile climbs near sample end.
         spot = 100 + (i % 8) * (1 if i % 2 == 0 else -1)
-        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), spot))
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), spot),
+        )
 
     class ConnWrapper:
         def __init__(self, inner):
@@ -305,14 +332,15 @@ def test_regime_stress_proxy_signal_can_change_label(monkeypatch):
 
 def test_regime_warmup_logs_warning(monkeypatch, caplog):
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
     # Deliberately below rolling windows.
     dates = pd.date_range("2026-01-01", periods=5, freq="D")
     for i, d in enumerate(dates):
         conn.execute(
-            "INSERT INTO snapshots (ts, spot) VALUES (?, ?)",
-            (d.to_pydatetime(), 100 + i),
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), 100 + i),
         )
 
     class ConnWrapper:
@@ -341,11 +369,15 @@ def test_regime_hash_normalizes_equivalent_event_paths(tmp_path):
 
 def test_regime_vix_signal_changes_label_independent_of_rv(monkeypatch):
     conn = duckdb.connect(":memory:")
-    conn.execute("CREATE TABLE snapshots (ts TIMESTAMP, spot DOUBLE)")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
     _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
     dates = pd.date_range("2026-01-01", periods=90, freq="D")
     for i, d in enumerate(dates):
-        conn.execute("INSERT INTO snapshots (ts, spot) VALUES (?, ?)", (d.to_pydatetime(), 100 + i))
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 1, d.to_pydatetime(), 100 + i),
+        )
 
     class ConnWrapper:
         def __init__(self, inner):
@@ -373,7 +405,8 @@ def test_regime_vix_signal_changes_label_independent_of_rv(monkeypatch):
 
     def low_vix_fetch(ticker, date_index):
         if ticker == "^VIX":
-            return {d: 10.0 for d in date_index}
+            n = len(date_index)
+            return {d: float(n - i) for i, d in enumerate(date_index)}
         return {}
 
     def high_vix_fetch(ticker, date_index):
@@ -395,3 +428,61 @@ def test_regime_vix_signal_changes_label_independent_of_rv(monkeypatch):
 
     assert low_label == "Calm"
     assert high_label in {"Transition", "Stress"}
+
+
+def test_trailing_percentile_logic_avoids_lookahead(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
+    dates = pd.date_range("2026-01-01", periods=90, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 7, d.to_pydatetime(), 100 + (i % 7)),
+        )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+    compute_regime_state(run_id=7)
+    first = conn.execute(
+        "SELECT rv20_percentile FROM regime_state ORDER BY regime_date ASC LIMIT 1"
+    ).fetchone()[0]
+    assert first is not None
+
+
+def test_regime_snapshot_labels_are_populated(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
+    dates = pd.date_range("2026-01-01", periods=90, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 9, d.to_pydatetime(), 200 + i),
+        )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+    compute_regime_state(run_id=9)
+    count = conn.execute("SELECT COUNT(*) FROM regime_snapshot_labels WHERE run_id = 9").fetchone()[0]
+    assert count > 0

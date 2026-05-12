@@ -68,3 +68,38 @@ def test_adversarial_gate_runs_with_explicit_scenarios() -> None:
     assert '"stale_books"' in output
     assert '"missing_tenors"' in output
     assert '"discontinuous_chain_snapshots"' in output
+
+
+def test_validate_release_emits_v3_fields() -> None:
+    cmd = [
+        sys.executable,
+        "scripts/validate_release.py",
+        "--config-path",
+        "config/config-test.yaml",
+        "--start-ts",
+        "2010-01-01T00:00:00Z",
+        "--end-ts",
+        "2010-02-28T23:59:59Z",
+        "--underlying",
+        "SPX",
+        "--baseline-lineage",
+        "3b024c9",
+        "--candidate-lineage",
+        "5128e8e",
+        "--train-size",
+        "10",
+        "--test-size",
+        "5",
+        "--step-size",
+        "5",
+        "--skip-outcome-refresh",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    output = result.stdout
+    assert '"taxonomy_verdict"' in output
+    assert '"threshold_freeze"' in output
+    assert '"threshold_freeze_pass"' in output
+    assert '"independence_diagnostics"' in output
+    assert '"event_governance"' in output
+    assert '"per_regime_outcome_counts"' in output
+    assert '"unknown_regime_share"' in output

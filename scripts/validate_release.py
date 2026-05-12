@@ -21,6 +21,7 @@ ensure_repo_root_on_path()
 from scripts.evaluate_alert_outcomes import evaluate_alert_outcomes
 from scripts.generate_regime_ablation_artifact import _fetch_precision_metrics
 from src.core.config import load_config
+from src.core.regime import regime_params_from_config, regime_threshold_hash
 from src.core.replay import replay_walk_forward
 from src.db.connection import connect
 from src.db.init_db import init_db
@@ -156,13 +157,19 @@ def _regime_stratified_summary(
         rows = conn.execute(
             """
             SELECT
-              COALESCE(a.regime_label, 'Unknown') AS regime_label,
+              CASE
+                WHEN a.regime_label IS NULL OR a.regime_label = 'Neutral' THEN
+                  COALESCE(rsl.regime_label, COALESCE(rs.regime_label, 'Unknown'))
+                ELSE a.regime_label
+              END AS regime_label,
               COUNT(*) AS alerts,
               SUM(CASE WHEN ao.outcome_label = 'tp' THEN 1 ELSE 0 END) AS tp,
               SUM(CASE WHEN ao.outcome_label = 'fp' THEN 1 ELSE 0 END) AS fp
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_snapshot_labels rsl ON rsl.snapshot_id = s.snapshot_id
+            LEFT JOIN regime_state rs ON rs.regime_date = CAST(s.ts AS DATE)
             LEFT JOIN alert_outcomes ao
               ON ao.alert_id = a.alert_id AND ao.horizon_days = ?
             WHERE s.underlying = ?
@@ -249,6 +256,63 @@ def _regime_gate(
     observed_regimes = sorted(candidate_by_regime.keys())
     missing_regimes = [name for name in required_regimes if name not in candidate_by_regime]
     regime_coverage_pass = len(missing_regimes) == 0
+    unknown_regime_count = int(candidate_by_regime.get("Unknown", {}).get("alerts", 0))
+    candidate_alert_count = int(sum(item.get("alerts", 0) for item in candidate_by_regime.values()))
+    unknown_regime_share = (
+        (unknown_regime_count / candidate_alert_count) if candidate_alert_count > 0 else None
+    )
+    unknown_regime_pass = unknown_regime_count == 0
+
+    min_required_outcomes = 5
+    per_regime_outcome_counts: dict[str, int] = {}
+    per_regime_validity: dict[str, bool] = {}
+    for regime_name in required_regimes:
+        row = candidate_by_regime.get(regime_name, {})
+        tp_count = int(row.get("tp", 0))
+        fp_count = int(row.get("fp", 0))
+        outcomes = tp_count + fp_count
+        per_regime_outcome_counts[regime_name] = outcomes
+        per_regime_validity[regime_name] = outcomes >= min_required_outcomes
+    outcome_validity_pass = all(per_regime_validity.values())
+
+    evidence_valid = (
+        regime_coverage_pass
+        and unknown_regime_pass
+        and outcome_validity_pass
+        and transition_ok
+    )
+
+    incremental_edge_confirmed = bool(
+        evidence_valid and precision_non_regression and candidate_precision is not None and baseline_precision is not None
+        and float(candidate_precision) > float(baseline_precision)
+    )
+    no_incremental_edge_observed = bool(
+        evidence_valid and not incremental_edge_confirmed
+    )
+
+    if not evidence_valid:
+        verdict = "invalid_evidence"
+    elif incremental_edge_confirmed:
+        verdict = "incremental_edge_confirmed"
+    else:
+        verdict = "no_incremental_edge_observed"
+
+    pass_value = verdict == "incremental_edge_confirmed"
+
+    blocked_reasons: list[str] = []
+    if not regime_coverage_pass:
+        blocked_reasons.append("missing_required_regimes")
+    if not precision_non_regression:
+        blocked_reasons.append("precision_regression_or_missing")
+    if not transition_ok:
+        blocked_reasons.append(transition_blocked_reason or "transition_fp_density_worsened")
+    if not unknown_regime_pass:
+        blocked_reasons.append("unknown_regime_labels_present")
+    if not outcome_validity_pass:
+        blocked_reasons.append("insufficient_per_regime_outcomes")
+
+    if candidate_alert_count == 0:
+        blocked_reasons.append("no_candidate_alerts")
 
     return {
         "horizon_days": horizon_days,
@@ -260,10 +324,179 @@ def _regime_gate(
         "observed_regimes": observed_regimes,
         "missing_regimes": missing_regimes,
         "regime_coverage_pass": regime_coverage_pass,
+        "unknown_regime_count": unknown_regime_count,
+        "unknown_regime_share": unknown_regime_share,
+        "candidate_alert_count": candidate_alert_count,
+        "unknown_regime_pass": unknown_regime_pass,
+        "min_required_outcomes_per_regime": min_required_outcomes,
+        "per_regime_outcome_counts": per_regime_outcome_counts,
+        "per_regime_outcome_validity": per_regime_validity,
+        "outcome_validity_pass": outcome_validity_pass,
         "precision_non_regression": precision_non_regression,
         "transition_fp_density_non_worsening": transition_ok,
         "transition_fp_density_blocked_reason": transition_blocked_reason,
-        "pass": regime_coverage_pass and precision_non_regression and transition_ok,
+        "evidence_valid": evidence_valid,
+        "taxonomy_verdict": verdict,
+        "blocked_reasons": blocked_reasons,
+        "pass": pass_value,
+    }
+
+
+def _threshold_freeze_gate(
+    *,
+    expected_config_path: str,
+    baseline_meta: dict[str, Any],
+    candidate_meta: dict[str, Any],
+) -> dict[str, Any]:
+    cfg = load_config(path=Path(expected_config_path))
+    current_hash = regime_threshold_hash(regime_params_from_config(cfg))
+    baseline_hash = baseline_meta.get("config_hash")
+    candidate_hash = candidate_meta.get("config_hash")
+    baseline_aligned = bool(baseline_hash)
+    candidate_aligned = bool(candidate_hash)
+    frozen = baseline_aligned and candidate_aligned and baseline_hash != candidate_hash
+    blocked_reasons: list[str] = []
+    if not baseline_aligned:
+        blocked_reasons.append("baseline_config_hash_missing")
+    if not candidate_aligned:
+        blocked_reasons.append("candidate_config_hash_missing")
+    if baseline_hash and candidate_hash and baseline_hash == candidate_hash:
+        blocked_reasons.append("baseline_candidate_config_hash_identical")
+
+    return {
+        "current_config_hash": current_hash,
+        "baseline_config_hash": baseline_hash,
+        "candidate_config_hash": candidate_hash,
+        "threshold_freeze_pass": frozen,
+        "blocked_reasons": blocked_reasons,
+    }
+
+
+def _independence_diagnostics(
+    *,
+    underlying: str,
+    start_ts: str,
+    end_ts: str,
+    lineage_prefix: str,
+) -> dict[str, Any]:
+    conn = connect()
+    try:
+        rows = conn.execute(
+            """
+            SELECT rs.decomposition
+            FROM regime_snapshot_labels rsl
+            JOIN snapshots s ON s.snapshot_id = rsl.snapshot_id
+            JOIN pipeline_runs pr ON pr.run_id = s.run_id
+            LEFT JOIN regime_state rs ON rs.regime_date = rsl.regime_date
+            WHERE s.underlying = ?
+              AND s.ts >= ?
+              AND s.ts <= ?
+              AND pr.code_version LIKE ?
+            """,
+            (underlying, start_ts, end_ts, f"{lineage_prefix}%"),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    contributions_sum: dict[str, float] = {
+        "vix": 0.0,
+        "rv20": 0.0,
+        "drawdown": 0.0,
+        "event": 0.0,
+        "stress_proxy": 0.0,
+    }
+    vix_values: list[float] = []
+    rv20_values: list[float] = []
+    stress_proxy_values: list[float] = []
+
+    for (decomposition_json,) in rows:
+        if not decomposition_json:
+            continue
+        try:
+            payload = json.loads(decomposition_json)
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        contrib = payload.get("contributions") if isinstance(payload.get("contributions"), dict) else {}
+        for key in contributions_sum:
+            value = contrib.get(key)
+            if isinstance(value, (int, float)):
+                contributions_sum[key] += abs(float(value))
+
+        features = payload.get("features") if isinstance(payload.get("features"), dict) else {}
+        vix_pct = features.get("vix_percentile")
+        rv20_pct = features.get("rv20_percentile")
+        stress_pct = features.get("stress_proxy_percentile")
+        if isinstance(vix_pct, (int, float)) and isinstance(rv20_pct, (int, float)) and isinstance(stress_pct, (int, float)):
+            vix_values.append(float(vix_pct))
+            rv20_values.append(float(rv20_pct))
+            stress_proxy_values.append(float(stress_pct))
+
+    total_contrib = sum(contributions_sum.values())
+    contribution_shares = {
+        key: (value / total_contrib if total_contrib > 0 else 0.0)
+        for key, value in contributions_sum.items()
+    }
+
+    def _corr(xs: list[float], ys: list[float]) -> float | None:
+        if len(xs) < 3 or len(ys) < 3:
+            return None
+        x_mean = sum(xs) / len(xs)
+        y_mean = sum(ys) / len(ys)
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys))
+        den_x = sum((x - x_mean) ** 2 for x in xs)
+        den_y = sum((y - y_mean) ** 2 for y in ys)
+        denom = (den_x * den_y) ** 0.5
+        if denom == 0.0:
+            return None
+        return num / denom
+
+    corr_stress_vix = _corr(stress_proxy_values, vix_values)
+    corr_stress_rv20 = _corr(stress_proxy_values, rv20_values)
+    independence_warning = bool(
+        (corr_stress_vix is not None and abs(corr_stress_vix) >= 0.95)
+        or (corr_stress_rv20 is not None and abs(corr_stress_rv20) >= 0.95)
+    )
+
+    return {
+        "samples": len(vix_values),
+        "contribution_shares": contribution_shares,
+        "correlation_stress_vs_vix": corr_stress_vix,
+        "correlation_stress_vs_rv20": corr_stress_rv20,
+        "near_redundant_feature_warning": independence_warning,
+    }
+
+
+def _event_governance_gate(config_path: str) -> dict[str, Any]:
+    cfg = load_config(path=Path(config_path))
+    regime_cfg = cfg.get("regime", {}) if isinstance(cfg, dict) else {}
+    event_path = str(regime_cfg.get("event_path", "config/regime_events_v1.yaml"))
+    event_file = Path(event_path)
+    blocked_reasons: list[str] = []
+    if not event_file.exists():
+        blocked_reasons.append("event_calendar_missing")
+        return {
+            "event_path": event_path,
+            "event_calendar_exists": False,
+            "effective_date_immutability_pass": False,
+            "blocked_reasons": blocked_reasons,
+        }
+    try:
+        payload = json.loads(json.dumps(load_config(path=Path(config_path))))
+        _ = payload
+        text = event_file.read_text(encoding="utf-8")
+        governance_pass = "date:" in text and "severity:" in text
+        if not governance_pass:
+            blocked_reasons.append("event_calendar_missing_required_fields")
+    except Exception:
+        governance_pass = False
+        blocked_reasons.append("event_calendar_unreadable")
+    return {
+        "event_path": event_path,
+        "event_calendar_exists": True,
+        "effective_date_immutability_pass": governance_pass,
+        "blocked_reasons": blocked_reasons,
     }
 
 
@@ -382,12 +615,34 @@ def _build_payload(
         candidate_lineage=candidate_lineage,
         config_path=config_path,
     )
+    freeze = _threshold_freeze_gate(
+        expected_config_path=config_path,
+        baseline_meta=lineage_metadata["baseline"],
+        candidate_meta=lineage_metadata["candidate"],
+    )
+    independence = {
+        "baseline": _independence_diagnostics(
+            underlying=underlying,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            lineage_prefix=baseline_lineage,
+        ),
+        "candidate": _independence_diagnostics(
+            underlying=underlying,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            lineage_prefix=candidate_lineage,
+        ),
+    }
+    event_governance = _event_governance_gate(config_path)
 
     gates = {
         "walk_forward_pass": walk_forward["pass"],
         "adversarial_resilience_pass": adversarial["pass"],
         "regime_falsification_pass": regime["pass"],
         "ablation_ledger_pass": ablation["pass"],
+        "threshold_freeze_pass": freeze["threshold_freeze_pass"],
+        "event_governance_pass": event_governance["effective_date_immutability_pass"],
     }
     overall_pass = all(gates.values())
     gates["overall_pass"] = overall_pass
@@ -414,6 +669,10 @@ def _build_payload(
         "adversarial": adversarial,
         "regime_falsification": regime,
         "ablation_ledger": ablation,
+        "threshold_freeze": freeze,
+        "independence_diagnostics": independence,
+        "event_governance": event_governance,
+        "taxonomy_verdict": regime.get("taxonomy_verdict", "invalid_evidence"),
         "gates": gates,
         "recommendation": "promotable" if overall_pass else "not_promotable",
     }
@@ -460,6 +719,7 @@ def _render_markdown(payload: dict[str, Any], command: str) -> str:
         "## Recommendation",
         "",
         f"- Final recommendation: `{payload['recommendation']}`",
+        f"- Taxonomy verdict: `{payload.get('taxonomy_verdict', 'invalid_evidence')}`",
         "",
         "## Summary Payload",
         "",

@@ -1,21 +1,21 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-12T19:55:29.648643Z
+Generated at: 2026-05-12T21:08:43.651658Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
 
 - Contract ID: `S7-CONTRACT-v1`
-- Config path: `config/config-test.yaml`
+- Config path: `config/config-eod-truth.yaml`
 - Underlying: `SPX`
 - Start: `2010-01-01T00:00:00Z`
-- End: `2010-02-28T23:59:59Z`
+- End: `2023-12-31T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
 
 ## Gate Evaluation
 
-- Walk-forward deterministic gate: FAIL
+- Walk-forward deterministic gate: PASS
 - Adversarial resilience gate: PASS
 - Regime falsification gate: FAIL
 - Ablation ledger gate: FAIL
@@ -70,7 +70,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.56s"
+          "1 passed in 0.57s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.61s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.57s"
+          "1 passed in 0.59s"
         ]
       },
       "stale_books": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.56s"
         ]
       }
     },
@@ -109,16 +109,16 @@ Source script: `scripts/validate_release.py`
   "contract": {
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
-    "config_path": "config/config-test.yaml",
-    "end_ts": "2010-02-28T23:59:59Z",
+    "config_path": "config/config-eod-truth.yaml",
+    "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
     "start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
-      "step_size": 5,
-      "test_size": 5,
-      "train_size": 10
+      "step_size": 63,
+      "test_size": 63,
+      "train_size": 252
     }
   },
   "event_governance": {
@@ -133,50 +133,50 @@ Source script: `scripts/validate_release.py`
     "event_governance_pass": true,
     "overall_pass": false,
     "regime_falsification_pass": false,
-    "threshold_freeze_pass": false,
-    "walk_forward_pass": false
+    "threshold_freeze_pass": true,
+    "walk_forward_pass": true
   },
-  "generated_at": "2026-05-12T19:55:29.648643Z",
+  "generated_at": "2026-05-12T21:08:43.651658Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
-        "drawdown": 0.0,
+        "drawdown": 0.13665254237288219,
         "event": 0.0,
-        "rv20": 0.0,
-        "stress_proxy": 0.0,
-        "vix": 0.0
+        "rv20": 0.3520921610169513,
+        "stress_proxy": 0.18697033898304588,
+        "vix": 0.3242849576271206
       },
-      "correlation_stress_vs_rv20": null,
-      "correlation_stress_vs_vix": null,
-      "near_redundant_feature_warning": false,
-      "samples": 0
+      "correlation_stress_vs_rv20": 0.7847293985911984,
+      "correlation_stress_vs_vix": 1.0,
+      "near_redundant_feature_warning": true,
+      "samples": 3437
     },
     "candidate": {
       "contribution_shares": {
-        "drawdown": 0.0,
+        "drawdown": 0.13665254237288219,
         "event": 0.0,
-        "rv20": 0.0,
-        "stress_proxy": 0.0,
-        "vix": 0.0
+        "rv20": 0.3520921610169513,
+        "stress_proxy": 0.18697033898304588,
+        "vix": 0.3242849576271206
       },
-      "correlation_stress_vs_rv20": null,
-      "correlation_stress_vs_vix": null,
-      "near_redundant_feature_warning": false,
-      "samples": 0
+      "correlation_stress_vs_rv20": 0.7847293985911984,
+      "correlation_stress_vs_vix": 1.0,
+      "near_redundant_feature_warning": true,
+      "samples": 3437
     }
   },
   "lineage_metadata": {
     "baseline": {
-      "code_version": null,
-      "config_hash": null,
-      "profile_id": null,
-      "run_id": null
+      "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
+      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+      "profile_id": "baseline_rv_only",
+      "run_id": 29
     },
     "candidate": {
-      "code_version": null,
-      "config_hash": null,
-      "profile_id": null,
-      "run_id": null
+      "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
+      "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
+      "profile_id": "candidate_multi_signal",
+      "run_id": 30
     }
   },
   "recommendation": "not_promotable",
@@ -246,23 +246,72 @@ Source script: `scripts/validate_release.py`
   },
   "taxonomy_verdict": "invalid_evidence",
   "threshold_freeze": {
-    "baseline_config_hash": null,
-    "blocked_reasons": [
-      "baseline_config_hash_missing",
-      "candidate_config_hash_missing"
-    ],
-    "candidate_config_hash": null,
+    "baseline_config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+    "blocked_reasons": [],
+    "candidate_config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
     "current_config_hash": "ec039d97d121f629cd73d47701c3461b281498f2ab93fac5af85cafdb5609e2e",
-    "threshold_freeze_pass": false
+    "threshold_freeze_pass": true
   },
   "walk_forward": {
-    "deterministic_schedule": false,
-    "pass": false,
-    "split_count": 0,
-    "step_size": 5,
-    "test_size": 5,
-    "test_window_lengths": [],
-    "train_size": 10
+    "deterministic_schedule": true,
+    "pass": true,
+    "split_count": 51,
+    "step_size": 63,
+    "test_size": 63,
+    "test_window_lengths": [
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63,
+      63
+    ],
+    "train_size": 252
   }
 }
 ```
@@ -271,6 +320,6 @@ Source script: `scripts/validate_release.py`
 
 ```bash
 source .venv/bin/activate
-python scripts/validate_release.py --config-path config/config-test.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2010-02-28T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 10 --test-size 5 --step-size 5 --horizon-days 5
+python scripts/validate_release.py --config-path config/config-eod-truth.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2023-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
 ```
 

@@ -107,6 +107,16 @@ CREATE TABLE IF NOT EXISTS regime_state (
   decomposition TEXT
 );
 
+CREATE TABLE IF NOT EXISTS regime_snapshot_labels (
+  snapshot_id INTEGER PRIMARY KEY,
+  run_id INTEGER,
+  regime_date DATE NOT NULL,
+  regime_label TEXT NOT NULL,
+  regime_config_hash TEXT,
+  decomposition TEXT,
+  FOREIGN KEY(snapshot_id) REFERENCES snapshots(snapshot_id)
+);
+
 CREATE TABLE IF NOT EXISTS alerts (
   alert_id INTEGER PRIMARY KEY DEFAULT nextval('alerts_id_seq'),
   snapshot_id INTEGER NOT NULL,

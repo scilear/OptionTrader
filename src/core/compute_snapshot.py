@@ -121,6 +121,42 @@ def _load_snapshot(conn, snapshot_id: int) -> tuple[datetime, float, int | None,
     return row[0], float(row[1]), None, None
 
 
+def _resolve_regime_for_snapshot(
+    conn,
+    *,
+    snapshot_id: int,
+    ts: datetime,
+    run_id: int | None,
+) -> tuple[str, str | None]:
+    row = conn.execute(
+        """
+        SELECT regime_label, regime_config_hash
+        FROM regime_snapshot_labels
+        WHERE snapshot_id = ?
+        """,
+        (snapshot_id,),
+    ).fetchone()
+    if row:
+        return str(row[0]), str(row[1]) if row[1] is not None else None
+
+    if run_id is not None:
+        row = conn.execute(
+            """
+            SELECT regime_label, regime_config_hash
+            FROM regime_snapshot_labels
+            WHERE run_id = ?
+              AND regime_date <= ?
+            ORDER BY regime_date DESC
+            LIMIT 1
+            """,
+            (run_id, ts.date()),
+        ).fetchone()
+        if row:
+            return str(row[0]), str(row[1]) if row[1] is not None else None
+
+    return "Unknown", None
+
+
 def _clear_snapshot_outputs(conn, snapshot_id: int) -> None:
     conn.execute(
         "DELETE FROM trade_ideas WHERE alert_id IN (SELECT alert_id FROM alerts WHERE snapshot_id = ?)",
@@ -167,6 +203,8 @@ def _determine_signal_state(
     quality_blockers: list[str] = []
     if tier is None:
         quality_blockers.append("tier_missing")
+    if regime_label == "Unknown":
+        quality_blockers.append("regime_missing")
     if not surface_qc_passed:
         quality_blockers.append("surface_qc_failed")
     if regime_hash_mismatch:
@@ -256,7 +294,7 @@ def _build_explain_payload(
     )
     persistence_pass = persistence >= persistence_required
     data_tier_pass = tier is not None
-    regime_pass = not (
+    regime_pass = regime_label != "Unknown" and not (
         alert.get("alert_type") == "RR_EXTREME" and regime_label == "Stress"
     )
     tradability_pass = tradability_score > 0.0
@@ -291,7 +329,11 @@ def _build_explain_payload(
                 "reason_code": (
                     "allowed"
                     if regime_pass
-                    else "rr_extreme_blocked_in_stress"
+                    else (
+                        "regime_missing"
+                        if regime_label == "Unknown"
+                        else "rr_extreme_blocked_in_stress"
+                    )
                 ),
                 "regime_label": regime_label,
             },
@@ -389,18 +431,19 @@ def compute_for_snapshot(
         if purge_existing:
             _clear_snapshot_outputs(conn, snapshot_id)
         logger.info("snapshot_id=%s ts=%s spot=%s", snapshot_id, ts, spot)
-        regime_row = conn.execute(
-            """
-            SELECT regime_label, regime_config_hash FROM regime_state
-            WHERE regime_date <= ?
-            ORDER BY regime_date DESC
-            LIMIT 1
-            """,
-            (ts.date(),),
-        ).fetchone()
-        regime_label = regime_row[0] if regime_row else "Neutral"
+        regime_label, persisted_regime_hash = _resolve_regime_for_snapshot(
+            conn,
+            snapshot_id=snapshot_id,
+            ts=ts,
+            run_id=snapshot_run_id,
+        )
+        if regime_label == "Unknown":
+            logger.warning(
+                "No scoped regime label available for snapshot_id=%s date=%s; defaulting to Unknown.",
+                snapshot_id,
+                ts.date(),
+            )
         current_regime_hash = regime_threshold_hash(regime_params_from_config(config))
-        persisted_regime_hash = regime_row[1] if regime_row and len(regime_row) > 1 else None
         regime_hash_mismatch = bool(
             persisted_regime_hash and persisted_regime_hash != current_regime_hash
         )
