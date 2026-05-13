@@ -124,7 +124,7 @@ def _load_existing_snapshots(
 def _resolve_snapshot(
     conn,
     snapshots_by_key: dict[tuple[str, float], int],
-    pending_clears: list[int],
+    cleared_snapshot_ids: set[int],
     summary: IngestSummary,
     *,
     quote_readtime: str,
@@ -138,8 +138,9 @@ def _resolve_snapshot(
     existing = snapshots_by_key.get(key)
     if existing is not None:
         summary.snapshots_reused += 1
-        if existing not in pending_clears:
-            pending_clears.append(existing)
+        if existing not in cleared_snapshot_ids:
+            conn.execute("DELETE FROM option_quotes WHERE snapshot_id = ?", (existing,))
+            cleared_snapshot_ids.add(existing)
         return existing
 
     row = conn.execute(
@@ -203,7 +204,7 @@ def ingest_spx_eod_option_data(
     conn = connect()
     try:
         snapshots_by_key = _load_existing_snapshots(conn, underlying, source_tag, session_tag)
-        pending_clears: list[int] = []
+        cleared_snapshot_ids: set[int] = set()
 
         quote_batch: list[tuple] = []
 
@@ -237,7 +238,7 @@ def ingest_spx_eod_option_data(
                 snapshot_id = _resolve_snapshot(
                     conn,
                     snapshots_by_key,
-                    pending_clears,
+                    cleared_snapshot_ids,
                     summary,
                     quote_readtime=quote_readtime,
                     ts=ts,
@@ -281,11 +282,6 @@ def ingest_spx_eod_option_data(
 
                     if len(quote_batch) >= BATCH_SIZE:
                         _flush_quote_batch(conn, quote_batch)
-
-            if pending_clears:
-                placeholders = ",".join("?" * len(pending_clears))
-                conn.execute(f"DELETE FROM option_quotes WHERE snapshot_id IN ({placeholders})", pending_clears)
-                pending_clears.clear()
 
             if quote_batch:
                 _flush_quote_batch(conn, quote_batch)

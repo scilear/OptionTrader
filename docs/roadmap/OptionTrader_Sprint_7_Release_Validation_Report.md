@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-12T19:55:29.648643Z
+Generated at: 2026-05-13T14:45:53.444608Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -70,7 +70,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.56s"
+          "1 passed in 0.88s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 1.02s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.57s"
+          "1 passed in 0.71s"
         ]
       },
       "stale_books": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.90s"
         ]
       }
     },
@@ -136,7 +136,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": false,
     "walk_forward_pass": false
   },
-  "generated_at": "2026-05-12T19:55:29.648643Z",
+  "generated_at": "2026-05-13T14:45:53.444608Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {

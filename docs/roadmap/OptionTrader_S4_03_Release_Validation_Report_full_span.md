@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-12T21:08:43.651658Z
+Generated at: 2026-05-13T14:40:23.014975Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -70,7 +70,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.57s"
+          "1 passed in 1.26s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.61s"
+          "1 passed in 1.18s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.59s"
+          "1 passed in 2.90s"
         ]
       },
       "stale_books": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.56s"
+          "1 passed in 1.39s"
         ]
       }
     },
@@ -136,7 +136,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-12T21:08:43.651658Z",
+  "generated_at": "2026-05-13T14:40:23.014975Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -170,79 +170,128 @@ Source script: `scripts/validate_release.py`
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 29
+      "run_id": 31
     },
     "candidate": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
       "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
       "profile_id": "candidate_multi_signal",
-      "run_id": 30
+      "run_id": 32
     }
   },
   "recommendation": "not_promotable",
   "regime_falsification": {
     "baseline": {
-      "fp": 0,
-      "outcomes_observed": 0,
-      "precision": null,
-      "tp": 0,
-      "transition_alerts": 0,
-      "transition_fp": 0,
-      "transition_fp_density": null
+      "fp": 147,
+      "outcomes_observed": 171,
+      "precision": 0.14035087719298245,
+      "tp": 24,
+      "transition_alerts": 57,
+      "transition_fp": 22,
+      "transition_fp_density": 0.38596491228070173
     },
-    "baseline_by_regime": {},
+    "baseline_by_regime": {
+      "Calm": {
+        "alerts": 40,
+        "fp": 11,
+        "precision": 0.15384615384615385,
+        "tp": 2
+      },
+      "Stress": {
+        "alerts": 176,
+        "fp": 108,
+        "precision": 0.10743801652892562,
+        "tp": 13
+      },
+      "Transition": {
+        "alerts": 57,
+        "fp": 22,
+        "precision": 0.2903225806451613,
+        "tp": 9
+      },
+      "Unknown": {
+        "alerts": 17,
+        "fp": 6,
+        "precision": 0.0,
+        "tp": 0
+      }
+    },
     "blocked_reasons": [
-      "missing_required_regimes",
       "precision_regression_or_missing",
-      "missing_transition_alerts",
-      "insufficient_per_regime_outcomes",
-      "no_candidate_alerts"
+      "transition_fp_density_worsened",
+      "unknown_regime_labels_present"
     ],
     "candidate": {
-      "fp": 0,
-      "outcomes_observed": 0,
-      "precision": null,
-      "tp": 0,
-      "transition_alerts": 0,
-      "transition_fp": 0,
-      "transition_fp_density": null
+      "fp": 69,
+      "outcomes_observed": 71,
+      "precision": 0.028169014084507043,
+      "tp": 2,
+      "transition_alerts": 19,
+      "transition_fp": 12,
+      "transition_fp_density": 0.631578947368421
     },
-    "candidate_alert_count": 0,
-    "candidate_by_regime": {},
+    "candidate_alert_count": 120,
+    "candidate_by_regime": {
+      "Calm": {
+        "alerts": 36,
+        "fp": 9,
+        "precision": 0.1,
+        "tp": 1
+      },
+      "Stress": {
+        "alerts": 48,
+        "fp": 42,
+        "precision": 0.023255813953488372,
+        "tp": 1
+      },
+      "Transition": {
+        "alerts": 19,
+        "fp": 12,
+        "precision": 0.0,
+        "tp": 0
+      },
+      "Unknown": {
+        "alerts": 17,
+        "fp": 6,
+        "precision": 0.0,
+        "tp": 0
+      }
+    },
     "evidence_valid": false,
     "horizon_days": 5,
     "min_required_outcomes_per_regime": 5,
-    "missing_regimes": [
+    "missing_regimes": [],
+    "observed_regimes": [
       "Calm",
+      "Stress",
       "Transition",
-      "Stress"
+      "Unknown"
     ],
-    "observed_regimes": [],
-    "outcome_validity_pass": false,
+    "outcome_validity_pass": true,
     "pass": false,
     "per_regime_outcome_counts": {
-      "Calm": 0,
-      "Stress": 0,
-      "Transition": 0
+      "Calm": 10,
+      "Stress": 43,
+      "Transition": 12
     },
     "per_regime_outcome_validity": {
-      "Calm": false,
-      "Stress": false,
-      "Transition": false
+      "Calm": true,
+      "Stress": true,
+      "Transition": true
     },
     "precision_non_regression": false,
-    "regime_coverage_pass": false,
+    "regime_coverage_pass": true,
     "required_regimes": [
       "Calm",
       "Transition",
       "Stress"
     ],
     "taxonomy_verdict": "invalid_evidence",
-    "transition_fp_density_blocked_reason": "missing_transition_alerts",
+    "transition_fp_density_blocked_reason": null,
     "transition_fp_density_non_worsening": false,
-    "unknown_regime_count": 0,
-    "unknown_regime_pass": true,
-    "unknown_regime_share": null
+    "unknown_regime_count": 17,
+    "unknown_regime_pass": false,
+    "unknown_regime_share": 0.14166666666666666
   },
   "taxonomy_verdict": "invalid_evidence",
   "threshold_freeze": {
