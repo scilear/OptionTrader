@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-13T14:40:23.014975Z",
+  "captured_at": "2026-05-14T19:03:35.129243Z",
   "contract": {
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
@@ -20,37 +20,37 @@
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 31
+      "run_id": 33
     }
   },
   "regime_falsification": {
     "baseline": {
-      "fp": 147,
-      "outcomes_observed": 171,
-      "precision": 0.14035087719298245,
-      "tp": 24,
-      "transition_alerts": 57,
-      "transition_fp": 22,
-      "transition_fp_density": 0.38596491228070173
+      "fp": 277,
+      "outcomes_observed": 324,
+      "precision": 0.14506172839506173,
+      "tp": 47,
+      "transition_alerts": 104,
+      "transition_fp": 62,
+      "transition_fp_density": 0.5961538461538461
     },
     "baseline_by_regime": {
       "Calm": {
-        "alerts": 40,
-        "fp": 11,
-        "precision": 0.15384615384615385,
-        "tp": 2
-      },
-      "Stress": {
-        "alerts": 176,
-        "fp": 108,
-        "precision": 0.10743801652892562,
+        "alerts": 126,
+        "fp": 86,
+        "precision": 0.13131313131313133,
         "tp": 13
       },
+      "Stress": {
+        "alerts": 196,
+        "fp": 123,
+        "precision": 0.1276595744680851,
+        "tp": 18
+      },
       "Transition": {
-        "alerts": 57,
-        "fp": 22,
-        "precision": 0.2903225806451613,
-        "tp": 9
+        "alerts": 104,
+        "fp": 62,
+        "precision": 0.20512820512820512,
+        "tp": 16
       },
       "Unknown": {
         "alerts": 17,

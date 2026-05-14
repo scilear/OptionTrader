@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-13T14:40:23.014975Z
+Generated at: 2026-05-14T19:03:35.129243Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -18,7 +18,7 @@ Source script: `scripts/validate_release.py`
 - Walk-forward deterministic gate: PASS
 - Adversarial resilience gate: PASS
 - Regime falsification gate: FAIL
-- Ablation ledger gate: FAIL
+- Ablation ledger gate: PASS
 - Overall release gate: FAIL
 
 ## Recommendation
@@ -58,10 +58,10 @@ Source script: `scripts/validate_release.py`
         "weight": 0.0
       }
     ],
-    "ideas_with_ranking": 0,
-    "mean_edge_after_cost": null,
-    "mean_total_friction_cost": null,
-    "pass": false
+    "ideas_with_ranking": 343,
+    "mean_edge_after_cost": 2748.037328471075,
+    "mean_total_friction_cost": 3.218746721000351,
+    "pass": true
   },
   "adversarial": {
     "details": {
@@ -70,7 +70,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.26s"
+          "1 passed in 0.54s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.18s"
+          "1 passed in 0.56s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 2.90s"
+          "1 passed in 0.58s"
         ]
       },
       "stale_books": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.39s"
+          "1 passed in 0.54s"
         ]
       }
     },
@@ -128,7 +128,7 @@ Source script: `scripts/validate_release.py`
     "event_path": "config/regime_events_v1.yaml"
   },
   "gates": {
-    "ablation_ledger_pass": false,
+    "ablation_ledger_pass": true,
     "adversarial_resilience_pass": true,
     "event_governance_pass": true,
     "overall_pass": false,
@@ -136,7 +136,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-13T14:40:23.014975Z",
+  "generated_at": "2026-05-14T19:03:35.129243Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -170,44 +170,44 @@ Source script: `scripts/validate_release.py`
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 31
+      "run_id": 33
     },
     "candidate": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
       "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
       "profile_id": "candidate_multi_signal",
-      "run_id": 32
+      "run_id": 34
     }
   },
   "recommendation": "not_promotable",
   "regime_falsification": {
     "baseline": {
-      "fp": 147,
-      "outcomes_observed": 171,
-      "precision": 0.14035087719298245,
-      "tp": 24,
-      "transition_alerts": 57,
-      "transition_fp": 22,
-      "transition_fp_density": 0.38596491228070173
+      "fp": 277,
+      "outcomes_observed": 324,
+      "precision": 0.14506172839506173,
+      "tp": 47,
+      "transition_alerts": 104,
+      "transition_fp": 62,
+      "transition_fp_density": 0.5961538461538461
     },
     "baseline_by_regime": {
       "Calm": {
-        "alerts": 40,
-        "fp": 11,
-        "precision": 0.15384615384615385,
-        "tp": 2
-      },
-      "Stress": {
-        "alerts": 176,
-        "fp": 108,
-        "precision": 0.10743801652892562,
+        "alerts": 126,
+        "fp": 86,
+        "precision": 0.13131313131313133,
         "tp": 13
       },
+      "Stress": {
+        "alerts": 196,
+        "fp": 123,
+        "precision": 0.1276595744680851,
+        "tp": 18
+      },
       "Transition": {
-        "alerts": 57,
-        "fp": 22,
-        "precision": 0.2903225806451613,
-        "tp": 9
+        "alerts": 104,
+        "fp": 62,
+        "precision": 0.20512820512820512,
+        "tp": 16
       },
       "Unknown": {
         "alerts": 17,
@@ -217,38 +217,37 @@ Source script: `scripts/validate_release.py`
       }
     },
     "blocked_reasons": [
-      "precision_regression_or_missing",
       "transition_fp_density_worsened",
       "unknown_regime_labels_present"
     ],
     "candidate": {
-      "fp": 69,
-      "outcomes_observed": 71,
-      "precision": 0.028169014084507043,
-      "tp": 2,
-      "transition_alerts": 19,
-      "transition_fp": 12,
-      "transition_fp_density": 0.631578947368421
+      "fp": 524,
+      "outcomes_observed": 627,
+      "precision": 0.16427432216905902,
+      "tp": 103,
+      "transition_alerts": 188,
+      "transition_fp": 124,
+      "transition_fp_density": 0.6595744680851063
     },
-    "candidate_alert_count": 120,
+    "candidate_alert_count": 1031,
     "candidate_by_regime": {
       "Calm": {
-        "alerts": 36,
-        "fp": 9,
-        "precision": 0.1,
-        "tp": 1
+        "alerts": 581,
+        "fp": 226,
+        "precision": 0.16911764705882354,
+        "tp": 46
       },
       "Stress": {
-        "alerts": 48,
-        "fp": 42,
-        "precision": 0.023255813953488372,
-        "tp": 1
+        "alerts": 245,
+        "fp": 168,
+        "precision": 0.12953367875647667,
+        "tp": 25
       },
       "Transition": {
-        "alerts": 19,
-        "fp": 12,
-        "precision": 0.0,
-        "tp": 0
+        "alerts": 188,
+        "fp": 124,
+        "precision": 0.20512820512820512,
+        "tp": 32
       },
       "Unknown": {
         "alerts": 17,
@@ -270,16 +269,16 @@ Source script: `scripts/validate_release.py`
     "outcome_validity_pass": true,
     "pass": false,
     "per_regime_outcome_counts": {
-      "Calm": 10,
-      "Stress": 43,
-      "Transition": 12
+      "Calm": 272,
+      "Stress": 193,
+      "Transition": 156
     },
     "per_regime_outcome_validity": {
       "Calm": true,
       "Stress": true,
       "Transition": true
     },
-    "precision_non_regression": false,
+    "precision_non_regression": true,
     "regime_coverage_pass": true,
     "required_regimes": [
       "Calm",
@@ -291,7 +290,7 @@ Source script: `scripts/validate_release.py`
     "transition_fp_density_non_worsening": false,
     "unknown_regime_count": 17,
     "unknown_regime_pass": false,
-    "unknown_regime_share": 0.14166666666666666
+    "unknown_regime_share": 0.016488845780795344
   },
   "taxonomy_verdict": "invalid_evidence",
   "threshold_freeze": {
