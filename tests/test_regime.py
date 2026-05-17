@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 import logging
 
-from src.core.regime import RegimeParams, compute_regime_state, regime_threshold_hash
+from src.core.regime import (
+    RegimeParams,
+    compute_regime_state,
+    first_regime_ready_date,
+    regime_threshold_hash,
+)
 
 
 def _create_regime_state_table(conn):
@@ -486,3 +491,69 @@ def test_regime_snapshot_labels_are_populated(monkeypatch):
     compute_regime_state(run_id=9)
     count = conn.execute("SELECT COUNT(*) FROM regime_snapshot_labels WHERE run_id = 9").fetchone()[0]
     assert count > 0
+
+
+def test_first_regime_ready_date_prefers_snapshot_labels(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
+    conn.execute(
+        "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (1, 77, '2026-01-01 16:00:00', 100.0)"
+    )
+    conn.execute(
+        "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (2, 77, '2026-01-02 16:00:00', 101.0)"
+    )
+    conn.execute(
+        """
+        INSERT INTO regime_snapshot_labels (
+            snapshot_id,
+            run_id,
+            regime_date,
+            regime_label,
+            regime_config_hash,
+            decomposition
+        ) VALUES (2, 77, '2026-01-02', 'Calm', 'abc', '{}')
+        """
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+
+    assert first_regime_ready_date(77) == pd.to_datetime("2026-01-02").date()
+
+
+def test_first_regime_ready_date_falls_back_to_warmup(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE snapshots (snapshot_id INTEGER, run_id INTEGER, ts TIMESTAMP, spot DOUBLE)")
+    _create_regime_state_table(conn)
+    _create_regime_snapshot_labels_table(conn)
+    dates = pd.date_range("2026-01-01", periods=90, freq="D")
+    for i, d in enumerate(dates):
+        conn.execute(
+            "INSERT INTO snapshots (snapshot_id, run_id, ts, spot) VALUES (?, ?, ?, ?)",
+            (i + 1, 88, d.to_pydatetime(), 200 + i),
+        )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("src.core.regime.connect", lambda: ConnWrapper(conn))
+
+    assert first_regime_ready_date(88) == pd.to_datetime(dates[62]).date()

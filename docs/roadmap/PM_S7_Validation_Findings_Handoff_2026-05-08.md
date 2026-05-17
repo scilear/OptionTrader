@@ -85,3 +85,25 @@ Result: `19 passed`.
   2. producing non-null transition false-positive density comparisons.
 
 No gate thresholds were relaxed in this cycle.
+
+## Addendum - 2026-05-15 (S4-03 V3 Post-Warm-Up Rerun)
+
+- Warm-up exclusion policy applied for S4-03 evidence window: `start_ts=2010-04-05T00:00:00Z`.
+- This removes regime warm-up contamination from evidence evaluation while preserving
+  fail-closed gate policy.
+- Outcome remains `not_promotable`, but blocker scope is now narrowed.
+
+Post-warm-up outputs:
+
+- `docs/roadmap/OptionTrader_S4_03_Release_Validation_Report_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Release_Validation_Payload_full_span_post_warmup.json`
+- `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Gate_Attrition_Report_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Baseline_Capture_full_span_post_warmup.json`
+
+Key findings from post-warm-up payload:
+
+- `unknown_regime_count=0` and `unknown_regime_pass=true` (previous unknown-label blocker closed).
+- `precision_non_regression=true` (candidate precision is higher than baseline).
+- `transition_fp_density_non_worsening=false` remains the active blocker.
+- Taxonomy verdict remains `invalid_evidence`, recommendation remains `not_promotable`.

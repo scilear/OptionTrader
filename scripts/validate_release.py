@@ -21,7 +21,11 @@ ensure_repo_root_on_path()
 from scripts.evaluate_alert_outcomes import evaluate_alert_outcomes
 from scripts.generate_regime_ablation_artifact import _fetch_precision_metrics
 from src.core.config import load_config
-from src.core.regime import regime_params_from_config, regime_threshold_hash
+from src.core.regime import (
+    first_regime_ready_date,
+    regime_params_from_config,
+    regime_threshold_hash,
+)
 from src.core.replay import replay_walk_forward
 from src.db.connection import connect
 from src.db.init_db import init_db
@@ -37,6 +41,60 @@ DEFAULT_CONFIG_PATH = "config/config-eod-truth.yaml"
 DEFAULT_OUTPUT_PATH = "docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Report.md"
 DEFAULT_JSON_OUTPUT_PATH = "docs/roadmap/OptionTrader_Sprint_7_Release_Validation_Payload.json"
 DEFAULT_BASELINE_CAPTURE_PATH = "docs/roadmap/OptionTrader_Sprint_7_Baseline_Capture_v1.json"
+
+
+def _parse_utc_ts(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def _format_utc_ts(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _resolve_effective_start_ts(
+    *,
+    requested_start_ts: str,
+    end_ts: str,
+    baseline_meta: dict[str, Any],
+    candidate_meta: dict[str, Any],
+    config_path: str,
+) -> dict[str, Any]:
+    del end_ts
+    requested_start_dt = _parse_utc_ts(requested_start_ts)
+    cfg = load_config(path=Path(config_path))
+    params = regime_params_from_config(cfg)
+
+    ready_dates: dict[str, str | None] = {"baseline": None, "candidate": None}
+    candidate_dates = [requested_start_dt.date()]
+
+    baseline_run_id = baseline_meta.get("run_id")
+    if isinstance(baseline_run_id, int):
+        baseline_ready = first_regime_ready_date(baseline_run_id, params=params)
+        if baseline_ready is not None:
+            ready_dates["baseline"] = baseline_ready.isoformat()
+            candidate_dates.append(baseline_ready)
+
+    candidate_run_id = candidate_meta.get("run_id")
+    if isinstance(candidate_run_id, int):
+        candidate_ready = first_regime_ready_date(candidate_run_id, params=params)
+        if candidate_ready is not None:
+            ready_dates["candidate"] = candidate_ready.isoformat()
+            candidate_dates.append(candidate_ready)
+
+    effective_start_date = max(candidate_dates)
+    effective_start_dt = datetime.combine(
+        effective_start_date,
+        datetime.min.time(),
+        tzinfo=timezone.utc,
+    )
+    warmup_excluded_days = max((effective_start_date - requested_start_dt.date()).days, 0)
+    return {
+        "requested_start_ts": requested_start_ts,
+        "effective_start_ts": _format_utc_ts(effective_start_dt),
+        "warmup_excluded_days": warmup_excluded_days,
+        "warmup_exclusion_applied": warmup_excluded_days > 0,
+        "regime_ready_dates": ready_dates,
+    }
 
 
 def _lineage_meta(underlying: str, start_ts: str, end_ts: str, lineage_prefix: str) -> dict[str, Any]:
@@ -589,10 +647,18 @@ def _build_payload(
         "baseline": _lineage_meta(underlying, start_ts, end_ts, baseline_lineage),
         "candidate": _lineage_meta(underlying, start_ts, end_ts, candidate_lineage),
     }
+    warmup_window = _resolve_effective_start_ts(
+        requested_start_ts=start_ts,
+        end_ts=end_ts,
+        baseline_meta=lineage_metadata["baseline"],
+        candidate_meta=lineage_metadata["candidate"],
+        config_path=config_path,
+    )
+    effective_start_ts = str(warmup_window["effective_start_ts"])
 
     walk_forward = _walk_forward_gate(
         underlying=underlying,
-        start_ts=start_ts,
+        start_ts=effective_start_ts,
         end_ts=end_ts,
         candidate_lineage=candidate_lineage,
         train_size=train_size,
@@ -602,7 +668,7 @@ def _build_payload(
     adversarial = _adversarial_gate()
     regime = _regime_gate(
         underlying=underlying,
-        start_ts=start_ts,
+        start_ts=effective_start_ts,
         end_ts=end_ts,
         baseline_lineage=baseline_lineage,
         candidate_lineage=candidate_lineage,
@@ -610,7 +676,7 @@ def _build_payload(
     )
     ablation = _ablation_gate(
         underlying=underlying,
-        start_ts=start_ts,
+        start_ts=effective_start_ts,
         end_ts=end_ts,
         candidate_lineage=candidate_lineage,
         config_path=config_path,
@@ -623,13 +689,13 @@ def _build_payload(
     independence = {
         "baseline": _independence_diagnostics(
             underlying=underlying,
-            start_ts=start_ts,
+            start_ts=effective_start_ts,
             end_ts=end_ts,
             lineage_prefix=baseline_lineage,
         ),
         "candidate": _independence_diagnostics(
             underlying=underlying,
-            start_ts=start_ts,
+            start_ts=effective_start_ts,
             end_ts=end_ts,
             lineage_prefix=candidate_lineage,
         ),
@@ -654,6 +720,7 @@ def _build_payload(
             "config_path": config_path,
             "underlying": underlying,
             "start_ts": start_ts,
+            "effective_start_ts": effective_start_ts,
             "end_ts": end_ts,
             "baseline_lineage": baseline_lineage,
             "candidate_lineage": candidate_lineage,
@@ -663,6 +730,15 @@ def _build_payload(
                 "step_size": step_size,
             },
             "horizon_days": horizon_days,
+        },
+        "window": {
+            "underlying": underlying,
+            "requested_start_ts": start_ts,
+            "effective_start_ts": effective_start_ts,
+            "end_ts": end_ts,
+            "warmup_excluded_days": warmup_window["warmup_excluded_days"],
+            "warmup_exclusion_applied": warmup_window["warmup_exclusion_applied"],
+            "regime_ready_dates": warmup_window["regime_ready_dates"],
         },
         "lineage_metadata": lineage_metadata,
         "walk_forward": walk_forward,
@@ -698,6 +774,7 @@ def _render_markdown(payload: dict[str, Any], command: str) -> str:
         f"- Config path: `{payload['contract']['config_path']}`",
         f"- Underlying: `{payload['contract']['underlying']}`",
         f"- Start: `{payload['contract']['start_ts']}`",
+        f"- Effective start (post warm-up): `{payload['contract']['effective_start_ts']}`",
         f"- End: `{payload['contract']['end_ts']}`",
         f"- Baseline lineage: `{payload['contract']['baseline_lineage']}`",
         f"- Candidate lineage: `{payload['contract']['candidate_lineage']}`",
@@ -715,6 +792,13 @@ def _render_markdown(payload: dict[str, Any], command: str) -> str:
         ),
         f"- Ablation ledger gate: {'PASS' if gates['ablation_ledger_pass'] else 'FAIL'}",
         f"- Overall release gate: {'PASS' if gates['overall_pass'] else 'FAIL'}",
+        "",
+        "## Warm-up Exclusion",
+        "",
+        f"- Warm-up exclusion applied: `{payload['window']['warmup_exclusion_applied']}`",
+        f"- Warm-up excluded days: `{payload['window']['warmup_excluded_days']}`",
+        f"- Requested start: `{payload['window']['requested_start_ts']}`",
+        f"- Effective start: `{payload['window']['effective_start_ts']}`",
         "",
         "## Recommendation",
         "",

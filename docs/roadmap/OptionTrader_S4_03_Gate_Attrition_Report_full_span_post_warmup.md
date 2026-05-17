@@ -1,12 +1,15 @@
 # OptionTrader S4-03 Gate Attrition Report
 
-Generated at: 2026-05-15T17:54:05.884116Z
+Generated at: 2026-05-17T17:03:33.670001Z
 
 ## Window
 
 - Underlying: `SPX`
-- Start: `2010-04-05T00:00:00Z`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-04-05T00:00:00Z`
 - End: `2023-12-31T23:59:59Z`
+- Warm-up exclusion applied: `True`
+- Warm-up excluded days: `94`
 
 ## Baseline
 
@@ -78,11 +81,18 @@ Generated at: 2026-05-15T17:54:05.884116Z
       "run_id": 34
     }
   },
-  "generated_at": "2026-05-15T17:54:05.884116Z",
+  "generated_at": "2026-05-17T17:03:33.670001Z",
   "window": {
+    "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
-    "start_ts": "2010-04-05T00:00:00Z",
-    "underlying": "SPX"
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 94,
+    "warmup_exclusion_applied": true
   }
 }
 ```

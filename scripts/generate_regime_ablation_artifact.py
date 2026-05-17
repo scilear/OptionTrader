@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -17,6 +18,7 @@ ensure_repo_root_on_path()
 
 from src.db.connection import connect
 from src.db.init_db import init_db
+from src.core.regime import first_regime_ready_date
 from scripts.evaluate_alert_outcomes import evaluate_alert_outcomes
 
 
@@ -26,6 +28,52 @@ DEFAULT_UNDERLYING = "SPX"
 DEFAULT_OUTPUT = "docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md"
 DEFAULT_BASELINE_LINEAGE = "3b024c9"
 DEFAULT_CANDIDATE_LINEAGE = "5128e8e"
+DEFAULT_CONFIG_PATH = "config/config-eod-truth.yaml"
+
+
+def _parse_utc_ts(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def _format_utc_ts(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _resolve_effective_start_ts(
+    requested_start_ts: str,
+    baseline_run_id: int | None,
+    candidate_run_id: int | None,
+) -> dict[str, Any]:
+    requested_start_dt = _parse_utc_ts(requested_start_ts)
+    ready_dates: dict[str, str | None] = {"baseline": None, "candidate": None}
+    candidate_dates = [requested_start_dt.date()]
+
+    if baseline_run_id is not None:
+        baseline_ready = first_regime_ready_date(baseline_run_id)
+        if baseline_ready is not None:
+            ready_dates["baseline"] = baseline_ready.isoformat()
+            candidate_dates.append(baseline_ready)
+
+    if candidate_run_id is not None:
+        candidate_ready = first_regime_ready_date(candidate_run_id)
+        if candidate_ready is not None:
+            ready_dates["candidate"] = candidate_ready.isoformat()
+            candidate_dates.append(candidate_ready)
+
+    effective_start_date = max(candidate_dates)
+    effective_start_dt = datetime.combine(
+        effective_start_date,
+        datetime.min.time(),
+        tzinfo=timezone.utc,
+    )
+    warmup_excluded_days = max((effective_start_date - requested_start_dt.date()).days, 0)
+    return {
+        "requested_start_ts": requested_start_ts,
+        "effective_start_ts": _format_utc_ts(effective_start_dt),
+        "warmup_excluded_days": warmup_excluded_days,
+        "warmup_exclusion_applied": warmup_excluded_days > 0,
+        "regime_ready_dates": ready_dates,
+    }
 
 
 def _fetch_alert_stats(
@@ -300,28 +348,18 @@ def main() -> None:
     parser.add_argument("--underlying", default=DEFAULT_UNDERLYING)
     parser.add_argument("--baseline-lineage", default=DEFAULT_BASELINE_LINEAGE)
     parser.add_argument("--candidate-lineage", default=DEFAULT_CANDIDATE_LINEAGE)
+    parser.add_argument("--config-path", default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--horizon-days", type=int, default=5)
     parser.add_argument("--skip-outcome-refresh", action="store_true")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
+    os.environ["OPTIONTRADER_CONFIG"] = args.config_path
     init_db()
 
     if not args.skip_outcome_refresh:
         evaluate_alert_outcomes(horizon_days=args.horizon_days, overwrite=False)
 
-    baseline_alert_count, baseline_buckets, baseline_snapshot_count = _fetch_alert_stats(
-        args.underlying,
-        args.start_ts,
-        args.end_ts,
-        args.baseline_lineage,
-    )
-    candidate_alert_count, candidate_buckets, candidate_snapshot_count = _fetch_alert_stats(
-        args.underlying,
-        args.start_ts,
-        args.end_ts,
-        args.candidate_lineage,
-    )
     baseline_run_meta = _fetch_lineage_run_metadata(
         args.underlying,
         args.start_ts,
@@ -334,31 +372,50 @@ def main() -> None:
         args.end_ts,
         args.candidate_lineage,
     )
+    warmup_window = _resolve_effective_start_ts(
+        requested_start_ts=args.start_ts,
+        baseline_run_id=baseline_run_meta.get("run_id"),
+        candidate_run_id=candidate_run_meta.get("run_id"),
+    )
+    effective_start_ts = str(warmup_window["effective_start_ts"])
+
+    baseline_alert_count, baseline_buckets, baseline_snapshot_count = _fetch_alert_stats(
+        args.underlying,
+        effective_start_ts,
+        args.end_ts,
+        args.baseline_lineage,
+    )
+    candidate_alert_count, candidate_buckets, candidate_snapshot_count = _fetch_alert_stats(
+        args.underlying,
+        effective_start_ts,
+        args.end_ts,
+        args.candidate_lineage,
+    )
 
     baseline_precision = _fetch_precision_metrics(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.baseline_lineage,
         args.horizon_days,
     )
     candidate_precision = _fetch_precision_metrics(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.candidate_lineage,
         args.horizon_days,
     )
     baseline_outcomes_by_regime = _fetch_per_regime_outcome_counts(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.baseline_lineage,
         args.horizon_days,
     )
     candidate_outcomes_by_regime = _fetch_per_regime_outcome_counts(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.candidate_lineage,
         args.horizon_days,
@@ -422,9 +479,13 @@ def main() -> None:
 
     summary = {
         "window": {
-            "start_ts": args.start_ts,
+            "requested_start_ts": args.start_ts,
+            "effective_start_ts": effective_start_ts,
             "end_ts": args.end_ts,
             "underlying": args.underlying,
+            "warmup_excluded_days": warmup_window["warmup_excluded_days"],
+            "warmup_exclusion_applied": warmup_window["warmup_exclusion_applied"],
+            "regime_ready_dates": warmup_window["regime_ready_dates"],
         },
         "baseline_track": args.baseline_lineage,
         "candidate_track": args.candidate_lineage,
@@ -486,6 +547,8 @@ def main() -> None:
         "",
         f"- Baseline lineage: `{args.baseline_lineage}`",
         f"- Candidate lineage: `{args.candidate_lineage}`",
+        f"- Requested start: `{args.start_ts}`",
+        f"- Effective start (post warm-up): `{effective_start_ts}`",
         f"- Baseline run/profile/hash: `run_id={baseline_run_meta['run_id']}` `profile={baseline_run_meta['profile_id']}` `config_hash={baseline_run_meta['config_hash']}`",
         f"- Candidate run/profile/hash: `run_id={candidate_run_meta['run_id']}` `profile={candidate_run_meta['profile_id']}` `config_hash={candidate_run_meta['config_hash']}`",
         "",

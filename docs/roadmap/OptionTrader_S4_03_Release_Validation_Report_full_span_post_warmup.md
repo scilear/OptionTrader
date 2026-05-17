@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-15T17:54:35.302201Z
+Generated at: 2026-05-17T17:04:03.831938Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -8,7 +8,8 @@ Source script: `scripts/validate_release.py`
 - Contract ID: `S7-CONTRACT-v1`
 - Config path: `config/config-eod-truth.yaml`
 - Underlying: `SPX`
-- Start: `2010-04-05T00:00:00Z`
+- Start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-04-05T00:00:00Z`
 - End: `2023-12-31T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
@@ -20,6 +21,13 @@ Source script: `scripts/validate_release.py`
 - Regime falsification gate: FAIL
 - Ablation ledger gate: PASS
 - Overall release gate: FAIL
+
+## Warm-up Exclusion
+
+- Warm-up exclusion applied: `True`
+- Warm-up excluded days: `94`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start: `2010-04-05T00:00:00Z`
 
 ## Recommendation
 
@@ -70,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.67s"
+          "1 passed in 0.60s"
         ]
       },
       "missing_tenors": {
@@ -86,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.64s"
+          "1 passed in 0.61s"
         ]
       },
       "stale_books": {
@@ -94,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.95s"
+          "1 passed in 0.58s"
         ]
       }
     },
@@ -110,10 +118,11 @@ Source script: `scripts/validate_release.py`
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-eod-truth.yaml",
+    "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
-    "start_ts": "2010-04-05T00:00:00Z",
+    "start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
       "step_size": 63,
@@ -136,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-15T17:54:35.302201Z",
+  "generated_at": "2026-05-17T17:04:03.831938Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -345,6 +354,18 @@ Source script: `scripts/validate_release.py`
       63
     ],
     "train_size": 252
+  },
+  "window": {
+    "effective_start_ts": "2010-04-05T00:00:00Z",
+    "end_ts": "2023-12-31T23:59:59Z",
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 94,
+    "warmup_exclusion_applied": true
   }
 }
 ```
@@ -353,6 +374,6 @@ Source script: `scripts/validate_release.py`
 
 ```bash
 source .venv/bin/activate
-python scripts/validate_release.py --config-path config/config-eod-truth.yaml --start-ts 2010-04-05T00:00:00Z --end-ts 2023-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
+python scripts/validate_release.py --config-path config/config-eod-truth.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2023-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
 ```
 

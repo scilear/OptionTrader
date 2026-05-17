@@ -103,3 +103,6 @@ def test_validate_release_emits_v3_fields() -> None:
     assert '"event_governance"' in output
     assert '"per_regime_outcome_counts"' in output
     assert '"unknown_regime_share"' in output
+    assert '"effective_start_ts"' in output
+    assert '"warmup_excluded_days"' in output
+    assert '"warmup_exclusion_applied"' in output

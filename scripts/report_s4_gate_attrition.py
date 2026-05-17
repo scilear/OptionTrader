@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 import sys
 
@@ -11,6 +12,7 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 from src.core.bootstrap import ensure_repo_root_on_path
+from src.core.regime import first_regime_ready_date
 
 ensure_repo_root_on_path()
 
@@ -19,6 +21,52 @@ from src.db.init_db import init_db
 
 
 DEFAULT_OUTPUT = "docs/roadmap/OptionTrader_S4_03_Gate_Attrition_Report.md"
+DEFAULT_CONFIG_PATH = "config/config-eod-truth.yaml"
+
+
+def _parse_utc_ts(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def _format_utc_ts(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _resolve_effective_start_ts(
+    requested_start_ts: str,
+    baseline_run_id: int | None,
+    candidate_run_id: int | None,
+) -> dict:
+    requested_start_dt = _parse_utc_ts(requested_start_ts)
+    ready_dates: dict[str, str | None] = {"baseline": None, "candidate": None}
+    candidate_dates = [requested_start_dt.date()]
+
+    if baseline_run_id is not None:
+        baseline_ready = first_regime_ready_date(baseline_run_id)
+        if baseline_ready is not None:
+            ready_dates["baseline"] = baseline_ready.isoformat()
+            candidate_dates.append(baseline_ready)
+
+    if candidate_run_id is not None:
+        candidate_ready = first_regime_ready_date(candidate_run_id)
+        if candidate_ready is not None:
+            ready_dates["candidate"] = candidate_ready.isoformat()
+            candidate_dates.append(candidate_ready)
+
+    effective_start_date = max(candidate_dates)
+    effective_start_dt = datetime.combine(
+        effective_start_date,
+        datetime.min.time(),
+        tzinfo=timezone.utc,
+    )
+    warmup_excluded_days = max((effective_start_date - requested_start_dt.date()).days, 0)
+    return {
+        "requested_start_ts": requested_start_ts,
+        "effective_start_ts": _format_utc_ts(effective_start_dt),
+        "warmup_excluded_days": warmup_excluded_days,
+        "warmup_exclusion_applied": warmup_excluded_days > 0,
+        "regime_ready_dates": ready_dates,
+    }
 
 
 def _run_meta(underlying: str, start_ts: str, end_ts: str, lineage_prefix: str) -> dict:
@@ -196,31 +244,44 @@ def main() -> None:
     parser.add_argument("--underlying", default="SPX")
     parser.add_argument("--baseline-lineage", required=True)
     parser.add_argument("--candidate-lineage", required=True)
+    parser.add_argument("--config-path", default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
+    os.environ["OPTIONTRADER_CONFIG"] = args.config_path
     init_db()
+    baseline_meta = _run_meta(args.underlying, args.start_ts, args.end_ts, args.baseline_lineage)
+    candidate_meta = _run_meta(args.underlying, args.start_ts, args.end_ts, args.candidate_lineage)
+    warmup_window = _resolve_effective_start_ts(
+        requested_start_ts=args.start_ts,
+        baseline_run_id=baseline_meta.get("run_id"),
+        candidate_run_id=candidate_meta.get("run_id"),
+    )
+    effective_start_ts = str(warmup_window["effective_start_ts"])
+
     baseline = _attrition_for_lineage(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.baseline_lineage,
     )
     candidate = _attrition_for_lineage(
         args.underlying,
-        args.start_ts,
+        effective_start_ts,
         args.end_ts,
         args.candidate_lineage,
     )
-    baseline_meta = _run_meta(args.underlying, args.start_ts, args.end_ts, args.baseline_lineage)
-    candidate_meta = _run_meta(args.underlying, args.start_ts, args.end_ts, args.candidate_lineage)
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "window": {
             "underlying": args.underlying,
-            "start_ts": args.start_ts,
+            "requested_start_ts": args.start_ts,
+            "effective_start_ts": effective_start_ts,
             "end_ts": args.end_ts,
+            "warmup_excluded_days": warmup_window["warmup_excluded_days"],
+            "warmup_exclusion_applied": warmup_window["warmup_exclusion_applied"],
+            "regime_ready_dates": warmup_window["regime_ready_dates"],
         },
         "baseline": {
             "lineage": args.baseline_lineage,
@@ -242,8 +303,11 @@ def main() -> None:
         "## Window",
         "",
         f"- Underlying: `{args.underlying}`",
-        f"- Start: `{args.start_ts}`",
+        f"- Requested start: `{args.start_ts}`",
+        f"- Effective start (post warm-up): `{effective_start_ts}`",
         f"- End: `{args.end_ts}`",
+        f"- Warm-up exclusion applied: `{warmup_window['warmup_exclusion_applied']}`",
+        f"- Warm-up excluded days: `{warmup_window['warmup_excluded_days']}`",
         "",
         "## Baseline",
         "",

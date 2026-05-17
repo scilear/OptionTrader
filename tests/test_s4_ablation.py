@@ -47,6 +47,18 @@ def _create_ablation_tables(conn: duckdb.DuckDBPyConnection) -> None:
             outcome_source TEXT,
             evaluated_at TIMESTAMP
         );
+        CREATE TABLE regime_snapshot_labels (
+            snapshot_id INTEGER,
+            run_id INTEGER,
+            regime_date DATE,
+            regime_label TEXT,
+            regime_config_hash TEXT,
+            decomposition TEXT
+        );
+        CREATE TABLE regime_state (
+            regime_date DATE,
+            regime_label TEXT
+        );
         """
     )
 
@@ -136,3 +148,22 @@ def test_ablation_metrics_use_real_lineage_data(monkeypatch, tmp_path):
     assert candidate_total == 1
     assert baseline_metrics["precision"] == 0.0
     assert candidate_metrics["precision"] == 1.0
+
+
+def test_ablation_effective_start_ts_uses_regime_ready_boundary(monkeypatch):
+    monkeypatch.setattr(
+        ablation_mod,
+        "first_regime_ready_date",
+        lambda run_id: {
+            11: datetime(2010, 4, 5).date(),
+            22: datetime(2010, 4, 7).date(),
+        }.get(run_id),
+    )
+    window = ablation_mod._resolve_effective_start_ts(
+        requested_start_ts="2010-01-01T00:00:00Z",
+        baseline_run_id=11,
+        candidate_run_id=22,
+    )
+    assert window["effective_start_ts"] == "2010-04-07T00:00:00Z"
+    assert window["warmup_exclusion_applied"] is True
+    assert window["warmup_excluded_days"] == 96

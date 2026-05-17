@@ -213,6 +213,52 @@ def _stress_proxy_score(stress_proxy_pct: float | None) -> float:
     return 2.0
 
 
+def _first_ready_date_from_snapshots(snapshots: pd.DataFrame, params: RegimeParams) -> date | None:
+    if snapshots.empty:
+        return None
+    work = snapshots.copy()
+    work["date"] = pd.to_datetime(work["ts"]).dt.date
+    daily = work.sort_values("ts").groupby("date").tail(1)
+    daily = daily.set_index(pd.to_datetime(daily["date"]))
+    daily["ret"] = daily["spot"].pct_change()
+    daily["rv20"] = daily["ret"].rolling(params.rv_window).std() * (252 ** 0.5)
+    rolling_high = daily["spot"].rolling(params.dd_window).max()
+    daily["drawdown"] = (daily["spot"] / rolling_high - 1.0) * -100.0
+    ready = daily[daily["rv20"].notna() & daily["drawdown"].notna()]
+    if ready.empty:
+        return None
+    return pd.to_datetime(ready.index[0]).date()
+
+
+def first_regime_ready_date(run_id: int, params: RegimeParams | None = None) -> date | None:
+    params = params or regime_params_from_config()
+    conn = connect()
+    try:
+        label_row = conn.execute(
+            """
+            SELECT MIN(regime_date)
+            FROM regime_snapshot_labels
+            WHERE run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()
+        if label_row and label_row[0] is not None:
+            return pd.to_datetime(label_row[0]).date()
+
+        snapshots = conn.execute(
+            """
+            SELECT snapshot_id, run_id, ts, spot
+            FROM snapshots
+            WHERE run_id = ?
+            ORDER BY ts, snapshot_id
+            """,
+            (run_id,),
+        ).fetchdf()
+    finally:
+        conn.close()
+    return _first_ready_date_from_snapshots(snapshots, params)
+
+
 def compute_regime_state(params: RegimeParams | None = None, run_id: int | None = None) -> int:
     logger = logging.getLogger("regime")
     params = params or regime_params_from_config()

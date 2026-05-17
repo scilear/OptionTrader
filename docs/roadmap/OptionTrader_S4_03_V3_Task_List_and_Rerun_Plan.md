@@ -209,3 +209,48 @@ Done only when all are true:
 2. Three-window rerun artifacts are generated with window-specific outputs.
 3. Validation checklist passes with explicit taxonomy verdict per window.
 4. Sprint docs + issue statuses are updated with evidence links and final state.
+
+## PM Status Update - Post-Warm-Up Full-Span Rerun (2026-05-15)
+
+Decision applied:
+
+- Adopted post-warm-up evaluation window for S4-03 full-span evidence:
+  - `start_ts=2010-04-05T00:00:00Z`
+  - `end_ts=2023-12-31T23:59:59Z`
+
+Why:
+
+- Regime labeling uses rolling warm-up (`rv_window=20`, `dd_window=63`).
+- Earliest snapshot dates in full span (`2010-01-04` onward) are unlabeled during warm-up.
+- Excluding warm-up removes non-causal/insufficient-history regime ambiguity from gate evidence.
+
+Artifacts generated (post-warm-up full span):
+
+- `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Gate_Attrition_Report_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Release_Validation_Report_full_span_post_warmup.md`
+- `docs/roadmap/OptionTrader_S4_03_Release_Validation_Payload_full_span_post_warmup.json`
+- `docs/roadmap/OptionTrader_S4_03_Baseline_Capture_full_span_post_warmup.json`
+
+Status against intended closure goals:
+
+- Unknown-regime evidence issue: CLOSED
+  - `unknown_regime_count=0`
+  - `unknown_regime_pass=true`
+- Precision regression concern: CLOSED
+  - `precision_non_regression=true`
+  - candidate precision > baseline precision
+- Remaining blocker: OPEN
+  - `transition_fp_density_non_worsening=false`
+  - transition false-positive density worsens in candidate
+
+Final gate state (post-warm-up full span):
+
+- `regime_falsification_pass=false`
+- `recommendation=not_promotable`
+- `taxonomy_verdict=invalid_evidence`
+
+Implication:
+
+- S4-03 V3 validity plumbing is functioning with warm-up-safe windowing.
+- Promotion is still blocked on substantive transition-FP behavior, not on evidence-shape artifacts.

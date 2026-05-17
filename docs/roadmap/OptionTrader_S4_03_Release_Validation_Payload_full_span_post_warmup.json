@@ -39,7 +39,7 @@
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.67s"
+          "1 passed in 0.60s"
         ]
       },
       "missing_tenors": {
@@ -55,7 +55,7 @@
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.64s"
+          "1 passed in 0.61s"
         ]
       },
       "stale_books": {
@@ -63,7 +63,7 @@
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.95s"
+          "1 passed in 0.58s"
         ]
       }
     },
@@ -79,10 +79,11 @@
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-eod-truth.yaml",
+    "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
-    "start_ts": "2010-04-05T00:00:00Z",
+    "start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
       "step_size": 63,
@@ -105,7 +106,7 @@
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-15T17:54:35.302201Z",
+  "generated_at": "2026-05-17T17:04:03.831938Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -314,5 +315,17 @@
       63
     ],
     "train_size": 252
+  },
+  "window": {
+    "effective_start_ts": "2010-04-05T00:00:00Z",
+    "end_ts": "2023-12-31T23:59:59Z",
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 94,
+    "warmup_exclusion_applied": true
   }
 }
