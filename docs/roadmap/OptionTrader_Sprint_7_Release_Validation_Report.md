@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-13T14:45:53.444608Z
+Generated at: 2026-05-17T17:04:53.095531Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -9,6 +9,7 @@ Source script: `scripts/validate_release.py`
 - Config path: `config/config-test.yaml`
 - Underlying: `SPX`
 - Start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-01-01T00:00:00Z`
 - End: `2010-02-28T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
@@ -20,6 +21,13 @@ Source script: `scripts/validate_release.py`
 - Regime falsification gate: FAIL
 - Ablation ledger gate: FAIL
 - Overall release gate: FAIL
+
+## Warm-up Exclusion
+
+- Warm-up exclusion applied: `False`
+- Warm-up excluded days: `0`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start: `2010-01-01T00:00:00Z`
 
 ## Recommendation
 
@@ -70,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.88s"
+          "1 passed in 0.60s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.02s"
+          "1 passed in 0.61s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.71s"
+          "1 passed in 0.60s"
         ]
       },
       "stale_books": {
@@ -94,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.90s"
+          "1 passed in 0.59s"
         ]
       }
     },
@@ -110,6 +118,7 @@ Source script: `scripts/validate_release.py`
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-test.yaml",
+    "effective_start_ts": "2010-01-01T00:00:00Z",
     "end_ts": "2010-02-28T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
@@ -136,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": false,
     "walk_forward_pass": false
   },
-  "generated_at": "2026-05-13T14:45:53.444608Z",
+  "generated_at": "2026-05-17T17:04:53.095531Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -263,6 +272,18 @@ Source script: `scripts/validate_release.py`
     "test_size": 5,
     "test_window_lengths": [],
     "train_size": 10
+  },
+  "window": {
+    "effective_start_ts": "2010-01-01T00:00:00Z",
+    "end_ts": "2010-02-28T23:59:59Z",
+    "regime_ready_dates": {
+      "baseline": null,
+      "candidate": null
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 0,
+    "warmup_exclusion_applied": false
   }
 }
 ```
