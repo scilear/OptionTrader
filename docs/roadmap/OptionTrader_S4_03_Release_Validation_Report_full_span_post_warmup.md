@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-17T17:04:03.831938Z
+Generated at: 2026-05-18T06:39:48.546539Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -32,7 +32,7 @@ Source script: `scripts/validate_release.py`
 ## Recommendation
 
 - Final recommendation: `not_promotable`
-- Taxonomy verdict: `invalid_evidence`
+- Taxonomy verdict: `no_incremental_edge_observed`
 
 ## Summary Payload
 
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.60s"
+          "1 passed in 0.58s"
         ]
       },
       "missing_tenors": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.62s"
+          "1 passed in 0.63s"
         ]
       },
       "sparse_wings": {
@@ -102,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.61s"
         ]
       }
     },
@@ -145,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-17T17:04:03.831938Z",
+  "generated_at": "2026-05-18T06:39:48.546539Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -252,7 +252,7 @@ Source script: `scripts/validate_release.py`
         "tp": 32
       }
     },
-    "evidence_valid": false,
+    "evidence_valid": true,
     "horizon_days": 5,
     "min_required_outcomes_per_regime": 5,
     "missing_regimes": [],
@@ -280,14 +280,15 @@ Source script: `scripts/validate_release.py`
       "Transition",
       "Stress"
     ],
-    "taxonomy_verdict": "invalid_evidence",
+    "taxonomy_verdict": "no_incremental_edge_observed",
     "transition_fp_density_blocked_reason": null,
     "transition_fp_density_non_worsening": false,
+    "transition_metric_available": true,
     "unknown_regime_count": 0,
     "unknown_regime_pass": true,
     "unknown_regime_share": 0.0
   },
-  "taxonomy_verdict": "invalid_evidence",
+  "taxonomy_verdict": "no_incremental_edge_observed",
   "threshold_freeze": {
     "baseline_config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
     "blocked_reasons": [],

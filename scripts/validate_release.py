@@ -333,16 +333,22 @@ def _regime_gate(
         per_regime_validity[regime_name] = outcomes >= min_required_outcomes
     outcome_validity_pass = all(per_regime_validity.values())
 
+    transition_metric_available = (
+        baseline.get("transition_fp_density") is not None
+        and candidate.get("transition_fp_density") is not None
+    )
     evidence_valid = (
         regime_coverage_pass
         and unknown_regime_pass
         and outcome_validity_pass
-        and transition_ok
+        and transition_metric_available
+        and candidate_alert_count > 0
     )
 
     incremental_edge_confirmed = bool(
         evidence_valid and precision_non_regression and candidate_precision is not None and baseline_precision is not None
         and float(candidate_precision) > float(baseline_precision)
+        and transition_ok
     )
     no_incremental_edge_observed = bool(
         evidence_valid and not incremental_edge_confirmed
@@ -369,6 +375,9 @@ def _regime_gate(
     if not outcome_validity_pass:
         blocked_reasons.append("insufficient_per_regime_outcomes")
 
+    if not transition_metric_available:
+        blocked_reasons.append("missing_transition_fp_density")
+
     if candidate_alert_count == 0:
         blocked_reasons.append("no_candidate_alerts")
 
@@ -393,6 +402,7 @@ def _regime_gate(
         "precision_non_regression": precision_non_regression,
         "transition_fp_density_non_worsening": transition_ok,
         "transition_fp_density_blocked_reason": transition_blocked_reason,
+        "transition_metric_available": transition_metric_available,
         "evidence_valid": evidence_valid,
         "taxonomy_verdict": verdict,
         "blocked_reasons": blocked_reasons,

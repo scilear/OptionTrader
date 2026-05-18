@@ -1,3 +1,42 @@
+# OptionTrader Sprint 7 Release Validation Report
+
+Generated at: 2026-05-18T06:35:34.451324Z
+Source script: `scripts/validate_release.py`
+
+## Contract
+
+- Contract ID: `S7-CONTRACT-v1`
+- Config path: `config/config-eod-truth.yaml`
+- Underlying: `SPX`
+- Start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-04-05T00:00:00Z`
+- End: `2012-12-31T23:59:59Z`
+- Baseline lineage: `3b024c9`
+- Candidate lineage: `5128e8e`
+
+## Gate Evaluation
+
+- Walk-forward deterministic gate: PASS
+- Adversarial resilience gate: PASS
+- Regime falsification gate: FAIL
+- Ablation ledger gate: PASS
+- Overall release gate: FAIL
+
+## Warm-up Exclusion
+
+- Warm-up exclusion applied: `True`
+- Warm-up excluded days: `94`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start: `2010-04-05T00:00:00Z`
+
+## Recommendation
+
+- Final recommendation: `not_promotable`
+- Taxonomy verdict: `no_incremental_edge_observed`
+
+## Summary Payload
+
+```json
 {
   "ablation_ledger": {
     "component_ledger": [
@@ -27,9 +66,9 @@
         "weight": 0.0
       }
     ],
-    "ideas_with_ranking": 343,
-    "mean_edge_after_cost": 2748.037328471075,
-    "mean_total_friction_cost": 3.218746721000351,
+    "ideas_with_ranking": 6,
+    "mean_edge_after_cost": 2939.1700390897586,
+    "mean_total_friction_cost": 3.6458189331444824,
     "pass": true
   },
   "adversarial": {
@@ -39,7 +78,7 @@
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.59s"
         ]
       },
       "missing_tenors": {
@@ -47,7 +86,7 @@
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.63s"
+          "1 passed in 0.65s"
         ]
       },
       "sparse_wings": {
@@ -55,7 +94,7 @@
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.61s"
+          "1 passed in 0.67s"
         ]
       },
       "stale_books": {
@@ -63,7 +102,7 @@
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.61s"
+          "1 passed in 0.62s"
         ]
       }
     },
@@ -80,7 +119,7 @@
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-eod-truth.yaml",
     "effective_start_ts": "2010-04-05T00:00:00Z",
-    "end_ts": "2023-12-31T23:59:59Z",
+    "end_ts": "2012-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
     "start_ts": "2010-01-01T00:00:00Z",
@@ -106,33 +145,33 @@
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-18T06:39:48.546539Z",
+  "generated_at": "2026-05-18T06:35:34.451324Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
-        "drawdown": 0.13665254237288219,
+        "drawdown": 0.190675111171001,
         "event": 0.0,
-        "rv20": 0.3520921610169513,
-        "stress_proxy": 0.18697033898304588,
-        "vix": 0.3242849576271206
+        "rv20": 0.3247540762700441,
+        "stress_proxy": 0.1800296456003243,
+        "vix": 0.3045411669586306
       },
-      "correlation_stress_vs_rv20": 0.7847293985911984,
+      "correlation_stress_vs_rv20": 0.7788632939693122,
       "correlation_stress_vs_vix": 1.0,
       "near_redundant_feature_warning": true,
-      "samples": 3437
+      "samples": 683
     },
     "candidate": {
       "contribution_shares": {
-        "drawdown": 0.13665254237288219,
+        "drawdown": 0.190675111171001,
         "event": 0.0,
-        "rv20": 0.3520921610169513,
-        "stress_proxy": 0.18697033898304588,
-        "vix": 0.3242849576271206
+        "rv20": 0.3247540762700441,
+        "stress_proxy": 0.1800296456003243,
+        "vix": 0.3045411669586306
       },
-      "correlation_stress_vs_rv20": 0.7847293985911984,
+      "correlation_stress_vs_rv20": 0.7788632939693122,
       "correlation_stress_vs_vix": 1.0,
       "near_redundant_feature_warning": true,
-      "samples": 3437
+      "samples": 683
     }
   },
   "lineage_metadata": {
@@ -152,65 +191,65 @@
   "recommendation": "not_promotable",
   "regime_falsification": {
     "baseline": {
-      "fp": 271,
-      "outcomes_observed": 318,
-      "precision": 0.14779874213836477,
-      "tp": 47,
-      "transition_alerts": 104,
-      "transition_fp": 62,
-      "transition_fp_density": 0.5961538461538461
+      "fp": 141,
+      "outcomes_observed": 165,
+      "precision": 0.14545454545454545,
+      "tp": 24,
+      "transition_alerts": 57,
+      "transition_fp": 22,
+      "transition_fp_density": 0.38596491228070173
     },
     "baseline_by_regime": {
       "Calm": {
-        "alerts": 126,
-        "fp": 86,
-        "precision": 0.13131313131313133,
-        "tp": 13
+        "alerts": 40,
+        "fp": 11,
+        "precision": 0.15384615384615385,
+        "tp": 2
       },
       "Stress": {
-        "alerts": 196,
-        "fp": 123,
-        "precision": 0.1276595744680851,
-        "tp": 18
+        "alerts": 176,
+        "fp": 108,
+        "precision": 0.10743801652892562,
+        "tp": 13
       },
       "Transition": {
-        "alerts": 104,
-        "fp": 62,
-        "precision": 0.20512820512820512,
-        "tp": 16
+        "alerts": 57,
+        "fp": 22,
+        "precision": 0.2903225806451613,
+        "tp": 9
       }
     },
     "blocked_reasons": [
       "transition_fp_density_worsened"
     ],
     "candidate": {
-      "fp": 518,
-      "outcomes_observed": 621,
-      "precision": 0.16586151368760063,
-      "tp": 103,
-      "transition_alerts": 188,
-      "transition_fp": 124,
-      "transition_fp_density": 0.6595744680851063
+      "fp": 141,
+      "outcomes_observed": 165,
+      "precision": 0.14545454545454545,
+      "tp": 24,
+      "transition_alerts": 75,
+      "transition_fp": 34,
+      "transition_fp_density": 0.4533333333333333
     },
-    "candidate_alert_count": 1014,
+    "candidate_alert_count": 273,
     "candidate_by_regime": {
       "Calm": {
-        "alerts": 581,
-        "fp": 226,
-        "precision": 0.16911764705882354,
-        "tp": 46
+        "alerts": 39,
+        "fp": 10,
+        "precision": 0.16666666666666666,
+        "tp": 2
       },
       "Stress": {
-        "alerts": 245,
-        "fp": 168,
-        "precision": 0.12953367875647667,
-        "tp": 25
+        "alerts": 159,
+        "fp": 97,
+        "precision": 0.09345794392523364,
+        "tp": 10
       },
       "Transition": {
-        "alerts": 188,
-        "fp": 124,
-        "precision": 0.20512820512820512,
-        "tp": 32
+        "alerts": 75,
+        "fp": 34,
+        "precision": 0.2608695652173913,
+        "tp": 12
       }
     },
     "evidence_valid": true,
@@ -225,9 +264,9 @@
     "outcome_validity_pass": true,
     "pass": false,
     "per_regime_outcome_counts": {
-      "Calm": 272,
-      "Stress": 193,
-      "Transition": 156
+      "Calm": 12,
+      "Stress": 107,
+      "Transition": 46
     },
     "per_regime_outcome_validity": {
       "Calm": true,
@@ -260,54 +299,10 @@
   "walk_forward": {
     "deterministic_schedule": true,
     "pass": true,
-    "split_count": 50,
+    "split_count": 6,
     "step_size": 63,
     "test_size": 63,
     "test_window_lengths": [
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
       63,
       63,
       63,
@@ -319,7 +314,7 @@
   },
   "window": {
     "effective_start_ts": "2010-04-05T00:00:00Z",
-    "end_ts": "2023-12-31T23:59:59Z",
+    "end_ts": "2012-12-31T23:59:59Z",
     "regime_ready_dates": {
       "baseline": "2010-04-05",
       "candidate": "2010-04-05"
@@ -330,3 +325,12 @@
     "warmup_exclusion_applied": true
   }
 }
+```
+
+## Reproducibility
+
+```bash
+source .venv/bin/activate
+python scripts/validate_release.py --config-path config/config-eod-truth.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2012-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
+```
+

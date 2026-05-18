@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-17T17:04:53.095531Z
+Generated at: 2026-05-18T06:39:14.510606Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.60s"
+          "1 passed in 0.57s"
         ]
       },
       "missing_tenors": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.61s"
+          "1 passed in 0.59s"
         ]
       },
       "sparse_wings": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.60s"
+          "1 passed in 0.59s"
         ]
       },
       "stale_books": {
@@ -102,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.59s"
+          "1 passed in 0.57s"
         ]
       }
     },
@@ -145,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": false,
     "walk_forward_pass": false
   },
-  "generated_at": "2026-05-17T17:04:53.095531Z",
+  "generated_at": "2026-05-18T06:39:14.510606Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -205,6 +205,7 @@ Source script: `scripts/validate_release.py`
       "precision_regression_or_missing",
       "missing_transition_alerts",
       "insufficient_per_regime_outcomes",
+      "missing_transition_fp_density",
       "no_candidate_alerts"
     ],
     "candidate": {
@@ -249,6 +250,7 @@ Source script: `scripts/validate_release.py`
     "taxonomy_verdict": "invalid_evidence",
     "transition_fp_density_blocked_reason": "missing_transition_alerts",
     "transition_fp_density_non_worsening": false,
+    "transition_metric_available": false,
     "unknown_regime_count": 0,
     "unknown_regime_pass": true,
     "unknown_regime_share": null
