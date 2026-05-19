@@ -270,6 +270,27 @@ def _determine_signal_state(
     }
 
 
+def _resolve_regime_override_threshold(
+    config: dict,
+    regime_label: str,
+    alert_type: str,
+) -> float | None:
+    alerts_cfg = config.get("alerts", {}) if isinstance(config, dict) else {}
+    overrides = alerts_cfg.get("regime_overrides", {}) if isinstance(alerts_cfg, dict) else {}
+    if not isinstance(overrides, dict):
+        return None
+    regime_cfg = overrides.get(regime_label)
+    if not isinstance(regime_cfg, dict):
+        return None
+    alert_cfg = regime_cfg.get(alert_type)
+    if not isinstance(alert_cfg, dict):
+        return None
+    min_abs_zscore = alert_cfg.get("min_abs_zscore")
+    if min_abs_zscore is None:
+        return None
+    return float(min_abs_zscore)
+
+
 def _build_explain_payload(
     alert: dict,
     threshold: float,
@@ -281,6 +302,7 @@ def _build_explain_payload(
     surface_qc_reasons: list[str],
     surface_quality_score: float,
     regime_hash_mismatch: bool,
+    regime_override: dict,
     lifecycle: dict,
 ) -> dict:
     zscore_mid = alert.get("zscore_mid")
@@ -364,6 +386,7 @@ def _build_explain_payload(
                     "regime_hash_mismatch" if regime_hash_mismatch else "regime_hash_aligned_or_missing"
                 ),
             },
+            "regime_override": regime_override,
         },
         "score_method": {
             "mid": alert.get("score_method_mid"),
@@ -616,6 +639,92 @@ def compute_for_snapshot(
         logger.info("alerts=%s", len(alerts))
         for alert in alerts:
             tier = tier_by_bucket.get(alert["expiry_bucket"])
+            alert_type = str(alert.get("alert_type") or "")
+            zscore_mid = alert.get("zscore_mid")
+            override_threshold = _resolve_regime_override_threshold(
+                config,
+                regime_label=regime_label,
+                alert_type=alert_type,
+            )
+            effective_threshold = (
+                float(override_threshold) if override_threshold is not None else float(threshold)
+            )
+            zscore_mid_abs = abs(float(zscore_mid)) if zscore_mid is not None else 0.0
+            override_blocked = zscore_mid is None or zscore_mid_abs < effective_threshold
+            regime_override_gate = {
+                "status": "FAIL" if override_blocked else "PASS",
+                "reason_code": (
+                    "regime_override_threshold_not_met"
+                    if override_blocked
+                    else (
+                        "regime_override_threshold_met"
+                        if override_threshold is not None
+                        else "regime_override_not_configured"
+                    )
+                ),
+                "min_abs_zscore": effective_threshold,
+                "zscore_mid_abs": zscore_mid_abs,
+                "regime_label": regime_label,
+                "alert_type": alert_type,
+            }
+
+            if override_blocked:
+                if not emit_non_execution_states:
+                    continue
+                lifecycle = {
+                    "signal_state": "Candidate",
+                    "transition_reason_code": "regime_override_threshold_not_met",
+                    "quality_blockers": ["regime_override_threshold_not_met"],
+                    "execution_blockers": [],
+                    "worst_case_coherent": _worst_case_coherent(
+                        alert.get("zscore_mid"),
+                        alert.get("zscore_worst"),
+                        effective_threshold,
+                    ),
+                    "uncertainty_score": 0.35,
+                }
+                explain = _build_explain_payload(
+                    alert=alert,
+                    threshold=effective_threshold,
+                    persistence_required=persistence,
+                    tier=tier,
+                    regime_label=regime_label,
+                    tradability_score=tradability_score,
+                    surface_qc_passed=surface_qc.passed,
+                    surface_qc_reasons=list(surface_qc.reason_codes),
+                    surface_quality_score=surface_qc.quality_score,
+                    regime_hash_mismatch=regime_hash_mismatch,
+                    regime_override=regime_override_gate,
+                    lifecycle=lifecycle,
+                )
+                severity = float(alert.get("effective_severity") or zscore_mid_abs)
+                conn.execute(
+                    """
+                    INSERT INTO alerts (
+                        alert_id, snapshot_id, alert_type, expiry_bucket, severity,
+                        zscore_mid, zscore_worst, tradability_score,
+                        confidence_tier, persistence_count, regime_label,
+                        signal_state, transition_reason_code, explain
+                    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        snapshot_id,
+                        alert_type,
+                        alert["expiry_bucket"],
+                        severity,
+                        alert.get("zscore_mid"),
+                        alert.get("zscore_worst"),
+                        tradability_score,
+                        tier or "Unknown",
+                        alert.get("persistence"),
+                        regime_label,
+                        lifecycle["signal_state"],
+                        lifecycle["transition_reason_code"],
+                        json.dumps(explain),
+                    ),
+                )
+                continue
+
             lifecycle = _determine_signal_state(
                 alert=alert,
                 tier=tier,
@@ -623,7 +732,7 @@ def compute_for_snapshot(
                 tradability_score=tradability_score,
                 surface_qc_passed=surface_qc.passed,
                 surface_quality_score=surface_qc.quality_score,
-                threshold=threshold,
+                threshold=effective_threshold,
                 regime_hash_mismatch=regime_hash_mismatch,
                 min_fit_confidence_validated=min_fit_confidence_validated,
                 min_fit_confidence_execution=min_fit_confidence_execution,
@@ -634,7 +743,7 @@ def compute_for_snapshot(
                 continue
             explain = _build_explain_payload(
                 alert=alert,
-                threshold=threshold,
+                threshold=effective_threshold,
                 persistence_required=persistence,
                 tier=tier,
                 regime_label=regime_label,
@@ -643,6 +752,7 @@ def compute_for_snapshot(
                 surface_qc_reasons=list(surface_qc.reason_codes),
                 surface_quality_score=surface_qc.quality_score,
                 regime_hash_mismatch=regime_hash_mismatch,
+                regime_override=regime_override_gate,
                 lifecycle=lifecycle,
             )
             severity = float(alert.get("effective_severity") or abs(alert["zscore_mid"]))

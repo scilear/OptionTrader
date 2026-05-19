@@ -1,6 +1,6 @@
 # OptionTrader Sprint 4 Ablation Artifact
 
-Generated at: 2026-05-12T20:16:46.329534Z
+Generated at: 2026-05-19T15:21:31.011741Z
 Source script: `scripts/generate_regime_ablation_artifact.py`
 
 ## Locked Gate Evaluation
@@ -15,8 +15,10 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
 
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
-- Baseline run/profile/hash: `run_id=27` `profile=baseline_rv_only` `config_hash=ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68`
-- Candidate run/profile/hash: `run_id=28` `profile=candidate_multi_signal` `config_hash=b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36`
+- Requested start: `2023-01-01T00:00:00Z`
+- Effective start (post warm-up): `2023-01-01T00:00:00Z`
+- Baseline run/profile/hash: `run_id=33` `profile=baseline_rv_only` `config_hash=ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68`
+- Candidate run/profile/hash: `run_id=34` `profile=candidate_multi_signal` `config_hash=b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36`
 
 ## Summary Payload
 
@@ -54,13 +56,13 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 27
+      "run_id": 33
     },
     "candidate": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
       "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
       "profile_id": "candidate_multi_signal",
-      "run_id": 28
+      "run_id": 34
     }
   },
   "sample": {
@@ -93,9 +95,16 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
   },
   "status": "blocked_pending_precision_labels",
   "window": {
+    "effective_start_ts": "2023-01-01T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
-    "start_ts": "2023-01-01T00:00:00Z",
-    "underlying": "SPX"
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2023-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 0,
+    "warmup_exclusion_applied": false
   }
 }
 ```

@@ -1,6 +1,6 @@
 # OptionTrader Sprint 4 Ablation Artifact
 
-Generated at: 2026-05-14T19:03:01.426997Z
+Generated at: 2026-05-19T15:23:20.483998Z
 Source script: `scripts/generate_regime_ablation_artifact.py`
 
 ## Locked Gate Evaluation
@@ -15,6 +15,8 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
 
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-04-05T00:00:00Z`
 - Baseline run/profile/hash: `run_id=33` `profile=baseline_rv_only` `config_hash=ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68`
 - Candidate run/profile/hash: `run_id=34` `profile=candidate_multi_signal` `config_hash=b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36`
 
@@ -42,11 +44,11 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
     "min_sample_pass": true,
     "overall_pass": false,
     "precision_blocked_reason": null,
-    "precision_delta": 0.019212593773997283,
+    "precision_delta": 0.018062771549235856,
     "precision_gate_pass": false,
     "transition_false_positive_density_worsening": 0.06342062193126019,
     "transition_fp_gate_pass": false,
-    "volume_delta_pct": 132.7313769751693,
+    "volume_delta_pct": 138.0281690140845,
     "volume_gate_pass": false
   },
   "lineage_metadata": {
@@ -67,14 +69,13 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
     "baseline_alerts_by_regime": {
       "Calm": 126,
       "Stress": 196,
-      "Transition": 104,
-      "Unknown": 17
+      "Transition": 104
     },
-    "baseline_alerts_total": 443,
+    "baseline_alerts_total": 426,
     "baseline_outcomes": {
-      "fp": 277,
-      "outcomes_observed": 324,
-      "precision": 0.14506172839506173,
+      "fp": 271,
+      "outcomes_observed": 318,
+      "precision": 0.14779874213836477,
       "tp": 47,
       "transition_alerts": 104,
       "transition_fp": 62,
@@ -83,21 +84,19 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
     "baseline_outcomes_by_regime": {
       "Calm": 99,
       "Stress": 141,
-      "Transition": 78,
-      "Unknown": 6
+      "Transition": 78
     },
-    "baseline_snapshot_count": 3499,
+    "baseline_snapshot_count": 3437,
     "candidate_alerts_by_regime": {
       "Calm": 581,
       "Stress": 245,
-      "Transition": 188,
-      "Unknown": 17
+      "Transition": 188
     },
-    "candidate_alerts_total": 1031,
+    "candidate_alerts_total": 1014,
     "candidate_outcomes": {
-      "fp": 524,
-      "outcomes_observed": 627,
-      "precision": 0.16427432216905902,
+      "fp": 518,
+      "outcomes_observed": 621,
+      "precision": 0.16586151368760063,
       "tp": 103,
       "transition_alerts": 188,
       "transition_fp": 124,
@@ -106,16 +105,22 @@ Source script: `scripts/generate_regime_ablation_artifact.py`
     "candidate_outcomes_by_regime": {
       "Calm": 272,
       "Stress": 193,
-      "Transition": 156,
-      "Unknown": 6
+      "Transition": 156
     },
-    "candidate_snapshot_count": 3499
+    "candidate_snapshot_count": 3437
   },
   "status": "failed_gate",
   "window": {
+    "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
-    "start_ts": "2010-01-01T00:00:00Z",
-    "underlying": "SPX"
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 94,
+    "warmup_exclusion_applied": true
   }
 }
 ```

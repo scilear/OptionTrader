@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 import logging
 from pathlib import Path
@@ -594,3 +595,161 @@ def test_metric_series_filters_future_and_other_underlying(monkeypatch):
     compute_for_snapshot(1, purge_existing=True)
 
     assert captured["rr25_mid_values"] == [1.0, 0.1]
+
+
+def test_transition_rr_blocked_by_regime_override(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema_with_underlying_run(conn)
+    conn.execute(
+        "INSERT INTO snapshots VALUES (1, ?, 100.0, 101, 'SPX')",
+        (datetime(2026, 2, 13),),
+    )
+    conn.execute(
+        "INSERT INTO option_quotes VALUES (1, '2026-03-15', 100.0, 'C', 1.0, 1.2)"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, 101, '2026-02-13', 'Transition', 'same_hash', NULL)"
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    cfg = _load_test_config_with_overrides(emit_non_execution_states=True)
+    cfg.setdefault("alerts", {})["regime_overrides"] = {
+        "Transition": {"RR_EXTREME": {"min_abs_zscore": 6.0}}
+    }
+
+    monkeypatch.setattr("src.core.compute_snapshot.connect", lambda: ConnWrapper(conn))
+    monkeypatch.setattr("src.core.compute_snapshot.load_config", lambda path=None: cfg)
+    monkeypatch.setattr("src.core.compute_snapshot.compute_iv_points", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_surface_metrics",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "tier": "Core",
+                "atm_iv_mid": 0.2,
+                "rr25_mid": 0.1,
+                "rr10_mid": 0.1,
+                "fly25_mid": 0.1,
+                "fly10_mid": 0.1,
+                "term_slope_mid": 0.0,
+                "atm_iv_worst": 0.2,
+                "rr25_worst": 0.1,
+                "rr10_worst": 0.1,
+                "fly25_worst": 0.1,
+                "fly10_worst": 0.1,
+                "term_slope_worst": 0.0,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_alerts",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "alert_type": "RR_EXTREME",
+                "zscore_mid": 5.5,
+                "zscore_worst": 5.2,
+                "persistence": 2,
+            }
+        ],
+    )
+    monkeypatch.setattr("src.core.compute_snapshot.regime_threshold_hash", lambda *_a, **_k: "same_hash")
+    monkeypatch.setattr("src.core.compute_snapshot.regime_params_from_config", lambda *_a, **_k: object())
+
+    compute_for_snapshot(1, purge_existing=True)
+
+    row = conn.execute(
+        "SELECT signal_state, transition_reason_code, explain FROM alerts LIMIT 1"
+    ).fetchone()
+    assert row[0] == "Candidate"
+    assert row[1] == "regime_override_threshold_not_met"
+    explain = json.loads(row[2])
+    assert explain["gates"]["regime_override"]["status"] == "FAIL"
+    assert explain["gates"]["regime_override"]["reason_code"] == "regime_override_threshold_not_met"
+
+
+def test_transition_rr_passes_regime_override(monkeypatch):
+    conn = duckdb.connect(":memory:")
+    _seed_minimal_compute_schema_with_underlying_run(conn)
+    conn.execute(
+        "INSERT INTO snapshots VALUES (1, ?, 100.0, 101, 'SPX')",
+        (datetime(2026, 2, 13),),
+    )
+    conn.execute(
+        "INSERT INTO option_quotes VALUES (1, '2026-03-15', 100.0, 'C', 1.0, 1.2)"
+    )
+    conn.execute(
+        "INSERT INTO regime_snapshot_labels VALUES (1, 101, '2026-02-13', 'Transition', 'same_hash', NULL)"
+    )
+
+    class ConnWrapper:
+        def __init__(self, inner):
+            self.inner = inner
+
+        def execute(self, *args, **kwargs):
+            return self.inner.execute(*args, **kwargs)
+
+        def close(self):
+            pass
+
+    cfg = _load_test_config_with_overrides(emit_non_execution_states=True)
+    cfg.setdefault("alerts", {})["regime_overrides"] = {
+        "Transition": {"RR_EXTREME": {"min_abs_zscore": 6.0}}
+    }
+
+    monkeypatch.setattr("src.core.compute_snapshot.connect", lambda: ConnWrapper(conn))
+    monkeypatch.setattr("src.core.compute_snapshot.load_config", lambda path=None: cfg)
+    monkeypatch.setattr("src.core.compute_snapshot.compute_iv_points", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_surface_metrics",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "tier": "Core",
+                "atm_iv_mid": 0.2,
+                "rr25_mid": 0.1,
+                "rr10_mid": 0.1,
+                "fly25_mid": 0.1,
+                "fly10_mid": 0.1,
+                "term_slope_mid": 0.0,
+                "atm_iv_worst": 0.2,
+                "rr25_worst": 0.1,
+                "rr10_worst": 0.1,
+                "fly25_worst": 0.1,
+                "fly10_worst": 0.1,
+                "term_slope_worst": 0.0,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "src.core.compute_snapshot.compute_alerts",
+        lambda *_a, **_k: [
+            {
+                "expiry_bucket": "30D",
+                "alert_type": "RR_EXTREME",
+                "zscore_mid": 6.2,
+                "zscore_worst": 6.0,
+                "persistence": 2,
+            }
+        ],
+    )
+    monkeypatch.setattr("src.core.compute_snapshot.regime_threshold_hash", lambda *_a, **_k: "same_hash")
+    monkeypatch.setattr("src.core.compute_snapshot.regime_params_from_config", lambda *_a, **_k: object())
+
+    compute_for_snapshot(1, purge_existing=True)
+
+    row = conn.execute(
+        "SELECT transition_reason_code, explain FROM alerts LIMIT 1"
+    ).fetchone()
+    explain = json.loads(row[1])
+    assert explain["gates"]["regime_override"]["status"] == "PASS"
+    assert explain["gates"]["regime_override"]["reason_code"] == "regime_override_threshold_met"

@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-14T19:03:35.129243Z
+Generated at: 2026-05-19T15:24:07.076566Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -9,6 +9,7 @@ Source script: `scripts/validate_release.py`
 - Config path: `config/config-eod-truth.yaml`
 - Underlying: `SPX`
 - Start: `2010-01-01T00:00:00Z`
+- Effective start (post warm-up): `2010-04-05T00:00:00Z`
 - End: `2023-12-31T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
@@ -21,10 +22,17 @@ Source script: `scripts/validate_release.py`
 - Ablation ledger gate: PASS
 - Overall release gate: FAIL
 
+## Warm-up Exclusion
+
+- Warm-up exclusion applied: `True`
+- Warm-up excluded days: `94`
+- Requested start: `2010-01-01T00:00:00Z`
+- Effective start: `2010-04-05T00:00:00Z`
+
 ## Recommendation
 
 - Final recommendation: `not_promotable`
-- Taxonomy verdict: `invalid_evidence`
+- Taxonomy verdict: `no_incremental_edge_observed`
 
 ## Summary Payload
 
@@ -70,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.54s"
+          "1 passed in 0.65s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.56s"
+          "1 passed in 0.70s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.93s"
         ]
       },
       "stale_books": {
@@ -94,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.54s"
+          "1 passed in 0.70s"
         ]
       }
     },
@@ -110,6 +118,7 @@ Source script: `scripts/validate_release.py`
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-eod-truth.yaml",
+    "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
@@ -136,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-14T19:03:35.129243Z",
+  "generated_at": "2026-05-19T15:24:07.076566Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -182,9 +191,9 @@ Source script: `scripts/validate_release.py`
   "recommendation": "not_promotable",
   "regime_falsification": {
     "baseline": {
-      "fp": 277,
-      "outcomes_observed": 324,
-      "precision": 0.14506172839506173,
+      "fp": 271,
+      "outcomes_observed": 318,
+      "precision": 0.14779874213836477,
       "tp": 47,
       "transition_alerts": 104,
       "transition_fp": 62,
@@ -208,28 +217,21 @@ Source script: `scripts/validate_release.py`
         "fp": 62,
         "precision": 0.20512820512820512,
         "tp": 16
-      },
-      "Unknown": {
-        "alerts": 17,
-        "fp": 6,
-        "precision": 0.0,
-        "tp": 0
       }
     },
     "blocked_reasons": [
-      "transition_fp_density_worsened",
-      "unknown_regime_labels_present"
+      "transition_fp_density_worsened"
     ],
     "candidate": {
-      "fp": 524,
-      "outcomes_observed": 627,
-      "precision": 0.16427432216905902,
+      "fp": 518,
+      "outcomes_observed": 621,
+      "precision": 0.16586151368760063,
       "tp": 103,
       "transition_alerts": 188,
       "transition_fp": 124,
       "transition_fp_density": 0.6595744680851063
     },
-    "candidate_alert_count": 1031,
+    "candidate_alert_count": 1014,
     "candidate_by_regime": {
       "Calm": {
         "alerts": 581,
@@ -248,23 +250,16 @@ Source script: `scripts/validate_release.py`
         "fp": 124,
         "precision": 0.20512820512820512,
         "tp": 32
-      },
-      "Unknown": {
-        "alerts": 17,
-        "fp": 6,
-        "precision": 0.0,
-        "tp": 0
       }
     },
-    "evidence_valid": false,
+    "evidence_valid": true,
     "horizon_days": 5,
     "min_required_outcomes_per_regime": 5,
     "missing_regimes": [],
     "observed_regimes": [
       "Calm",
       "Stress",
-      "Transition",
-      "Unknown"
+      "Transition"
     ],
     "outcome_validity_pass": true,
     "pass": false,
@@ -285,14 +280,15 @@ Source script: `scripts/validate_release.py`
       "Transition",
       "Stress"
     ],
-    "taxonomy_verdict": "invalid_evidence",
+    "taxonomy_verdict": "no_incremental_edge_observed",
     "transition_fp_density_blocked_reason": null,
     "transition_fp_density_non_worsening": false,
-    "unknown_regime_count": 17,
-    "unknown_regime_pass": false,
-    "unknown_regime_share": 0.016488845780795344
+    "transition_metric_available": true,
+    "unknown_regime_count": 0,
+    "unknown_regime_pass": true,
+    "unknown_regime_share": 0.0
   },
-  "taxonomy_verdict": "invalid_evidence",
+  "taxonomy_verdict": "no_incremental_edge_observed",
   "threshold_freeze": {
     "baseline_config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
     "blocked_reasons": [],
@@ -303,7 +299,7 @@ Source script: `scripts/validate_release.py`
   "walk_forward": {
     "deterministic_schedule": true,
     "pass": true,
-    "split_count": 51,
+    "split_count": 50,
     "step_size": 63,
     "test_size": 63,
     "test_window_lengths": [
@@ -356,10 +352,21 @@ Source script: `scripts/validate_release.py`
       63,
       63,
       63,
-      63,
       63
     ],
     "train_size": 252
+  },
+  "window": {
+    "effective_start_ts": "2010-04-05T00:00:00Z",
+    "end_ts": "2023-12-31T23:59:59Z",
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2010-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 94,
+    "warmup_exclusion_applied": true
   }
 }
 ```

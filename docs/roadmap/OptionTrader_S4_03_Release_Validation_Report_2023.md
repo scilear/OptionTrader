@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-12T20:17:02.754893Z
+Generated at: 2026-05-19T15:22:33.749293Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -9,6 +9,7 @@ Source script: `scripts/validate_release.py`
 - Config path: `config/config-eod-truth.yaml`
 - Underlying: `SPX`
 - Start: `2023-01-01T00:00:00Z`
+- Effective start (post warm-up): `2023-01-01T00:00:00Z`
 - End: `2023-12-31T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
@@ -20,6 +21,13 @@ Source script: `scripts/validate_release.py`
 - Regime falsification gate: FAIL
 - Ablation ledger gate: FAIL
 - Overall release gate: FAIL
+
+## Warm-up Exclusion
+
+- Warm-up exclusion applied: `False`
+- Warm-up excluded days: `0`
+- Requested start: `2023-01-01T00:00:00Z`
+- Effective start: `2023-01-01T00:00:00Z`
 
 ## Recommendation
 
@@ -70,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.94s"
+          "1 passed in 1.52s"
         ]
       },
       "missing_tenors": {
@@ -78,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.60s"
+          "1 passed in 1.64s"
         ]
       },
       "sparse_wings": {
@@ -86,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 1.28s"
         ]
       },
       "stale_books": {
@@ -94,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.57s"
+          "1 passed in 2.66s"
         ]
       }
     },
@@ -110,6 +118,7 @@ Source script: `scripts/validate_release.py`
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
     "config_path": "config/config-eod-truth.yaml",
+    "effective_start_ts": "2023-01-01T00:00:00Z",
     "end_ts": "2023-12-31T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
@@ -136,33 +145,33 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": false
   },
-  "generated_at": "2026-05-12T20:17:02.754893Z",
+  "generated_at": "2026-05-19T15:22:33.749293Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
-        "drawdown": 0.17305315203955499,
+        "drawdown": 0.08631071858691294,
         "event": 0.0,
-        "rv20": 0.38936959208899874,
-        "stress_proxy": 0.1779975278121138,
-        "vix": 0.2595797280593325
+        "rv20": 0.363307908470494,
+        "stress_proxy": 0.23926134082697667,
+        "vix": 0.3111200321156164
       },
-      "correlation_stress_vs_rv20": 0.5029873029563207,
+      "correlation_stress_vs_rv20": 0.7062073881783825,
       "correlation_stress_vs_vix": 1.0,
       "near_redundant_feature_warning": true,
-      "samples": 187
+      "samples": 249
     },
     "candidate": {
       "contribution_shares": {
-        "drawdown": 0.17305315203955499,
+        "drawdown": 0.08631071858691294,
         "event": 0.0,
-        "rv20": 0.38936959208899874,
-        "stress_proxy": 0.1779975278121138,
-        "vix": 0.2595797280593325
+        "rv20": 0.363307908470494,
+        "stress_proxy": 0.23926134082697667,
+        "vix": 0.3111200321156164
       },
-      "correlation_stress_vs_rv20": 0.5029873029563207,
+      "correlation_stress_vs_rv20": 0.7062073881783825,
       "correlation_stress_vs_vix": 1.0,
       "near_redundant_feature_warning": true,
-      "samples": 187
+      "samples": 249
     }
   },
   "lineage_metadata": {
@@ -170,13 +179,13 @@ Source script: `scripts/validate_release.py`
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
       "profile_id": "baseline_rv_only",
-      "run_id": 27
+      "run_id": 33
     },
     "candidate": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
       "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
       "profile_id": "candidate_multi_signal",
-      "run_id": 28
+      "run_id": 34
     }
   },
   "recommendation": "not_promotable",
@@ -196,6 +205,7 @@ Source script: `scripts/validate_release.py`
       "precision_regression_or_missing",
       "missing_transition_alerts",
       "insufficient_per_regime_outcomes",
+      "missing_transition_fp_density",
       "no_candidate_alerts"
     ],
     "candidate": {
@@ -240,6 +250,7 @@ Source script: `scripts/validate_release.py`
     "taxonomy_verdict": "invalid_evidence",
     "transition_fp_density_blocked_reason": "missing_transition_alerts",
     "transition_fp_density_non_worsening": false,
+    "transition_metric_available": false,
     "unknown_regime_count": 0,
     "unknown_regime_pass": true,
     "unknown_regime_share": null
@@ -260,6 +271,18 @@ Source script: `scripts/validate_release.py`
     "test_size": 63,
     "test_window_lengths": [],
     "train_size": 252
+  },
+  "window": {
+    "effective_start_ts": "2023-01-01T00:00:00Z",
+    "end_ts": "2023-12-31T23:59:59Z",
+    "regime_ready_dates": {
+      "baseline": "2010-04-05",
+      "candidate": "2010-04-05"
+    },
+    "requested_start_ts": "2023-01-01T00:00:00Z",
+    "underlying": "SPX",
+    "warmup_excluded_days": 0,
+    "warmup_exclusion_applied": false
   }
 }
 ```

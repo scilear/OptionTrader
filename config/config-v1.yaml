@@ -49,6 +49,16 @@ alerts:
   z_threshold: 2.0
   persistence_snapshots: 2
   pessimistic_gate: true
+  regime_overrides:
+    Transition:
+      RR_EXTREME:
+        min_abs_zscore: 6.0
+    Calm:
+      RR_EXTREME:
+        min_abs_zscore: 5.0
+    Stress:
+      RR_EXTREME:
+        min_abs_zscore: 5.0
   history_scope: global
   metric_series_qc_only: true
   emit_non_execution_states: false
