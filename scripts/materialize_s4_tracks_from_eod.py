@@ -19,7 +19,7 @@ from src.core.bootstrap import ensure_repo_root_on_path
 ensure_repo_root_on_path()
 
 from src.core.compute_snapshot import compute_for_snapshot
-from src.core.config import config_digest, get_config_path
+from src.core.config import config_digest, get_config_path, load_config
 from src.core.regime import compute_regime_state
 from src.db.connection import connect
 from src.db.init_db import init_db
@@ -277,6 +277,10 @@ def materialize_s4_tracks_from_eod(
 ) -> dict:
     init_db()
     base_config_path = get_config_path().resolve()
+    active_cfg = load_config(path=base_config_path)
+    active_db_path = Path(str(active_cfg.get("storage", {}).get("path", "")))
+    if not active_db_path.is_absolute():
+        active_db_path = (repo_root / active_db_path).resolve()
     baseline_cfg_path, baseline_profile_id, baseline_cfg_hash = _build_profile_config(
         base_config_path=base_config_path,
         profile_path=baseline_profile_path,
@@ -304,7 +308,10 @@ def materialize_s4_tracks_from_eod(
         source_rows = _load_source_snapshots(conn, underlying, start_ts, end_ts)
         source_snapshot_ids = [int(row[0]) for row in source_rows]
         if not source_snapshot_ids:
-            raise ValueError("No source EOD snapshots found for requested window")
+            raise ValueError(
+                "No source EOD snapshots found for requested window "
+                f"(active_config={base_config_path}, active_db_path={active_db_path})"
+            )
 
         baseline_code_version = f"{_resolve_commit(baseline_lineage)}+profile:{baseline_profile_id}"
         candidate_code_version = f"{_resolve_commit(candidate_lineage)}+profile:{candidate_profile_id}"
@@ -378,6 +385,11 @@ def materialize_s4_tracks_from_eod(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Materialize S4 baseline/candidate tracks from EOD snapshots")
     parser.add_argument("--db-path", default=None)
+    parser.add_argument(
+        "--config-path",
+        default=None,
+        help="Active config path used to resolve storage.path (preferred over OPTIONTRADER_CONFIG).",
+    )
     parser.add_argument("--baseline-lineage", required=True)
     parser.add_argument("--candidate-lineage", required=True)
     parser.add_argument(
@@ -400,16 +412,25 @@ def main() -> None:
             "warning: --db-path is informational; use OPTIONTRADER_CONFIG storage.path for active DB"
         )
 
-    result = materialize_s4_tracks_from_eod(
-        underlying=args.underlying,
-        start_ts=args.start_ts,
-        end_ts=args.end_ts,
-        baseline_lineage=args.baseline_lineage,
-        candidate_lineage=args.candidate_lineage,
-        baseline_profile_path=Path(args.baseline_profile),
-        candidate_profile_path=Path(args.candidate_profile),
-    )
-    print(json.dumps(result, indent=2, sort_keys=True))
+    original_config_env = os.environ.get("OPTIONTRADER_CONFIG")
+    try:
+        if args.config_path:
+            os.environ["OPTIONTRADER_CONFIG"] = args.config_path
+        result = materialize_s4_tracks_from_eod(
+            underlying=args.underlying,
+            start_ts=args.start_ts,
+            end_ts=args.end_ts,
+            baseline_lineage=args.baseline_lineage,
+            candidate_lineage=args.candidate_lineage,
+            baseline_profile_path=Path(args.baseline_profile),
+            candidate_profile_path=Path(args.candidate_profile),
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+    finally:
+        if original_config_env is not None:
+            os.environ["OPTIONTRADER_CONFIG"] = original_config_env
+        elif "OPTIONTRADER_CONFIG" in os.environ:
+            del os.environ["OPTIONTRADER_CONFIG"]
 
 
 if __name__ == "__main__":
