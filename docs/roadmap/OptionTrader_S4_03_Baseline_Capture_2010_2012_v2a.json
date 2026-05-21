@@ -1,8 +1,8 @@
 {
-  "captured_at": "2026-05-21T06:27:22.592012Z",
+  "captured_at": "2026-05-21T14:37:56.682802Z",
   "contract": {
     "baseline_lineage": "3b024c9",
-    "candidate_lineage": "5128e8e",
+    "candidate_lineage": "5128e8e-v2a",
     "config_path": "config/config-eod-truth.yaml",
     "effective_start_ts": "2010-04-05T00:00:00Z",
     "end_ts": "2012-12-31T23:59:59Z",
@@ -19,9 +19,9 @@
   "lineage_metadata": {
     "baseline": {
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
-      "config_hash": "844d0668639e038a08e0d775450d70ae3fc33684f270b817ebe77a45c55deabc",
+      "config_hash": "a6440afa83ff9f447c210ff9943e54243434132725f466e6bff0f9b1890c8c07",
       "profile_id": "baseline_rv_only",
-      "run_id": 43
+      "run_id": 47
     }
   },
   "regime_falsification": {

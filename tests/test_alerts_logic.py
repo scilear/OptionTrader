@@ -1,7 +1,10 @@
 import pandas as pd
 
 from src.core.alerts import compute_alerts
-from src.core.compute_snapshot import _resolve_regime_override_threshold
+from src.core.compute_snapshot import (
+    _resolve_regime_override_disabled_alert_types,
+    _resolve_regime_override_threshold,
+)
 
 
 def test_pessimistic_gate_blocks():
@@ -170,3 +173,35 @@ def test_regime_override_threshold_lookup() -> None:
     assert _resolve_regime_override_threshold(config, "Stress", "RR_EXTREME") == 5.0
     assert _resolve_regime_override_threshold(config, "Transition", "FLY_EXTREME") is None
     assert _resolve_regime_override_threshold(config, "Unknown", "RR_EXTREME") is None
+
+
+def test_regime_override_variant_lookup_and_disabled_alert_types() -> None:
+    config = {
+        "alerts": {
+            "regime_overrides": {
+                "Transition": {"RR_EXTREME": {"min_abs_zscore": 6.0}},
+            },
+            "policy_variant": "v2b",
+            "policy_variants": {
+                "v2a": {
+                    "regime_overrides": {
+                        "Transition": {"RR_EXTREME": {"min_abs_zscore": 6.5}},
+                    }
+                },
+                "v2b": {
+                    "regime_overrides": {
+                        "Transition": {
+                            "RR_EXTREME": {"min_abs_zscore": 6.0},
+                            "disabled_alert_types": ["RR_EXTREME", "FLY_EXTREME"],
+                        },
+                    }
+                },
+            },
+        }
+    }
+
+    assert _resolve_regime_override_threshold(config, "Transition", "RR_EXTREME") == 6.0
+    assert _resolve_regime_override_disabled_alert_types(config, "Transition") == {
+        "RR_EXTREME",
+        "FLY_EXTREME",
+    }

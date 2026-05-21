@@ -1,6 +1,6 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-19T15:20:48.552075Z
+Generated at: 2026-05-21T06:27:22.592012Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
@@ -66,9 +66,9 @@ Source script: `scripts/validate_release.py`
         "weight": 0.0
       }
     ],
-    "ideas_with_ranking": 6,
-    "mean_edge_after_cost": 2939.1700390897586,
-    "mean_total_friction_cost": 3.6458189331444824,
+    "ideas_with_ranking": 3,
+    "mean_edge_after_cost": 4400.389041214812,
+    "mean_total_friction_cost": 5.421943381045536,
     "pass": true
   },
   "adversarial": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.00s"
+          "1 passed in 0.61s"
         ]
       },
       "missing_tenors": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.95s"
+          "1 passed in 0.60s"
         ]
       },
       "sparse_wings": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 2.55s"
+          "1 passed in 0.62s"
         ]
       },
       "stale_books": {
@@ -102,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 1.46s"
+          "1 passed in 0.61s"
         ]
       }
     },
@@ -145,7 +145,7 @@ Source script: `scripts/validate_release.py`
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-19T15:20:48.552075Z",
+  "generated_at": "2026-05-21T06:27:22.592012Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
@@ -177,15 +177,15 @@ Source script: `scripts/validate_release.py`
   "lineage_metadata": {
     "baseline": {
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
-      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+      "config_hash": "844d0668639e038a08e0d775450d70ae3fc33684f270b817ebe77a45c55deabc",
       "profile_id": "baseline_rv_only",
-      "run_id": 33
+      "run_id": 43
     },
     "candidate": {
       "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
-      "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
+      "config_hash": "f63e4e3627be83a1b651e44a3e64538e78cfacf0d5591990745210eccd5ea0b9",
       "profile_id": "candidate_multi_signal",
-      "run_id": 34
+      "run_id": 44
     }
   },
   "recommendation": "not_promotable",
@@ -290,9 +290,9 @@ Source script: `scripts/validate_release.py`
   },
   "taxonomy_verdict": "no_incremental_edge_observed",
   "threshold_freeze": {
-    "baseline_config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
+    "baseline_config_hash": "844d0668639e038a08e0d775450d70ae3fc33684f270b817ebe77a45c55deabc",
     "blocked_reasons": [],
-    "candidate_config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
+    "candidate_config_hash": "f63e4e3627be83a1b651e44a3e64538e78cfacf0d5591990745210eccd5ea0b9",
     "current_config_hash": "ec039d97d121f629cd73d47701c3461b281498f2ab93fac5af85cafdb5609e2e",
     "threshold_freeze_pass": true
   },

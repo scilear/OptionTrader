@@ -21,9 +21,159 @@ created: 2026-05-20
 > - YAML frontmatter: `title`, `tags`, `aliases`, `status: draft`, `related` (list of [[WikiLinks]])
 > - Use `[[WikiLinks]]` throughout the body for cross-references
 > - Be practical and tested — state clearly when advice is data-backed vs rule-of-thumb
-> - Always include a `> [!warning]` callout for key risks
 > - No ASCII art. Reference charts by filename: `![[chart-name.png]]`
 > - Target length: 400–700 words unless specified otherwise
+> - **Callout types** — use only these four, never invent others:
+>   - `> [!warning]` — financial risk of loss (include in every note)
+>   - `> [!danger]` — strategy unsuitable for beginners; high probability of outsized loss
+>   - `> [!tip]` — best practice or experienced-trader rule of thumb
+>   - `> [!note]` — definition, context, or clarifying background
+>   Every note must contain at least one `[!warning]` or `[!danger]` callout.
+
+---
+
+## Build Order & Dependencies
+
+### Phase Summary
+
+Tasks within a phase can be generated in parallel (send to different Claude instances simultaneously). Phases must run in order. Within a phase, respect the **Critical Chains** listed below.
+
+| Phase | Task IDs | Description |
+|-------|----------|-------------|
+| **0 — Pre-Build** | 086 087 088 091 097 | No dependencies. Run all five first: link map, examples sheet, chart constants, Obsidian settings, prompt extractor. These unblock everything else. |
+| **1 — Infrastructure** | 001 004 089 093 → 090 092 095 | Templates (001), charts README (004), vault scaffold (089), broker guide (093) in parallel. Then: validator (090, needs 089), dashboard (092, needs 089+091), journal template (095, needs 001). |
+| **2 — Foundations** | 006 021 046 060 061 068 → 007 008 009 010 011 012 022 047 048 062 069 070 074 | Entry-point concept notes in parallel, then their dependents (Greeks detail, timing, risk intros, earnings/0DTE intros). |
+| **3 — Framework** | 013 023 024 047 048 050 063 → 014 015 025 041 051 052 → 081 082 083 084 085 | IV rank (013), then ticker system (015), entry signals (025), market conditions (041), drawdown (050). Charts (081-085) run in parallel with this phase — they only need 004+088. |
+| **4 — Entry/Exit + Market + Risk** | 016 017 018 019 026 027 042 043 044 045 049 053 064 071 072 | Screeners, checklist, entry/exit discipline, all market condition playbooks, risk rules, 0DTE credit spread, earnings IC and straddle. |
+| **5 — Core Strategies** | 020 028 029 030 031 032 033 034 035 036 037 038 039 040 054 055 056 057 058 059 065 066 067 073 075 076 077 078 079 080 | All strategy playbooks and their adjustments. Follow critical chains within this phase. |
+| **6 — Synthesis** | 002 003 005 094 096 | MOCs, glossary, tax note, common mistakes. Write these last — they reference all prior notes. |
+
+---
+
+### Critical Sequential Chains
+
+Within a phase, these sub-sequences must be done in order (each item requires the prior):
+
+| Chain | Sequence |
+|-------|----------|
+| IV concepts | 012 → 013 → 014 |
+| Ticker funnel | 013 → 015 → 016, 017, 018 → 019 → 020 |
+| Entry/exit discipline | 019 → 025 → 026 → 027 |
+| Credit spread ladder | 028 → 031 → 032 → 033 |
+| Complex income | 033 → 034 → 035 → 036 |
+| Time spreads | 037 → 038; 039 → 040 (LEAPS → PMCC) |
+| Rolling chain | 054 → 055 → 056, 057, 058, 059 |
+| 0DTE chain | 061 → 062 → 063 → 064, 065, 066 → 067 |
+| Earnings chain | 068 → 069, 070, 074 → 071, 072 → 073 → 075 |
+| Long-term chain | 029 → 078 → 079 → 080 |
+| Risk chain | 046 → 047 → 049, 050 → 051 |
+
+---
+
+### Full Dependency Table
+
+Every task lists only its **content dependencies** — the notes whose concepts must exist before this note can be written correctly. Universal prerequisites (086 WikiLink Map, 087 Canon Examples, 001 Templates) apply to all content notes (TASK-006 onward) and are omitted from individual rows to avoid repetition.
+
+| Task | Minimum Content Dependencies |
+|------|------------------------------|
+| 001 | 086 |
+| 002 | 001, 086 (write stub in Phase 1, complete in Phase 6) |
+| 003 | 001, 086 (write stub in Phase 1, complete in Phase 6) |
+| 004 | 088 |
+| 005 | 006–014 (all foundation concepts) |
+| 006 | 001 |
+| 007 | 008, 009, 010, 011 |
+| 008 | 006 |
+| 009 | 006 |
+| 010 | 006 |
+| 011 | 006 |
+| 012 | 006 |
+| 013 | 012 |
+| 014 | 013 |
+| 015 | 013 |
+| 016 | 015 |
+| 017 | 015 |
+| 018 | 013, 015 |
+| 019 | 015, 016, 017 |
+| 020 | 013, 019, 082 (IV chart needed for the pattern diagram) |
+| 021 | 001 |
+| 022 | 021 |
+| 023 | 021, 022 |
+| 024 | 021 |
+| 025 | 013, 019 |
+| 026 | 019, 025 |
+| 027 | 026 |
+| 028 | 008, 009, 013, 081 (P&L chart must exist to embed) |
+| 029 | 028 |
+| 030 | 028, 029 |
+| 031 | 028, 008 |
+| 032 | 031 |
+| 033 | 031, 032, 081 |
+| 034 | 033 |
+| 035 | 034 |
+| 036 | 033, 034, 035 |
+| 037 | 009, 010, 082 |
+| 038 | 037 |
+| 039 | 008, 010 |
+| 040 | 038, 039 |
+| 041 | 013, 033 |
+| 042 | 041, 013 |
+| 043 | 041, 013 |
+| 044 | 041 |
+| 045 | 041 |
+| 046 | 001 |
+| 047 | 046 |
+| 048 | 046 |
+| 049 | 046, 054 |
+| 050 | 046, 047, 084 |
+| 051 | 050 |
+| 052 | 009, 033 |
+| 053 | 052 |
+| 054 | 028, 046 |
+| 055 | 054 |
+| 056 | 055, 031 |
+| 057 | 055, 033 |
+| 058 | 055, 040 |
+| 059 | 055, 065 |
+| 060 | 027 |
+| 061 | 011, 013 |
+| 062 | 061 |
+| 063 | 061, 022, 083 |
+| 064 | 061, 063, 031 |
+| 065 | 061, 063, 033 |
+| 066 | 061, 035 |
+| 067 | 066, 011 |
+| 068 | 013 |
+| 069 | 068, 010 |
+| 070 | 068 |
+| 071 | 068, 033, 069, 085 |
+| 072 | 068, 069 |
+| 073 | 071, 072 |
+| 074 | 068 |
+| 075 | 071, 073, 074 |
+| 076 | 039 |
+| 077 | 040, 076 |
+| 078 | 029 |
+| 079 | 078 |
+| 080 | 047, 079 |
+| 081 | 004, 088 |
+| 082 | 004, 088 |
+| 083 | 004, 088 |
+| 084 | 004, 088 |
+| 085 | 004, 088 |
+| 086 | — |
+| 087 | — |
+| 088 | — |
+| 089 | 086 |
+| 090 | 089 |
+| 091 | — |
+| 092 | 089, 091 |
+| 093 | — |
+| 094 | 028, 029, 039, 078 |
+| 095 | 001 |
+| 096 | 028–080 (all strategy notes — write last) |
+| 097 | — |
+| 099 | 081, 082, 083, 084, 085, 090 (run after all chart scripts and all content notes complete) |
 
 ---
 
@@ -217,14 +367,6 @@ Options-Curriculum/                   ← Obsidian vault root
 
 ---
 
-#### TASK-007 · Greeks Overview
-**Complexity:** 2 — Sonnet | **Output:** `01-Foundations/Greeks-Overview.md`
-
-**Prompt:**
-> Write an Obsidian note giving a practical overview of options Greeks for active traders. Not academic — focus on what each Greek means for trade management decisions. Cover delta, gamma, theta, vega; mention rho briefly. For each: one-sentence definition, practical implication (e.g., "If delta is 0.30, option moves $0.30 for every $1 move in the stock"), how it affects entry/exit decisions. Include a table: Greek | What it measures | High = | Low = | Key decision. Link to individual Greek notes: [[Delta]], [[Gamma]], [[Theta-Decay]], [[Vega]]. Add chart reference: `![[chart-greeks-sensitivity.png]]`.
-
----
-
 #### TASK-008 · Delta Note
 **Complexity:** 1 — Haiku | **Output:** `01-Foundations/Delta.md`
 
@@ -254,6 +396,14 @@ Options-Curriculum/                   ← Obsidian vault root
 
 **Prompt:**
 > Write an Obsidian note on gamma for options traders focused on risk management. Cover: definition (rate of change of delta), why gamma is the primary risk for short options sellers (especially near expiration), gamma explosion near expiration (0DTE risk), gamma risk vs theta reward tradeoff, how to manage gamma by closing positions early. Include a `> [!warning]` callout: "Gamma risk is highest for 0DTE and same-week trades — positions can move against you faster than you can react." Add chart reference: `![[chart-gamma-vs-dte.png]]`. Link to [[Greeks-Overview]], [[0DTE-Overview]], [[50pct-vs-Expiry]].
+
+---
+
+#### TASK-007 · Greeks Overview
+**Complexity:** 2 — Sonnet | **Output:** `01-Foundations/Greeks-Overview.md`
+
+**Prompt:**
+> Write an Obsidian note giving a practical overview of options Greeks for active traders. Not academic — focus on what each Greek means for trade management decisions. Cover delta, gamma, theta, vega; mention rho briefly. For each: one-sentence definition, practical implication (e.g., "If delta is 0.30, option moves $0.30 for every $1 move in the stock"), how it affects entry/exit decisions. Include a table: Greek | What it measures | High = | Low = | Key decision. Link to individual Greek notes: [[Delta]], [[Gamma]], [[Theta-Decay]], [[Vega]]. Add chart reference: `![[chart-greeks-sensitivity.png]]`.
 
 ---
 
@@ -859,13 +1009,30 @@ Options-Curriculum/                   ← Obsidian vault root
 **Prompt:**
 > Write a well-documented Python script (`pnl_diagrams.py`) that generates P&L diagrams for all major options strategies and saves them as both PNG (for Obsidian embedding) and HTML (interactive). Use `matplotlib` for PNG and `plotly` for HTML.
 >
-> Strategies to generate: (1) long call, (2) short put (CSP), (3) covered call, (4) bull put credit spread, (5) bear call credit spread, (6) iron condor, (7) iron fly, (8) butterfly (call), (9) calendar spread (simplified, at expiry of short leg), (10) collar, (11) PMCC (at short call expiry).
+> **Import style:** `from constants import COLORS, FIG_STANDARD, FIG_WIDE, SPX_SPOT, AAPL_SPOT, DPI` at the top of the script. Use `COLORS['profit']` for profit zones, `COLORS['loss']` for loss zones, `COLORS['neutral']` for breakeven lines, `COLORS['primary']` for the main P&L curve. Use `FIG_STANDARD` for `figsize`. Use `SPX_SPOT` as the base price for SPX-based examples.
 >
-> For each diagram: x-axis = underlying price at expiry, y-axis = P&L in dollars, show breakeven line(s), max profit line, max loss line. Use a clean style (no grid clutter). Add the strategy name as title. Use realistic sample inputs (e.g., SPX IC with $50-wide spreads collecting $15 credit).
+> Strategies to generate (14 total): (1) short put / CSP, (2) covered call, (3) wheel cycle timeline, (4) bull put credit spread, (5) bear call credit spread, (6) iron condor, (7) iron fly, (8) butterfly (call), (9) calendar spread (simplified, at expiry of short leg), (10) diagonal spread, (11) zero-risk collar, (12) advanced collar, (13) PMCC (at short call expiry), (14) fly vs IC comparison (two overlapping P&L curves on one chart).
 >
-> Script structure: each strategy is a function `def plot_[strategy](save_dir)`. A `main()` function calls all of them. Include docstrings on every function documenting the formula used. Include `if __name__ == "__main__": main()`.
+> For each diagram: x-axis = underlying price at expiry, y-axis = P&L in dollars, show breakeven line(s), max profit line, max loss line. Use a clean style. Add the strategy name as title. Use parameters from `canon_examples` (SPX at 5000, $50-wide IC collecting $15 credit, etc.).
 >
-> Output files: `outputs/pnl-csp.png`, `outputs/pnl-covered-call.png`, `outputs/pnl-bull-put-spread.png`, `outputs/pnl-iron-condor.png`, etc.
+> Script structure: each strategy is a function `def plot_[strategy](save_dir)`. A `main()` function calls all of them. Include docstrings on every function documenting the formula used. Include `if __name__ == "__main__": main()`. Also generate `chart-leaps-vs-stock.png` comparing LEAPS payoff vs stock ownership at expiry.
+>
+> **Chart → Note mapping** (every output must be embedded in exactly one note):
+> - `pnl-csp.png` → [[CSP-Cash-Secured-Put]]
+> - `pnl-covered-call.png` → [[Covered-Call]]
+> - `pnl-wheel-cycle.png` → [[Wheel-Strategy]]
+> - `pnl-bull-put-spread.png` → [[Bull-Put-Spread]]
+> - `pnl-bear-call-spread.png` → [[Bear-Call-Spread]]
+> - `pnl-iron-condor.png` → [[Iron-Condor]]
+> - `pnl-iron-fly.png` → [[Iron-Fly]]
+> - `pnl-butterfly.png` → [[Butterfly]]
+> - `pnl-calendar-spread.png` → [[Calendar-Spread]]
+> - `pnl-diagonal-spread.png` → [[Diagonal-Spread]]
+> - `pnl-zero-risk-collar.png` → [[Zero-Risk-Collar]]
+> - `pnl-advanced-collar.png` → [[Advanced-Collar]]
+> - `pnl-pmcc.png` → [[PMCC]]
+> - `pnl-fly-vs-ic-comparison.png` → [[Fly-vs-IC]]
+> - `chart-leaps-vs-stock.png` → [[LEAPS]] and [[LEAPS-Investing]]
 
 ---
 
@@ -875,14 +1042,27 @@ Options-Curriculum/                   ← Obsidian vault root
 **Prompt:**
 > Write a documented Python script (`iv_charts.py`) that generates implied volatility educational charts. Use `matplotlib` for PNG and `plotly` for HTML.
 >
-> Charts to generate:
+> **Import style:** `from constants import COLORS, FIG_STANDARD, FIG_WIDE, SPX_SPOT, DPI` at the top. Use constants for all colors and figure sizing.
+>
+> Charts to generate (7 total):
 > (1) **Theta decay curve** (`chart-theta-decay-curve.png`): theta of an ATM option vs. DTE (from 90 to 0 DTE), showing the acceleration in the last 30 days;
 > (2) **IV rank distribution** (`chart-ivr-distribution.png`): histogram of IVR values for a sample universe of stocks, with color bands (low/mid/high IVR zones);
 > (3) **IV crush pattern** (`chart-iv-crush-pattern.png`): simulated IV trajectory going into earnings (rising) and post-earnings (crushing), 30-day window;
 > (4) **IV term structure** (`chart-iv-term-structure.png`): two lines — normal (upward sloping) and inverted (post-spike) IV curves across expirations;
-> (5) **Gamma vs DTE** (`chart-gamma-vs-dte.png`): gamma of an ATM option as a function of DTE, showing gamma explosion near expiry.
+> (5) **Gamma vs DTE** (`chart-gamma-vs-dte.png`): gamma of an ATM option as a function of DTE, showing gamma explosion near expiry;
+> (6) **Greeks sensitivity table** (`chart-greeks-sensitivity.png`): a styled matplotlib table showing each Greek, what it measures, and the practical implication for trade management — not a line chart, a visual table with color-coded rows;
+> (7) **IV compression coil** (`chart-iv-compression-coil.png`): IV rank over a 60-day window showing a compression (declining IVR) followed by a sharp expansion — annotate the entry signal zone.
 >
-> Use Black-Scholes Greeks formulas. Include scipy.stats.norm in calculations. Docstring every function with the formula used. Use realistic parameters (SPX-like: spot 5000, risk-free 5%, realistic IV levels).
+> Use Black-Scholes Greeks formulas. Include `scipy.stats.norm` in calculations. Docstring every function with the formula used. Use SPX_SPOT and realistic IV levels from constants.
+>
+> **Chart → Note mapping:**
+> - `chart-theta-decay-curve.png` → [[Theta-Decay]]
+> - `chart-ivr-distribution.png` → [[IV-Rank]]
+> - `chart-iv-crush-pattern.png` → [[IV-Crush-Mechanics]]
+> - `chart-iv-term-structure.png` → [[IV-vs-HV]]
+> - `chart-gamma-vs-dte.png` → [[Gamma]]
+> - `chart-greeks-sensitivity.png` → [[Greeks-Overview]]
+> - `chart-iv-compression-coil.png` → [[Setup-Recognition-Patterns]]
 
 ---
 
@@ -892,13 +1072,21 @@ Options-Curriculum/                   ← Obsidian vault root
 **Prompt:**
 > Write a documented Python script (`timing_charts.py`) that generates educational charts on options trading timing patterns. Use `matplotlib` for PNG.
 >
-> Charts to generate:
-> (1) **Intraday VIX pattern** (`chart-0dte-ivx-by-time.png`): simulated intraday VIX/IV index level through a typical day (9:30 AM to 4:00 PM), showing the open spike, midday calm, and afternoon activity;
-> (2) **Intraday SPX volume pattern** (`chart-intraday-volume.png`): typical intraday volume curve showing U-shape (high at open, low midday, high at close);
-> (3) **Expected earnings move vs actual** (`chart-earnings-ic-example.png`): bar chart for a sample of 20 earnings events, showing implied move (blue bar) vs actual move (orange bar), highlighting how often actual < implied;
-> (4) **Superfly gamma profile** (`chart-superfly-gamma.png`): OTM butterfly value vs underlying price for 4 time scenarios (30 min, 60 min, 120 min, 240 min before expiry), showing gamma explosion near strikes.
+> **Import style:** `from constants import COLORS, FIG_STANDARD, FIG_WIDE, DPI` at the top.
 >
-> Use synthetic/realistic data (clearly label as illustrative). Docstring every function.
+> Charts to generate (4 total):
+> (1) **Intraday VIX pattern** (`chart-0dte-ivx-by-time.png`): simulated intraday VIX/IV index level through a typical trading day (9:30 AM to 4:00 PM), showing the open spike, midday calm, and power-hour activity; annotate the preferred entry window (10:00–11:00 AM);
+> (2) **Intraday SPX volume pattern** (`chart-intraday-volume.png`): typical intraday volume curve showing U-shape (high at open, low midday, high at close); annotate "avoid" zones;
+> (3) **Implied vs actual earnings moves** (`chart-earnings-move-vs-actual.png`): grouped bar chart for a sample of 20 earnings events showing implied move (one color) vs actual move (another), making visually clear how often actual < implied — do NOT name this file `chart-earnings-ic-example.png` (reserved for TASK-085);
+> (4) **Superfly gamma profile** (`chart-superfly-gamma.png`): OTM butterfly value vs underlying price for 4 time scenarios (30 min, 60 min, 120 min, 240 min before expiry), showing gamma explosion as stock approaches the center strike.
+>
+> Use synthetic/realistic data (label as "illustrative"). Docstring every function.
+>
+> **Chart → Note mapping:**
+> - `chart-0dte-ivx-by-time.png` → [[0DTE-Entry-Timing]]
+> - `chart-intraday-volume.png` → [[Intraday-Timing-Open]]
+> - `chart-earnings-move-vs-actual.png` → [[Earnings-Overview]]
+> - `chart-superfly-gamma.png` → [[Superfly]]
 
 ---
 
@@ -908,13 +1096,21 @@ Options-Curriculum/                   ← Obsidian vault root
 **Prompt:**
 > Write a documented Python script (`risk_charts.py`) that generates portfolio risk management educational charts. Use `matplotlib` and `numpy`.
 >
-> Charts to generate:
-> (1) **Drawdown recovery curve** (`chart-drawdown-recovery.png`): bar chart showing required return to recover from various drawdown levels (10%, 15%, 20%, 25%, 30%, 40%, 50%), illustrating asymmetry;
-> (2) **50% profit close vs expiry** (`chart-50pct-vs-expiry.png`): two simulated equity curves over 100 trades — one closing at 50% profit, one holding to expiry — showing risk-adjusted return comparison;
-> (3) **Win rate vs profit factor** (`chart-winrate-profit-factor.png`): heatmap of expected value across combinations of win rates (50%–80%) and win/loss ratios (0.3–2.0), color-coded positive/negative EV;
-> (4) **Position sizing impact** (`chart-position-sizing.png`): simulation of 200 trades showing portfolio growth curves for 1%, 2%, 5%, and 10% risk-per-trade sizing.
+> **Import style:** `from constants import COLORS, FIG_STANDARD, FIG_WIDE, DPI` at the top. Use `COLORS['loss']` for drawdown curves, `COLORS['profit']` for recovery/growth curves, `COLORS['neutral']` for reference lines.
 >
-> Use Monte Carlo simulation for equity curves (1000 paths). Docstring every function with the statistical method used.
+> Charts to generate (4 total):
+> (1) **Drawdown recovery asymmetry** (`chart-drawdown-recovery.png`): horizontal bar chart showing % gain required to recover from each drawdown level (10%, 15%, 20%, 25%, 30%, 40%, 50%); annotate with the formula `recovery = 1/(1-drawdown) - 1`; use `COLORS['loss']` for bars;
+> (2) **50% profit close vs hold to expiry** (`chart-50pct-vs-expiry.png`): two simulated equity curves over 100 trades — one closing at 50% profit, one holding to expiry — Monte Carlo (1000 paths each), show median and 10th/90th percentile bands;
+> (3) **Win rate vs profit factor EV heatmap** (`chart-winrate-profit-factor.png`): heatmap of expected value across win rates (50%–80%) and win/loss ratios (0.3–2.0); color green for positive EV, red for negative, annotate the "income strategy sweet spot" zone;
+> (4) **Position sizing impact** (`chart-position-sizing.png`): 4 equity curves (1%, 2%, 5%, 10% risk per trade) over 200 trades with a 65% win rate — use Monte Carlo (1000 paths), show median path only for clarity.
+>
+> Docstring every function with the statistical method and assumptions used.
+>
+> **Chart → Note mapping:**
+> - `chart-drawdown-recovery.png` → [[Drawdown-Management]]
+> - `chart-50pct-vs-expiry.png` → [[50pct-vs-Expiry]]
+> - `chart-winrate-profit-factor.png` → [[Portfolio-Performance-Metrics]]
+> - `chart-position-sizing.png` → [[Position-Sizing]]
 
 ---
 
@@ -924,13 +1120,129 @@ Options-Curriculum/                   ← Obsidian vault root
 **Prompt:**
 > Write a documented Python script (`earnings_charts.py`) that generates earnings-related educational charts for the options curriculum. Use `matplotlib` and `plotly`.
 >
-> Charts to generate:
-> (1) **Earnings IV crush pattern** (`chart-earnings-iv-crush.png`): line chart showing ATM IV over a 30-day window centered on an earnings date — IV accumulation pre-earnings, spike on day-before, crush post-announcement;
-> (2) **Implied vs actual earnings moves** (`chart-earnings-move-comparison.png`): scatter plot with implied move on x-axis, actual move on y-axis, showing the distribution of moves relative to implied — with the 45-degree "priced right" line;
-> (3) **Earnings IC P&L at expiry** (`chart-earnings-ic-example.png`): P&L diagram for a sample earnings IC, with zones labeled: "IV crush profits here", "stock move hurts here", "max loss zone";
-> (4) **IV percentile before earnings histogram** (`chart-iv-preearnings-distribution.png`): distribution of IVP values 5 days before earnings for a sample of 100 earnings events.
+> **Import style:** `from constants import COLORS, FIG_STANDARD, FIG_WIDE, AAPL_SPOT, DPI` at the top. Use constants for all colors and figure sizing.
 >
-> Use synthetic but realistic data clearly labeled as illustrative. Document each function with data source assumptions.
+> Charts to generate (4 total):
+> (1) **Earnings IV crush pattern** (`chart-earnings-iv-crush.png`): line chart showing ATM IV over a 30-day window centered on an earnings date — IV accumulation in the 2 weeks before, spike on the day before, sharp crush post-announcement; annotate the announcement date with a vertical dashed line;
+> (2) **Implied vs actual earnings moves scatter** (`chart-earnings-move-comparison.png`): scatter plot with implied move % on x-axis, actual move % on y-axis, ~50 synthetic data points; draw the 45-degree "priced correctly" line; color points above it green (actual > implied = IV underestimated) and below red (actual < implied = IV crush profitable); annotate "~60% of points below line";
+> (3) **Earnings IC P&L at expiry** (`chart-earnings-ic-example.png`): P&L diagram for a sample earnings IC using AAPL_SPOT, with labeled zones: "IV crush profit zone" (center), "danger zone" (outside wings); show the expected move boundaries as vertical dashed lines;
+> (4) **IVP distribution pre-earnings** (`chart-iv-preearnings-distribution.png`): histogram of IVP values 5 days before earnings for a synthetic sample of 100 events; color bars: IVP < 50 in red, IVP ≥ 50 in green; annotate median line.
+>
+> Use synthetic but realistic data clearly labeled as "illustrative". Document each function with data source assumptions.
+>
+> **Chart → Note mapping:**
+> - `chart-earnings-iv-crush.png` → [[Earnings-Overview]]
+> - `chart-earnings-move-comparison.png` → [[Earnings-Ticker-Selection]]
+> - `chart-earnings-ic-example.png` → [[Earnings-IC-Playbook]]
+> - `chart-iv-preearnings-distribution.png` → [[Earnings-Ticker-Selection]]
+
+---
+
+### META TASKS: PREP & TOOLING
+
+---
+
+#### TASK-086 · WikiLink Canonical Map
+**Complexity:** 1 — Haiku | **Output:** `00-Index/WikiLink-Map.md`
+
+**Prompt:**
+> Create a reference note listing every file in the Options-Curriculum vault with its exact filename and the canonical [[WikiLink]] to use. Format as a two-column table: File Path | WikiLink. Cover all notes defined in this taskboard. Also list common aliases (e.g., [[IC]] → [[Iron-Condor]], [[CC]] → [[Covered-Call]], [[CSP]] → [[CSP-Cash-Secured-Put]]). This is the authoritative spelling source — any cross-reference in any note must match exactly. Mark `status: meta`. This file does not appear in the student-facing vault.
+
+---
+
+#### TASK-087 · Canon Examples Reference Sheet
+**Complexity:** 1 — Haiku | **Output:** `00-Index/Canon-Examples.md`
+
+**Prompt:**
+> Create a reference note defining the standard example parameters used consistently across all curriculum notes. Define: default underlyings (SPX at 5000, AAPL at $200, SPY at $500, GLD at $200), standard IV conditions (calm: VIX 15 / IVR 20, normal: VIX 18 / IVR 40, elevated: VIX 25 / IVR 65, stressed: VIX 35 / IVR 80), standard spread widths (SPX: $25-wide and $50-wide; equity: $2.50-wide and $5-wide), standard DTE scenarios (0DTE, 7DTE, 21DTE, 45DTE), standard credit targets (25% of width for IC, 33% for naked credit spread), standard portfolio size ($100K for all examples). Every note that uses numerical examples draws from these values. Mark `status: meta`.
+
+---
+
+#### TASK-088 · Charts/constants.py
+**Complexity:** 1 — Haiku | **Output:** `Charts/constants.py`
+
+**Prompt:**
+> Write a Python constants module (`constants.py`) imported by all chart generation scripts. Include: (1) **Color palette** — PROFIT = '#4CAF50', LOSS = '#F44336', NEUTRAL = '#9E9E9E', PRIMARY = '#2196F3', HIGHLIGHT = '#FF9800', BREAKEVEN = '#757575'; (2) **Figure sizes** — FIG_STANDARD = (10, 6), FIG_WIDE = (14, 6), FIG_SQUARE = (8, 8); (3) **Font settings** — TITLE_SIZE = 14, LABEL_SIZE = 11, ANNOT_SIZE = 9, FONT_FAMILY = 'DejaVu Sans'; (4) **Line styles** — MAIN_LW = 2.5, REF_LW = 1.5; (5) **Output** — DPI = 150; (6) **Canon example parameters** matching TASK-087 (SPX_SPOT = 5000, AAPL_SPOT = 200, etc.). Module-level docstring explaining the purpose. No functions — constants only.
+
+---
+
+#### TASK-089 · Vault Folder Scaffolding Script
+**Complexity:** 1 — Haiku | **Output:** `Charts/scaffold_vault.py`
+
+**Prompt:**
+> Write a Python script (`scaffold_vault.py`) that creates the complete Options-Curriculum Obsidian vault structure. Takes one CLI argument: vault root path (argparse). Creates all directories, then for each note in the curriculum creates a stub `.md` file with YAML frontmatter: `title` (derived from filename, hyphens → spaces), `tags` (inferred from parent folder name), `status: stub`, `related: []`. Folder list: 00-Index/, 01-Foundations/, 02-Finding-Opportunities/, 03-Entry-Exit/, 04-Strategies/Set-and-Forget/, 04-Strategies/Income/, 04-Strategies/Long-Term/, 04-Strategies/0DTE/, 05-Market-Conditions/, 06-Risk-Management/, 07-Profit-Taking/, 08-Adjustments/, 09-Earnings/, Charts/outputs/, Templates/, prompts/. Skips existing files (does not overwrite). Prints a summary: N directories created, M stub files created, K skipped.
+
+---
+
+#### TASK-090 · Link & Frontmatter Validator
+**Complexity:** 2 — Sonnet | **Output:** `Charts/validate_vault.py`
+
+**Prompt:**
+> Write a Python script (`validate_vault.py`) that validates the Options-Curriculum Obsidian vault. Takes vault root path as argparse argument. Three checks: (1) **WikiLink resolution** — regex-scan all `.md` files for `[[...]]` patterns, verify a `.md` file with that name exists (case-insensitive, strip pipe aliases), report broken links as `source_file:line_number → [[broken-link]]`; (2) **Frontmatter validation** — every `.md` file must have YAML frontmatter with `title` and `status` fields, report missing; (3) **Chart embed check** — scan for `![[...png]]` and `![[...html]]`, verify the file exists in `Charts/outputs/`, report missing. Output: colored terminal summary (green = pass, red = fail). Exit code 0 if clean, 1 if any errors. Add `--fix-stubs` flag that creates missing stub files for broken WikiLinks.
+
+---
+
+#### TASK-091 · Obsidian Settings + Plugin List
+**Complexity:** 1 — Haiku | **Output:** `00-Index/Obsidian-Setup.md`
+
+**Prompt:**
+> Write an Obsidian note guiding vault setup for the Options-Curriculum. Sections: (1) **Core plugins to enable** — Templates, Search, Backlinks; (2) **Community plugins to install** — Dataview (live progress queries), Templater (template hotkeys), Better Word Count; step-by-step install instructions for each; (3) **Dataview setup** — enable JavaScript queries in settings; (4) **Graph view configuration** — color nodes: green for `status: complete`, orange for `status: draft`, red for `status: stub`; group by folder; (5) **Useful hotkeys** — Cmd/Ctrl+E (toggle edit/preview), Cmd/Ctrl+G (graph), Cmd/Ctrl+P (command palette); (6) **Linking settings** — enable Wikilinks, disable auto-update internal links during bulk builds; (7) **Templates folder** — set to `Templates/`. Mark `status: meta`.
+
+---
+
+#### TASK-092 · Progress Dashboard
+**Complexity:** 2 — Sonnet | **Output:** `00-Index/Progress-Dashboard.md`
+
+**Prompt:**
+> Write an Obsidian note that serves as the curriculum build progress dashboard using Dataview plugin queries. Include four blocks: (1) A `dataview` table of all notes where `status != "complete"` — columns: file.link, status, tags; (2) A `dataviewjs` block counting notes by status and rendering a mini progress bar (complete/total); (3) A `dataview` list of notes missing the `related` frontmatter field; (4) A static checklist for the five Python chart scripts (which have no Obsidian frontmatter). Add a note: "Requires Dataview plugin — see [[Obsidian-Setup]]." Add a "Chart Script Status" section with manual ☐/☑ checkboxes for pnl_diagrams.py, iv_charts.py, timing_charts.py, risk_charts.py, earnings_charts.py. Mark `status: meta`.
+
+---
+
+#### TASK-093 · Broker Comparison
+**Complexity:** 2 — Sonnet | **Output:** `00-Index/Broker-Comparison.md`
+
+**Prompt:**
+> Write an Obsidian reference note comparing options brokers for retail traders. Cover five: (1) **tastytrade** — best for income strategies: $1/contract ($10 cap per leg), options-first UI, built-in P&L and Greeks dashboard, best for beginners to intermediate; (2) **Interactive Brokers (IBKR)** — best for portfolio margin and international access, most capital-efficient margin, steeper UI learning curve, Trader Workstation; (3) **thinkorswim (Schwab)** — best platform for charting and paper trading, excellent for learning; higher commissions; (4) **Webull / Robinhood** — avoid for multi-leg strategies: poor fills, limited order types; (5) **Tastytrade vs IBKR** head-to-head for a $200K options portfolio. Include a comparison table: Broker | Commissions | Multi-leg Support | Portfolio Margin | Best For. Add `> [!warning]`: "Execution quality matters more than commissions — a $0.05 wider fill on a 10-contract IC costs more than the commission difference." Link to [[Position-Sizing]].
+
+---
+
+#### TASK-094 · Options Tax Treatment
+**Complexity:** 2 — Sonnet | **Output:** `00-Index/Tax-Treatment.md`
+
+**Prompt:**
+> Write an Obsidian reference note on US tax treatment of options trades. Sections: (1) **Default rule** — options held < 1 year = short-term capital gains (ordinary income rates); (2) **Section 1256 / 60-40 rule** — SPX, XSP, NDX, RUT, and futures options are 60% long-term / 40% short-term capital gains regardless of holding period — significant advantage for index options traders; QQQ and SPY options do NOT qualify; (3) **LEAPS** — held > 1 year = long-term gains; writing covered calls against LEAPS can disqualify the holding period (qualified covered call rules); (4) **Wash sale** — applies when you sell a loss option and buy a "substantially identical" option within 30 days; also applies to stock sold at loss + selling a put on the same stock; (5) **Assignment tax treatment** — CSP assignment: cost basis = strike − premium; CC assignment: proceeds = strike + premium; (6) **Record keeping** — what to capture per trade for Schedule D. Add prominent `> [!warning]`: "This note is educational only and does not constitute tax advice. Consult a CPA for your specific situation." Link to [[CSP-Cash-Secured-Put]], [[Covered-Call]], [[LEAPS]], [[Zero-Risk-Collar]], [[Broker-Comparison]].
+
+---
+
+#### TASK-095 · Paper Trading Journal Template
+**Complexity:** 1 — Haiku | **Output:** `Templates/Paper-Trade-Journal-Template.md`
+
+**Prompt:**
+> Write an Obsidian template for logging paper trades while learning options. Include: (1) A trade entry table with fields: Date, Ticker, Strategy (wikilink), Structure (legs), DTE at Entry, IV Rank at Entry, Credit/Debit, Max Profit, Max Loss, Planned Exit Rule, Actual Exit Date, Exit P&L, Win/Loss; (2) A "Thesis" free-text field (why you took this trade, what setup confirmed); (3) A "What Went Right / Wrong" section; (4) A "What I'd Do Differently" section. Below the trade log, a weekly summary: Total Trades, Wins, Losses, Win Rate, Gross P&L, Best Trade, Worst Trade. Use Templater syntax (`<% tp.date.now() %>`) for auto-date. Include a reminder block linking to [[High-Probability-Setup-Checklist]] and [[Building-Discipline]].
+
+---
+
+#### TASK-096 · Common Beginner Mistakes
+**Complexity:** 2 — Sonnet | **Output:** `00-Index/Common-Mistakes.md`
+
+**Prompt:**
+> Write an Obsidian synthesis note on the 12 most common and costly beginner options mistakes. Write this last — it should link back to the specific notes that address each mistake. Mistakes to cover: (1) Selling undefined-risk premium into earnings without defined risk — link [[Earnings-IC-Playbook]]; (2) Over-sizing positions beyond 5% max loss — link [[Position-Sizing]]; (3) Holding losers to expiry hoping for recovery instead of closing at 2× credit — link [[Stop-Loss-Strategies]]; (4) Rolling a losing spread for a debit — link [[Rolling-Basics]]; (5) Trading illiquid options (wide spread, low OI) — link [[Ticker-Criteria-Fundamental]]; (6) Selling premium when IVR < 25 — link [[IV-Rank]], [[Low-IV-Playbook]]; (7) Ignoring gamma risk inside 14 DTE — link [[Gamma]]; (8) Entering at market open (first 30 minutes) — link [[Intraday-Timing-Open]]; (9) Running 0DTE without active monitoring — link [[0DTE-Overview]]; (10) Revenge trading after a max-loss event — link [[Losing-Trade-Mindset]]; (11) Treating the Wheel as "safe" — it carries full stock downside — link [[Wheel-Strategy]]; (12) No exit plan before entry — link [[Entry-Confirmation-Signals]]. For each: 2-sentence description + consequence + fix. Mark `status: complete` — write this only after all strategy notes exist.
+
+---
+
+#### TASK-097 · Prompt Extraction Script
+**Complexity:** 1 — Haiku | **Output:** `Charts/extract_prompts.py`
+
+**Prompt:**
+> Write a Python script (`extract_prompts.py`) that parses `TASKBOARD.md` and extracts each task's prompt into individual text files for batch execution. For each `#### TASK-NNN` heading: extract task ID, title, complexity level, output file path, and the full prompt block (lines between `**Prompt:**` and the next `---` or `####`). Save each as `prompts/TASK-NNN.txt` with a structured header: `# TASK-NNN: {title}\n# Complexity: {level}\n# Output: {path}\n\n{GLOBAL_PROMPT_PREFIX}\n\n{task_prompt}`. The global prefix is the text from the "## Global Prompt Prefix" section of the taskboard. Create `prompts/` if it doesn't exist. Print summary: "Extracted N prompts to prompts/". Argparse: accepts taskboard path (default: `TASKBOARD.md`) and output dir (default: `prompts/`). This enables: `claude -p "$(cat prompts/TASK-028.txt)"` for batch generation.
+
+---
+
+#### TASK-099 · Chart Reference Registry + Final QA
+**Complexity:** 1 — Haiku | **Output:** `Charts/CHART_REFERENCE.md`
+
+**Prompt:**
+> Create a Markdown reference file (`CHART_REFERENCE.md`) that serves as the authoritative registry of every chart file generated by the curriculum's Python scripts. Format as a table with columns: Script | Output Filename | Embedded In (note wikilink) | Status (☐/☑). Populate it with all charts defined in TASK-081 through TASK-085, using the "Chart → Note mapping" listed in each task's prompt. Below the table, include a "Final QA Checklist" section with these manual steps to run after all 98 content tasks are complete: (1) Run `python Charts/validate_vault.py` — fix any broken links; (2) Run `python Charts/pnl_diagrams.py` then check all PNG files exist in `Charts/outputs/`; (3) Repeat for iv_charts.py, timing_charts.py, risk_charts.py, earnings_charts.py; (4) Run `python Charts/validate_vault.py` again to verify chart embeds now resolve; (5) Open Obsidian and check `[[Progress-Dashboard]]` — confirm all notes show `status: complete`; (6) Update this file's Status column. Mark `status: meta`.
 
 ---
 
@@ -1023,19 +1335,20 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-083 | Timing Charts Script | 2 | ☐ |
 | TASK-084 | Risk Charts Script | 3 | ☐ |
 | TASK-085 | Earnings Charts Script | 2 | ☐ |
+| TASK-086 | WikiLink Canonical Map | 1 | ☑ |
+| TASK-087 | Canon Examples Reference Sheet | 1 | ☑ |
+| TASK-088 | Charts/constants.py | 1 | ☑ |
+| TASK-089 | Vault Folder Scaffolding Script | 1 | ☐ |
+| TASK-090 | Link & Frontmatter Validator | 2 | ☐ |
+| TASK-091 | Obsidian Settings + Plugin List | 1 | ☑ |
+| TASK-092 | Progress Dashboard | 2 | ☐ |
+| TASK-093 | Broker Comparison | 2 | ☐ |
+| TASK-094 | Options Tax Treatment | 2 | ☐ |
+| TASK-095 | Paper Trading Journal Template | 1 | ☐ |
+| TASK-096 | Common Beginner Mistakes | 2 | ☐ |
+| TASK-097 | Prompt Extraction Script | 1 | ☑ |
+| TASK-099 | Chart Reference Registry + Final QA | 1 | ☐ |
 
-**Total: 85 tasks** | Complexity 1: 17 | Complexity 2: 40 | Complexity 3: 28
+**Total: 98 tasks** | Complexity 1: 25 | Complexity 2: 45 | Complexity 3: 28
 
----
 
-## Suggested Build Order
-
-1. **Week 1** — Infrastructure first: TASK-001 through TASK-005 (templates, MOCs, glossary)
-2. **Week 2** — Foundations: TASK-006 through TASK-014 (Greeks, IV concepts)
-3. **Week 3** — Finding opportunities + Entry/Exit: TASK-015 through TASK-027
-4. **Week 4** — Core income strategies: TASK-028 through TASK-040
-5. **Week 5** — Market conditions + Risk management: TASK-041 through TASK-053
-6. **Week 6** — Adjustments + 0DTE: TASK-054 through TASK-067
-7. **Week 7** — Earnings strategies: TASK-068 through TASK-075
-8. **Week 8** — Long-term strategies: TASK-076 through TASK-080
-9. **Week 9** — All charts: TASK-081 through TASK-085, then embed chart references into all notes

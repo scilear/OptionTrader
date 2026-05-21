@@ -38,9 +38,26 @@ ACTIVE_CONFIG_KEYS = frozenset(
         "alerts.z_threshold",
         "alerts.persistence_snapshots",
         "alerts.pessimistic_gate",
+        "alerts.policy_variant",
         "alerts.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
         "alerts.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
         "alerts.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.disabled_alert_types",
+        "alerts.policy_variants.v2b.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
         "alerts.history_scope",
         "alerts.metric_series_qc_only",
         "alerts.emit_non_execution_states",
@@ -111,9 +128,26 @@ HIGH_IMPACT_ACTIVE_KEYS = frozenset(
         "quality.min_valid_points_full",
         "quality.min_valid_points_core",
         "alerts.pessimistic_gate",
+        "alerts.policy_variant",
         "alerts.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
         "alerts.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
         "alerts.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2a.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Transition.disabled_alert_types",
+        "alerts.policy_variants.v2b.regime_overrides.Calm.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Stress.RR_EXTREME.min_abs_zscore",
+        "alerts.policy_variants.v2b.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore",
         "alerts.history_scope",
         "alerts.metric_series_qc_only",
         "alerts.emit_non_execution_states",
@@ -160,13 +194,66 @@ CONTRACT_TEST_COVERAGE: dict[str, tuple[str, ...]] = {
     "quality.min_valid_points_full": ("tests/test_tier_logic.py",),
     "quality.min_valid_points_core": ("tests/test_tier_logic.py",),
     "alerts.pessimistic_gate": ("tests/test_alerts_logic.py",),
+    "alerts.policy_variant": (
+        "tests/test_alerts_logic.py",
+        "tests/test_regime_filter.py",
+    ),
     "alerts.regime_overrides.Transition.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore": (
         "tests/test_alerts_logic.py",
     ),
     "alerts.regime_overrides.Calm.RR_EXTREME.min_abs_zscore": (
         "tests/test_alerts_logic.py",
     ),
+    "alerts.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
     "alerts.regime_overrides.Stress.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Transition.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Calm.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Stress.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2a.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Transition.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Transition.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Transition.disabled_alert_types": (
+        "tests/test_alerts_logic.py",
+        "tests/test_regime_filter.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Calm.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Calm.FLY_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Stress.RR_EXTREME.min_abs_zscore": (
+        "tests/test_alerts_logic.py",
+    ),
+    "alerts.policy_variants.v2b.regime_overrides.Stress.FLY_EXTREME.min_abs_zscore": (
         "tests/test_alerts_logic.py",
     ),
     "alerts.history_scope": (

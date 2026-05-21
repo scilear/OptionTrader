@@ -277,6 +277,14 @@ def _resolve_regime_override_threshold(
 ) -> float | None:
     alerts_cfg = config.get("alerts", {}) if isinstance(config, dict) else {}
     overrides = alerts_cfg.get("regime_overrides", {}) if isinstance(alerts_cfg, dict) else {}
+    policy_variant = alerts_cfg.get("policy_variant") if isinstance(alerts_cfg, dict) else None
+    policy_variants = alerts_cfg.get("policy_variants", {}) if isinstance(alerts_cfg, dict) else {}
+    if isinstance(policy_variant, str) and isinstance(policy_variants, dict):
+        variant_cfg = policy_variants.get(policy_variant)
+        if isinstance(variant_cfg, dict):
+            variant_overrides = variant_cfg.get("regime_overrides")
+            if isinstance(variant_overrides, dict):
+                overrides = variant_overrides
     if not isinstance(overrides, dict):
         return None
     regime_cfg = overrides.get(regime_label)
@@ -289,6 +297,31 @@ def _resolve_regime_override_threshold(
     if min_abs_zscore is None:
         return None
     return float(min_abs_zscore)
+
+
+def _resolve_regime_override_disabled_alert_types(
+    config: dict,
+    regime_label: str,
+) -> set[str]:
+    alerts_cfg = config.get("alerts", {}) if isinstance(config, dict) else {}
+    overrides = alerts_cfg.get("regime_overrides", {}) if isinstance(alerts_cfg, dict) else {}
+    policy_variant = alerts_cfg.get("policy_variant") if isinstance(alerts_cfg, dict) else None
+    policy_variants = alerts_cfg.get("policy_variants", {}) if isinstance(alerts_cfg, dict) else {}
+    if isinstance(policy_variant, str) and isinstance(policy_variants, dict):
+        variant_cfg = policy_variants.get(policy_variant)
+        if isinstance(variant_cfg, dict):
+            variant_overrides = variant_cfg.get("regime_overrides")
+            if isinstance(variant_overrides, dict):
+                overrides = variant_overrides
+    if not isinstance(overrides, dict):
+        return set()
+    regime_cfg = overrides.get(regime_label)
+    if not isinstance(regime_cfg, dict):
+        return set()
+    disabled = regime_cfg.get("disabled_alert_types", [])
+    if not isinstance(disabled, list):
+        return set()
+    return {str(value) for value in disabled}
 
 
 def _build_explain_payload(
@@ -646,22 +679,33 @@ def compute_for_snapshot(
                 regime_label=regime_label,
                 alert_type=alert_type,
             )
+            disabled_alert_types = _resolve_regime_override_disabled_alert_types(
+                config,
+                regime_label=regime_label,
+            )
             effective_threshold = (
                 float(override_threshold) if override_threshold is not None else float(threshold)
             )
             zscore_mid_abs = abs(float(zscore_mid)) if zscore_mid is not None else 0.0
-            override_blocked = zscore_mid is None or zscore_mid_abs < effective_threshold
+            alert_type_disabled = alert_type in disabled_alert_types
+            override_blocked = alert_type_disabled or zscore_mid is None or zscore_mid_abs < effective_threshold
             regime_override_gate = {
                 "status": "FAIL" if override_blocked else "PASS",
                 "reason_code": (
-                    "regime_override_threshold_not_met"
-                    if override_blocked
+                    "regime_override_alert_type_disabled"
+                    if alert_type_disabled
                     else (
-                        "regime_override_threshold_met"
-                        if override_threshold is not None
-                        else "regime_override_not_configured"
+                        "regime_override_threshold_not_met"
+                        if override_blocked
+                        else (
+                            "regime_override_threshold_met"
+                            if override_threshold is not None
+                            else "regime_override_not_configured"
+                        )
                     )
                 ),
+                "disabled_alert_types": sorted(disabled_alert_types),
+                "alert_type_disabled": alert_type_disabled,
                 "min_abs_zscore": effective_threshold,
                 "zscore_mid_abs": zscore_mid_abs,
                 "regime_label": regime_label,
@@ -669,12 +713,21 @@ def compute_for_snapshot(
             }
 
             if override_blocked:
+                transition_reason_code = (
+                    "regime_override_alert_type_disabled"
+                    if alert_type_disabled
+                    else (
+                        "regime_override_threshold_not_met"
+                        if zscore_mid is None or zscore_mid_abs < effective_threshold
+                        else "regime_override_blocked"
+                    )
+                )
                 if not emit_non_execution_states:
                     continue
                 lifecycle = {
                     "signal_state": "Candidate",
-                    "transition_reason_code": "regime_override_threshold_not_met",
-                    "quality_blockers": ["regime_override_threshold_not_met"],
+                    "transition_reason_code": transition_reason_code,
+                    "quality_blockers": [transition_reason_code],
                     "execution_blockers": [],
                     "worst_case_coherent": _worst_case_coherent(
                         alert.get("zscore_mid"),
