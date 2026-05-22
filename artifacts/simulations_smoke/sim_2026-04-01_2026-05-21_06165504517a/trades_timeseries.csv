@@ -1,0 +1,2 @@
+run_id,trade_id,strategy,symbol,entry_date,exit_date,entry_dte,entry_expiration,entry_credit,max_risk,exit_reason,realized_pnl,return_on_risk,days_held
+sim_2026-04-01_2026-05-21_06165504517a,put_credit_spread_SPY_000001,put_credit_spread,SPY,2026-04-01,2026-04-30,29,2026-04-30,6.175,3982.5,EARLY_PROFIT_TARGET,615.5,0.154551,29

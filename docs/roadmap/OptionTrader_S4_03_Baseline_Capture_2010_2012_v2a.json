@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-21T14:37:56.682802Z",
+  "captured_at": "2026-05-22T02:48:37.798165Z",
   "contract": {
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e-v2a",
@@ -21,7 +21,7 @@
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "a6440afa83ff9f447c210ff9943e54243434132725f466e6bff0f9b1890c8c07",
       "profile_id": "baseline_rv_only",
-      "run_id": 47
+      "run_id": 51
     }
   },
   "regime_falsification": {

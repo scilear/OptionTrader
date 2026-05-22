@@ -1250,33 +1250,33 @@ Options-Curriculum/                   ← Obsidian vault root
 
 | Task | Title | Complexity | Status |
 |------|-------|-----------|--------|
-| TASK-001 | Vault Templates | 1 | ☐ |
+| TASK-001 | Vault Templates | 1 | ☑ |
 | TASK-002 | Home MOC | 1 | ☐ |
 | TASK-003 | Module MOCs | 1 | ☐ |
-| TASK-004 | Charts README | 2 | ☐ |
+| TASK-004 | Charts README | 2 | ☑ |
 | TASK-005 | Glossary | 1 | ☐ |
-| TASK-006 | Options Basics | 1 | ☐ |
-| TASK-007 | Greeks Overview | 2 | ☐ |
-| TASK-008 | Delta | 1 | ☐ |
-| TASK-009 | Theta Decay | 2 | ☐ |
-| TASK-010 | Vega | 1 | ☐ |
-| TASK-011 | Gamma | 2 | ☐ |
-| TASK-012 | IV vs HV | 2 | ☐ |
-| TASK-013 | IV Rank | 2 | ☐ |
-| TASK-014 | IV Percentile | 1 | ☐ |
-| TASK-015 | Ticker Selection System | 2 | ☐ |
-| TASK-016 | Ticker Criteria Technical | 2 | ☐ |
-| TASK-017 | Ticker Criteria Fundamental | 1 | ☐ |
-| TASK-018 | Screener Setup | 2 | ☐ |
-| TASK-019 | High-Probability Checklist | 2 | ☐ |
+| TASK-006 | Options Basics | 1 | ☑ |
+| TASK-007 | Greeks Overview | 2 | ☑ |
+| TASK-008 | Delta | 1 | ☑ |
+| TASK-009 | Theta Decay | 2 | ☑ |
+| TASK-010 | Vega | 1 | ☑ |
+| TASK-011 | Gamma | 2 | ☑ |
+| TASK-012 | IV vs HV | 2 | ☑ |
+| TASK-013 | IV Rank | 2 | ☑ |
+| TASK-014 | IV Percentile | 1 | ☑ |
+| TASK-015 | Ticker Selection System | 2 | ☑ |
+| TASK-016 | Ticker Criteria Technical | 2 | ☑ |
+| TASK-017 | Ticker Criteria Fundamental | 1 | ☑ |
+| TASK-018 | Screener Setup | 2 | ☑ |
+| TASK-019 | High-Probability Checklist | 2 | ☑ |
 | TASK-020 | Setup Recognition Patterns | 3 | ☐ |
-| TASK-021 | Best Days of Week | 2 | ☐ |
-| TASK-022 | Intraday Timing — Open | 2 | ☐ |
-| TASK-023 | Intraday Timing — Power Hour | 1 | ☐ |
-| TASK-024 | Intraday Timing — Midday | 1 | ☐ |
-| TASK-025 | Entry Confirmation Signals | 2 | ☐ |
-| TASK-026 | When NOT to Trade | 2 | ☐ |
-| TASK-027 | Building Discipline | 2 | ☐ |
+| TASK-021 | Best Days of Week | 2 | ☑ |
+| TASK-022 | Intraday Timing — Open | 2 | ☑ |
+| TASK-023 | Intraday Timing — Power Hour | 1 | ☑ |
+| TASK-024 | Intraday Timing — Midday | 1 | ☑ |
+| TASK-025 | Entry Confirmation Signals | 2 | ☑ |
+| TASK-026 | When NOT to Trade | 2 | ☑ |
+| TASK-027 | Building Discipline | 2 | ☑ |
 | TASK-028 | CSP — Cash Secured Put | 2 | ☐ |
 | TASK-029 | Covered Call | 2 | ☐ |
 | TASK-030 | Wheel Strategy | 3 | ☐ |
@@ -1290,61 +1290,61 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-038 | Diagonal Spread | 2 | ☐ |
 | TASK-039 | LEAPS Overview | 2 | ☐ |
 | TASK-040 | PMCC | 3 | ☐ |
-| TASK-041 | Market Condition Classification | 2 | ☐ |
-| TASK-042 | High IV Playbook | 2 | ☐ |
-| TASK-043 | Low IV Playbook | 2 | ☐ |
-| TASK-044 | Trending Market Strategies | 2 | ☐ |
-| TASK-045 | Range-Bound Strategies | 2 | ☐ |
-| TASK-046 | Position Sizing | 2 | ☐ |
-| TASK-047 | Portfolio Allocation | 3 | ☐ |
-| TASK-048 | Max Risk Per Trade | 1 | ☐ |
-| TASK-049 | Stop Loss Strategies | 3 | ☐ |
-| TASK-050 | Drawdown Management | 3 | ☐ |
-| TASK-051 | Portfolio Performance Metrics | 2 | ☐ |
-| TASK-052 | 50% vs Expiry | 3 | ☐ |
-| TASK-053 | Scaling Out of Winners | 2 | ☐ |
+| TASK-041 | Market Condition Classification | 2 | ☑ |
+| TASK-042 | High IV Playbook | 2 | ☑ |
+| TASK-043 | Low IV Playbook | 2 | ☑ |
+| TASK-044 | Trending Market Strategies | 2 | ☑ |
+| TASK-045 | Range-Bound Strategies | 2 | ☑ |
+| TASK-046 | Position Sizing | 2 | ☑ |
+| TASK-047 | Portfolio Allocation | 3 | ☑ |
+| TASK-048 | Max Risk Per Trade | 1 | ☑ |
+| TASK-049 | Stop Loss Strategies | 3 | ☑ |
+| TASK-050 | Drawdown Management | 3 | ☑ |
+| TASK-051 | Portfolio Performance Metrics | 2 | ☑ |
+| TASK-052 | 50% vs Expiry | 3 | ☑ |
+| TASK-053 | Scaling Out of Winners | 2 | ☑ |
 | TASK-054 | Adjust vs Close | 3 | ☐ |
 | TASK-055 | Rolling Basics | 2 | ☐ |
 | TASK-056 | Rolling Credit Spreads | 2 | ☐ |
 | TASK-057 | Rolling Iron Condors | 3 | ☐ |
 | TASK-058 | PMCC Adjustments | 3 | ☐ |
 | TASK-059 | 0DTE Adjustments | 3 | ☐ |
-| TASK-060 | Losing Trade Mindset | 1 | ☐ |
-| TASK-061 | 0DTE Overview | 2 | ☐ |
-| TASK-062 | SPX vs QQQ 0DTE | 2 | ☐ |
-| TASK-063 | 0DTE Entry Timing | 3 | ☐ |
-| TASK-064 | 0DTE Credit Spread | 3 | ☐ |
+| TASK-060 | Losing Trade Mindset | 1 | ☑ |
+| TASK-061 | 0DTE Overview | 2 | ☑ |
+| TASK-062 | SPX vs QQQ 0DTE | 2 | ☑ |
+| TASK-063 | 0DTE Entry Timing | 3 | ☑ |
+| TASK-064 | 0DTE Credit Spread | 3 | ☑ |
 | TASK-065 | 0DTE Iron Condor | 3 | ☐ |
 | TASK-066 | 0DTE Butterfly | 3 | ☐ |
 | TASK-067 | Superfly | 3 | ☐ |
-| TASK-068 | Earnings Overview | 2 | ☐ |
-| TASK-069 | IV Crush Mechanics | 3 | ☐ |
-| TASK-070 | Earnings Ticker Selection | 2 | ☐ |
-| TASK-071 | Earnings IC Playbook | 3 | ☐ |
-| TASK-072 | Earnings Straddle/Strangle | 3 | ☐ |
+| TASK-068 | Earnings Overview | 2 | ☑ |
+| TASK-069 | IV Crush Mechanics | 3 | ☑ |
+| TASK-070 | Earnings Ticker Selection | 2 | ☑ |
+| TASK-071 | Earnings IC Playbook | 3 | ☑ |
+| TASK-072 | Earnings Straddle/Strangle | 3 | ☑ |
 | TASK-073 | Earnings Strategy Matching | 3 | ☐ |
-| TASK-074 | Earnings Tools | 2 | ☐ |
+| TASK-074 | Earnings Tools | 2 | ☑ |
 | TASK-075 | Earnings Execution Playbook | 2 | ☐ |
 | TASK-076 | LEAPS Investing | 2 | ☐ |
 | TASK-077 | PMCC Income (Long-Term) | 3 | ☐ |
 | TASK-078 | Zero Risk Collar | 2 | ☐ |
 | TASK-079 | Advanced Collar | 3 | ☐ |
 | TASK-080 | Portfolio Margin | 3 | ☐ |
-| TASK-081 | P&L Diagrams Script | 3 | ☐ |
-| TASK-082 | IV Charts Script | 3 | ☐ |
-| TASK-083 | Timing Charts Script | 2 | ☐ |
-| TASK-084 | Risk Charts Script | 3 | ☐ |
-| TASK-085 | Earnings Charts Script | 2 | ☐ |
+| TASK-081 | P&L Diagrams Script | 3 | ☑ |
+| TASK-082 | IV Charts Script | 3 | ☑ |
+| TASK-083 | Timing Charts Script | 2 | ☑ |
+| TASK-084 | Risk Charts Script | 3 | ☑ |
+| TASK-085 | Earnings Charts Script | 2 | ☑ |
 | TASK-086 | WikiLink Canonical Map | 1 | ☑ |
 | TASK-087 | Canon Examples Reference Sheet | 1 | ☑ |
 | TASK-088 | Charts/constants.py | 1 | ☑ |
-| TASK-089 | Vault Folder Scaffolding Script | 1 | ☐ |
-| TASK-090 | Link & Frontmatter Validator | 2 | ☐ |
+| TASK-089 | Vault Folder Scaffolding Script | 1 | ☑ |
+| TASK-090 | Link & Frontmatter Validator | 2 | ☑ |
 | TASK-091 | Obsidian Settings + Plugin List | 1 | ☑ |
-| TASK-092 | Progress Dashboard | 2 | ☐ |
-| TASK-093 | Broker Comparison | 2 | ☐ |
+| TASK-092 | Progress Dashboard | 2 | ☑ |
+| TASK-093 | Broker Comparison | 2 | ☑ |
 | TASK-094 | Options Tax Treatment | 2 | ☐ |
-| TASK-095 | Paper Trading Journal Template | 1 | ☐ |
+| TASK-095 | Paper Trading Journal Template | 1 | ☑ |
 | TASK-096 | Common Beginner Mistakes | 2 | ☐ |
 | TASK-097 | Prompt Extraction Script | 1 | ☑ |
 | TASK-099 | Chart Reference Registry + Final QA | 1 | ☐ |

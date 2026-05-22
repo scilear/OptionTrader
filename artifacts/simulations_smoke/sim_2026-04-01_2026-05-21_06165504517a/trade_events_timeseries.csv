@@ -1,0 +1,4 @@
+run_id,trade_id,date,event_type,event_price,event_qty,fees,slippage,notes
+sim_2026-04-01_2026-05-21_06165504517a,put_credit_spread_SPY_000001,2026-04-01,ENTRY,6.175,2,2.0,0.30875,entry_open
+sim_2026-04-01_2026-05-21_06165504517a,put_credit_spread_SPY_000001,2026-04-30,EXIT,0.0,2,2.0,0.0,EARLY_PROFIT_TARGET
+sim_2026-04-01_2026-05-21_06165504517a,put_credit_spread_SPY_000002,2026-04-30,ENTRY,4.665,2,2.0,0.23325,entry_open

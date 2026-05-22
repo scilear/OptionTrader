@@ -1,0 +1,30 @@
+run:
+  start_date: "2019-02-09"
+  end_date: "2026-05-21"
+  output_root: "artifacts/simulations"
+  symbols: ["SPY", "IWM", "QQQ", "DIA", "GLD"]
+  data_repo_path: "/mnt/Data/dolt_data/options"
+  contract_multiplier: 100
+  initial_equity: 1000000.0
+  max_margin_utilization: 0.50
+  transaction_fee_per_contract: 1.0
+  slippage_bps: 5.0
+  vix_gate_threshold: 40.0
+  gate_short_straddle: true
+  gate_put_credit_spread: false
+
+straddle:
+  target_dte: 30
+  dte_tolerance: 5
+  close_dte: 2
+
+put_credit_spread:
+  target_dte: 30
+  dte_tolerance: 5
+  short_delta_target: 0.30
+  long_delta_target: 0.10
+  early_profit_take: 0.75
+  close_dte_itm: 2
+
+filters:
+  max_spread_pct: 0.30

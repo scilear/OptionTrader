@@ -47,7 +47,7 @@
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.58s"
+          "1 passed in 0.60s"
         ]
       },
       "sparse_wings": {
@@ -55,7 +55,7 @@
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.86s"
+          "1 passed in 0.57s"
         ]
       },
       "stale_books": {
@@ -63,7 +63,7 @@
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.57s"
+          "1 passed in 0.58s"
         ]
       }
     },
@@ -106,15 +106,15 @@
     "threshold_freeze_pass": true,
     "walk_forward_pass": true
   },
-  "generated_at": "2026-05-21T14:37:56.682802Z",
+  "generated_at": "2026-05-22T02:48:37.798165Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
-        "drawdown": 0.190675111171001,
+        "drawdown": 0.0,
         "event": 0.0,
-        "rv20": 0.3247540762700441,
-        "stress_proxy": 0.1800296456003243,
-        "vix": 0.3045411669586306
+        "rv20": 0.5160599571734475,
+        "stress_proxy": 0.0,
+        "vix": 0.48394004282655245
       },
       "correlation_stress_vs_rv20": 0.7788632939693122,
       "correlation_stress_vs_vix": 1.0,
@@ -140,13 +140,13 @@
       "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
       "config_hash": "a6440afa83ff9f447c210ff9943e54243434132725f466e6bff0f9b1890c8c07",
       "profile_id": "baseline_rv_only",
-      "run_id": 47
+      "run_id": 51
     },
     "candidate": {
       "code_version": "5128e8e-v2a+profile:candidate_multi_signal_v2a",
       "config_hash": "20776af3d4924050091369612d07a73770d51f41965c43a6de8b8dd71e9d70ec",
       "profile_id": "candidate_multi_signal_v2a",
-      "run_id": 46
+      "run_id": 50
     }
   },
   "recommendation": "not_promotable",

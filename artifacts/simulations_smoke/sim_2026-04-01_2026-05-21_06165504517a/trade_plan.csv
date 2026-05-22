@@ -1,0 +1,3 @@
+run_id,date,strategy,symbol,trade_id,expiration,strike_short,strike_long,entry_credit,max_risk
+sim_2026-04-01_2026-05-21_06165504517a,2026-04-01,put_credit_spread,SPY,put_credit_spread_SPY_000001,2026-04-30,636.0,590.0,6.175,3982.5
+sim_2026-04-01_2026-05-21_06165504517a,2026-04-30,put_credit_spread,SPY,put_credit_spread_SPY_000002,2026-05-29,697.0,661.0,4.665,3133.5
