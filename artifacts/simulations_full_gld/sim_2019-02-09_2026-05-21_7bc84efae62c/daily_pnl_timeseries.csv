@@ -1,0 +1,1 @@
+run_id,date,strategy,symbol,trade_id,option_pnl,hedge_pnl,total_pnl,cum_pnl,margin_used,max_risk,vix_close,iv_current,hv_current

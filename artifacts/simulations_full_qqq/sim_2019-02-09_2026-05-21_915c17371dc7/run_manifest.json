@@ -20,11 +20,11 @@
       "gate_short_straddle": true,
       "initial_equity": 1000000.0,
       "max_margin_utilization": 0.5,
-      "output_root": "artifacts/simulations_full_spy",
+      "output_root": "artifacts/simulations_full_qqq",
       "slippage_bps": 5.0,
       "start_date": "2019-02-09",
       "symbols": [
-        "SPY"
+        "QQQ"
       ],
       "transaction_fee_per_contract": 1.0,
       "vix_gate_threshold": 40.0
@@ -35,18 +35,18 @@
       "target_dte": 30
     }
   },
-  "config_digest": "29c06ed80e5a32edc2d718343dfad83559d83f6bfed96bd342d31037a1d0c370",
+  "config_digest": "915c17371dc7e46c5d49192ebd1815aee8105112e51cb40abdfb3de8a01b4739",
   "data_repo_path": "/mnt/Data/dolt_data/options",
   "end_date": "2026-05-21",
   "row_counts": {
-    "daily_pnl_timeseries": 1793,
-    "eligibility_timeseries": 2050,
-    "trade_events_timeseries": 193,
-    "trades_timeseries": 91
+    "daily_pnl_timeseries": 0,
+    "eligibility_timeseries": 3660,
+    "trade_events_timeseries": 0,
+    "trades_timeseries": 0
   },
-  "run_id": "sim_2019-02-09_2026-05-21_29c06ed80e5a",
+  "run_id": "sim_2019-02-09_2026-05-21_915c17371dc7",
   "start_date": "2019-02-09",
   "symbols": [
-    "SPY"
+    "QQQ"
   ]
 }

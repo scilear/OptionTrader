@@ -1,0 +1,6 @@
+table,symbol,column,null_count,null_rate
+option_chain,SPY,bid,0,0.0
+option_chain,SPY,ask,0,0.0
+option_chain,SPY,delta,0,0.0
+volatility_history,SPY,iv_current,16,0.013479359730412805
+volatility_history,SPY,hv_current,0,0.0

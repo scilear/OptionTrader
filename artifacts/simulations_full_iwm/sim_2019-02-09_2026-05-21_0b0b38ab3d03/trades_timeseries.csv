@@ -1,0 +1,1 @@
+run_id,trade_id,strategy,symbol,entry_date,exit_date,entry_dte,entry_expiration,entry_credit,max_risk,exit_reason,realized_pnl,return_on_risk,days_held

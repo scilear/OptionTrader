@@ -1,0 +1,6 @@
+table,symbol,column,null_count,null_rate
+option_chain,DIA,bid,0,0.0
+option_chain,DIA,ask,0,0.0
+option_chain,DIA,delta,0,0.0
+volatility_history,DIA,iv_current,17,0.014249790444258172
+volatility_history,DIA,hv_current,0,0.0

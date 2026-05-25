@@ -1277,19 +1277,19 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-025 | Entry Confirmation Signals | 2 | ☑ |
 | TASK-026 | When NOT to Trade | 2 | ☑ |
 | TASK-027 | Building Discipline | 2 | ☑ |
-| TASK-028 | CSP — Cash Secured Put | 2 | ☐ |
-| TASK-029 | Covered Call | 2 | ☐ |
-| TASK-030 | Wheel Strategy | 3 | ☐ |
-| TASK-031 | Bull Put Spread | 2 | ☐ |
-| TASK-032 | Bear Call Spread | 2 | ☐ |
-| TASK-033 | Iron Condor | 3 | ☐ |
-| TASK-034 | Iron Fly | 2 | ☐ |
-| TASK-035 | Butterfly | 2 | ☐ |
-| TASK-036 | Fly vs IC | 3 | ☐ |
-| TASK-037 | Calendar Spread | 2 | ☐ |
-| TASK-038 | Diagonal Spread | 2 | ☐ |
-| TASK-039 | LEAPS Overview | 2 | ☐ |
-| TASK-040 | PMCC | 3 | ☐ |
+| TASK-028 | CSP — Cash Secured Put | 2 | ☑ |
+| TASK-029 | Covered Call | 2 | ☑ |
+| TASK-030 | Wheel Strategy | 3 | ☑ |
+| TASK-031 | Bull Put Spread | 2 | ☑ |
+| TASK-032 | Bear Call Spread | 2 | ☑ |
+| TASK-033 | Iron Condor | 3 | ☑ |
+| TASK-034 | Iron Fly | 2 | ☑ |
+| TASK-035 | Butterfly | 2 | ☑ |
+| TASK-036 | Fly vs IC | 3 | ☑ |
+| TASK-037 | Calendar Spread | 2 | ☑ |
+| TASK-038 | Diagonal Spread | 2 | ☑ |
+| TASK-039 | LEAPS Overview | 2 | ☑ |
+| TASK-040 | PMCC | 3 | ☑ |
 | TASK-041 | Market Condition Classification | 2 | ☑ |
 | TASK-042 | High IV Playbook | 2 | ☑ |
 | TASK-043 | Low IV Playbook | 2 | ☑ |

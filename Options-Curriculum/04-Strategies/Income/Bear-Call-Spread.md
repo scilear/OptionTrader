@@ -75,14 +75,14 @@ SPX is trading at 5000. IV Rank is 52. You identify 5150 as a prior swing high a
 
 ## Trade Management
 
-Rules are supported by TastyTrade mechanical backtest data showing that early profit-taking and a fixed loss multiple outperform holding to expiry in aggregate (data-backed, not infallible):
+Data-backed rules (TastyTrade mechanical backtests — not infallible):
 
-- **Take profit** at 50% of max profit — close the spread when the credit has decayed by half. In the example above, buy back the spread when it is worth $7.50. Frees capital and eliminates remaining gamma risk.
-- **Stop loss** at 200% of credit received — if the spread has moved against you by 2x the premium collected, exit. In the example above, exit when the spread is worth $30 (a $15 loss on $15 credit collected, netting a $15 debit to close).
-- **Expiry management:** Never hold through expiration with a short naked call risk. If you cannot close at your target before expiry, close by 21 DTE regardless.
+- **Take profit** at 50% of max profit — buy back the spread when it is worth $7.50 in the example above. Eliminates remaining gamma risk and frees capital.
+- **Stop loss** at 200% of credit received — exit when the spread is worth $30 ($15 loss on $15 credit). Do not hold a deteriorating position hoping for reversal.
+- **Time stop:** Close by 21 DTE regardless. Never hold through expiry with a short call uncapped by gamma risk.
 
 > [!tip]
-> For [[Rolling-Credit-Spreads]], a tested alternative to stopping out is rolling the spread up and out to a later expiry for a net credit. Only do this if the underlying thesis is intact and the new short strike remains above a meaningful resistance level.
+> See [[Rolling-Credit-Spreads]] for rolling a tested wing up and out for a net credit. Only roll if the thesis is intact and the new strike clears a meaningful resistance level.
 
 ## Combining into an Iron Condor
 
