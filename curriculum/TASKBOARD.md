@@ -1269,7 +1269,7 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-017 | Ticker Criteria Fundamental | 1 | ☑ |
 | TASK-018 | Screener Setup | 2 | ☑ |
 | TASK-019 | High-Probability Checklist | 2 | ☑ |
-| TASK-020 | Setup Recognition Patterns | 3 | ☐ |
+| TASK-020 | Setup Recognition Patterns | 3 | ☑ |
 | TASK-021 | Best Days of Week | 2 | ☑ |
 | TASK-022 | Intraday Timing — Open | 2 | ☑ |
 | TASK-023 | Intraday Timing — Power Hour | 1 | ☑ |
@@ -1303,33 +1303,33 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-051 | Portfolio Performance Metrics | 2 | ☑ |
 | TASK-052 | 50% vs Expiry | 3 | ☑ |
 | TASK-053 | Scaling Out of Winners | 2 | ☑ |
-| TASK-054 | Adjust vs Close | 3 | ☐ |
-| TASK-055 | Rolling Basics | 2 | ☐ |
-| TASK-056 | Rolling Credit Spreads | 2 | ☐ |
-| TASK-057 | Rolling Iron Condors | 3 | ☐ |
-| TASK-058 | PMCC Adjustments | 3 | ☐ |
-| TASK-059 | 0DTE Adjustments | 3 | ☐ |
+| TASK-054 | Adjust vs Close | 3 | ☑ |
+| TASK-055 | Rolling Basics | 2 | ☑ |
+| TASK-056 | Rolling Credit Spreads | 2 | ☑ |
+| TASK-057 | Rolling Iron Condors | 3 | ☑ |
+| TASK-058 | PMCC Adjustments | 3 | ☑ |
+| TASK-059 | 0DTE Adjustments | 3 | ☑ |
 | TASK-060 | Losing Trade Mindset | 1 | ☑ |
 | TASK-061 | 0DTE Overview | 2 | ☑ |
 | TASK-062 | SPX vs QQQ 0DTE | 2 | ☑ |
 | TASK-063 | 0DTE Entry Timing | 3 | ☑ |
 | TASK-064 | 0DTE Credit Spread | 3 | ☑ |
-| TASK-065 | 0DTE Iron Condor | 3 | ☐ |
-| TASK-066 | 0DTE Butterfly | 3 | ☐ |
-| TASK-067 | Superfly | 3 | ☐ |
+| TASK-065 | 0DTE Iron Condor | 3 | ☑ |
+| TASK-066 | 0DTE Butterfly | 3 | ☑ |
+| TASK-067 | Superfly | 3 | ☑ |
 | TASK-068 | Earnings Overview | 2 | ☑ |
 | TASK-069 | IV Crush Mechanics | 3 | ☑ |
 | TASK-070 | Earnings Ticker Selection | 2 | ☑ |
 | TASK-071 | Earnings IC Playbook | 3 | ☑ |
 | TASK-072 | Earnings Straddle/Strangle | 3 | ☑ |
-| TASK-073 | Earnings Strategy Matching | 3 | ☐ |
+| TASK-073 | Earnings Strategy Matching | 3 | ☑ |
 | TASK-074 | Earnings Tools | 2 | ☑ |
-| TASK-075 | Earnings Execution Playbook | 2 | ☐ |
-| TASK-076 | LEAPS Investing | 2 | ☐ |
-| TASK-077 | PMCC Income (Long-Term) | 3 | ☐ |
-| TASK-078 | Zero Risk Collar | 2 | ☐ |
-| TASK-079 | Advanced Collar | 3 | ☐ |
-| TASK-080 | Portfolio Margin | 3 | ☐ |
+| TASK-075 | Earnings Execution Playbook | 2 | ☑ |
+| TASK-076 | LEAPS Investing | 2 | ☑ |
+| TASK-077 | PMCC Income (Long-Term) | 3 | ☑ |
+| TASK-078 | Zero Risk Collar | 2 | ☑ |
+| TASK-079 | Advanced Collar | 3 | ☑ |
+| TASK-080 | Portfolio Margin | 3 | ☑ |
 | TASK-081 | P&L Diagrams Script | 3 | ☑ |
 | TASK-082 | IV Charts Script | 3 | ☑ |
 | TASK-083 | Timing Charts Script | 2 | ☑ |

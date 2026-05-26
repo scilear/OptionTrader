@@ -50,12 +50,12 @@ Sell a lower strike call, buy a higher strike call. The net premium collected is
 | Long call | $120 | Buy | −$0.90 |
 | **Net** | | | **−$1.60 debit** |
 
-**P&L zones at expiry:** put protects below $90 (loss capped at ~$11.60); stock moves freely $90–$110 with only the $1.60 debit as drag; you participate dollar-for-dollar $110–$120; capped again above $120 (max option gain ~$8.40/share).
+**P&L zones at expiry:** put protects below $90 (loss capped ~$11.60); free range $90–$110 with only the debit as drag; dollar-for-dollar participation $110–$120; capped above $120 (max option gain ~$8.40/share).
 
 ![[pnl-advanced-collar.png]]
 
 > [!note]
-> The $110–$120 participation zone is the defining feature — you earn 1:1 within the spread width rather than being permanently capped at the sold strike. Actual breakevens depend on strikes, premium received, and dividends.
+> You earn 1:1 within the spread width rather than being permanently capped at the sold strike. Actual breakevens depend on strikes chosen, premium received, and dividends.
 
 ---
 
