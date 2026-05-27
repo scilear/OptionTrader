@@ -491,7 +491,7 @@ def run_simulation(config: SimulationConfig, raw_config: dict, config_digest: st
                     else config.run.gate_put_credit_spread
                 )
                 gate_vix_pass = (not strategy_uses_vix_gate) or (
-                    vix_close is not None and vix_close > config.run.vix_gate_threshold
+                    vix_close is not None and vix_close <= config.run.vix_gate_threshold
                 )
 
                 entry_credit = 0.0

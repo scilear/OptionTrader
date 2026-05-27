@@ -20,7 +20,7 @@ related:
 
 Entry timing is the single most consequential skill in [[0DTE-Overview|0DTE trading]]. A structurally sound iron condor placed at the wrong time of day can be killed by intraday momentum before [[Theta|theta]] has a chance to work. The goal is to enter after price discovery is complete and before premium has decayed to unworkable levels.
 
-![[chart-intraday-profile.png]]
+![[chart-0dte-ivx-by-time.png]]
 
 ---
 

@@ -20,7 +20,7 @@ related:
 
 IV Rank is a normalized measure that tells you where current [[IV|implied volatility]] sits relative to its own 52-week range. It answers a practical question: *is IV high or low right now compared to its recent history for this specific underlying?*
 
-![[chart-iv-rank-gauge.png]]
+![[chart-ivr-distribution.png]]
 
 ## Formula
 

@@ -26,7 +26,7 @@ Theta measures how much an option's price erodes with the passage of one calenda
 
 Theta is non-linear. At 90 DTE, decay is slow and nearly linear. As expiration approaches, decay accelerates — particularly inside the final 21–30 days. This is the "gamma risk zone": theta is at its fastest, but gamma (sensitivity of delta to price moves) is also peaking. A large overnight gap can wipe out weeks of collected premium.
 
-![[chart-dte-theta.png]]
+![[chart-theta-decay-curve.png]]
 
 The curve shape is roughly proportional to the square root of time remaining: an option with 25 DTE decays roughly twice as fast as one with 100 DTE, not four times (rule of thumb, not exact).
 

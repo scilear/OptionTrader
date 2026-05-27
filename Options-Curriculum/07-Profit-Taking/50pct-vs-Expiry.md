@@ -26,7 +26,7 @@ The question of when to exit a winning options trade is one of the most conseque
 
 Tastytrade's large-scale backtests consistently showed that closing short premium positions at 50% of max profit produces **the same or better win rate** as holding to expiry, while meaningfully reducing risk. The core finding: the last half of a trade's profit potential requires disproportionate time and carries disproportionate risk.
 
-![[chart-dte-theta.png]]
+![[chart-theta-decay-curve.png]]
 
 > [!note]
 > "Max profit" for a defined-risk trade like an [[Iron-Condor]] equals the net credit received. Closing at 50% means buying back the spread for half the original credit.

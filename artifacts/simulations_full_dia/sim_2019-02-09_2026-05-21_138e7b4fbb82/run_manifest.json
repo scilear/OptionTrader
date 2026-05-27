@@ -1,5 +1,5 @@
 {
-  "code_version": "eecce8a80c14be29c644eca9c6d2816815e149cc",
+  "code_version": "ba18228f669e88dbc03e763a826acbde268317ff",
   "config": {
     "filters": {
       "max_spread_pct": 0.3
@@ -39,10 +39,10 @@
   "data_repo_path": "/mnt/Data/dolt_data/options",
   "end_date": "2026-05-21",
   "row_counts": {
-    "daily_pnl_timeseries": 1793,
-    "eligibility_timeseries": 2062,
-    "trade_events_timeseries": 207,
-    "trades_timeseries": 97
+    "daily_pnl_timeseries": 3370,
+    "eligibility_timeseries": 644,
+    "trade_events_timeseries": 566,
+    "trades_timeseries": 176
   },
   "run_id": "sim_2019-02-09_2026-05-21_138e7b4fbb82",
   "start_date": "2019-02-09",

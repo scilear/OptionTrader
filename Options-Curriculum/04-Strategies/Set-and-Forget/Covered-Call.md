@@ -30,7 +30,7 @@ A covered call pairs 100 long shares of stock with one short OTM call at the sam
 The covered call works best under three conditions, all of which should be true simultaneously:
 
 1. **Neutral to mildly bullish outlook** — you expect the stock to move sideways or drift slightly higher, but not rip. A strongly bullish view means you are selling away the upside you want.
-2. **[[IV Rank]] > 30** — elevated implied volatility inflates the premium you collect. Selling when IV rank is below 20–25 generates thin credits that do not compensate for the risk of a large move down. (Rule of thumb, not back-tested on all underlyings.)
+2. **[[IV-Rank]] > 30** — elevated implied volatility inflates the premium you collect. Selling when IV rank is below 20–25 generates thin credits that do not compensate for the risk of a large move down. (Rule of thumb, not back-tested on all underlyings.)
 3. **Long-term holder** — you own the stock for reasons independent of the option trade and are comfortable holding through a drawdown. If you are trying to exit the position, a [[CSP-Cash-Secured-Put]] or a direct sale is cleaner.
 
 ---
@@ -69,7 +69,7 @@ Placing the strike at a resistance level gives the trade two sources of edge: th
 - **Roll up and out for a net credit**: buy back the short call, sell a higher strike in a later expiry. Only do this if you can collect a credit — never roll for a debit just to avoid assignment.
 - **Let it get called away**: assignment at the strike is not a bad outcome. You collected the premium and sold the stock at the strike you chose. Reopen the position (or a new one) afterward if the thesis still holds.
 
-**If the stock falls sharply**: the covered call is not the right lever. Manage the stock position directly (add a [[Protective Put]], trim shares, or hold according to your equity thesis). Do not roll the call down to collect more premium — that tightens the cap and locks in a lower exit price.
+**If the stock falls sharply**: the covered call is not the right lever. Manage the stock position directly (add a [[Zero-Risk-Collar]], trim shares, or hold according to your equity thesis). Do not roll the call down to collect more premium — that tightens the cap and locks in a lower exit price.
 
 > [!tip]
 > Do not sell covered calls on stocks you are unwilling to sell. If assignment would be emotionally painful, you will make poor rolling decisions under pressure.

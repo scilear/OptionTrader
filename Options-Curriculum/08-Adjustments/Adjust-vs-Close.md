@@ -89,7 +89,7 @@ Is DTE > 21?
                                          └── Yes → ADJUST (document the reason)
 ```
 
-![[adjust-vs-close-decision-tree.png]]
+![[chart-winrate-profit-factor.png]]
 
 ---
 

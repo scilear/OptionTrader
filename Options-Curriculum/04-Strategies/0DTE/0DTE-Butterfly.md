@@ -88,7 +88,7 @@ SPX is trading at **5000** at 10:15 AM. You believe it will close near 5000.
 - **Breakevens:** Approximately 4980 and 5020 (debit paid away from each wing)
 - **Stop:** Exit immediately if SPX moves more than $12–$13 from 5000 (half of $25 wing)
 
-![[0dte-butterfly-payoff.png]]
+![[pnl-butterfly.png]]
 
 ---
 

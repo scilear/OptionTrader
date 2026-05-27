@@ -27,7 +27,7 @@ Rolling is the most common adjustment technique for short-premium traders. It me
 
 ### Rolling Out (Same Strike, Later Expiry)
 
-You keep the strike and push the expiration further into the future. The new expiry collects additional time premium, which — if [[Implied Volatility]] has not collapsed — typically allows you to receive a net credit.
+You keep the strike and push the expiration further into the future. The new expiry collects additional time premium, which — if [[IV-vs-HV]] has not collapsed — typically allows you to receive a net credit.
 
 Use case: the underlying is near your strike but has not broken through. You still like the position, you just need more time.
 

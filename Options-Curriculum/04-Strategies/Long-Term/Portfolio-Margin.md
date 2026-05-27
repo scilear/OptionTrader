@@ -20,7 +20,7 @@ related:
 
 # Portfolio Margin for Advanced Options Traders
 
-Portfolio margin (PM) is a risk-based margin methodology that evaluates the net exposure of your entire portfolio, rather than applying fixed per-position rules as [[Reg-T Margin]] does. Under PM, the broker stress-tests your holdings across a range of price and volatility scenarios — typically ±15% in the underlying and ±30% in implied volatility — and charges margin only for the worst projected loss.
+Portfolio margin (PM) is a risk-based margin methodology that evaluates the net exposure of your entire portfolio, rather than applying fixed per-position rules as [[Portfolio-Margin]] does. Under PM, the broker stress-tests your holdings across a range of price and volatility scenarios — typically ±15% in the underlying and ±30% in implied volatility — and charges margin only for the worst projected loss.
 
 > [!note]
 > Reg-T margin is rule-based: each position has a fixed requirement regardless of hedges held elsewhere. Portfolio margin is model-based: a long put that offsets a short call lowers your net requirement to reflect the real economic exposure.
@@ -35,7 +35,7 @@ Key inputs the model considers:
 - **Net vega** — long and short vega positions offset each other.
 - **Correlation** — a position in SPY and a short SPX put are treated as correlated; both legs count toward one stress test.
 
-![[portfolio-margin-stress-test.png]]
+![[chart-drawdown-recovery.png]]
 
 ## Eligibility Requirements
 

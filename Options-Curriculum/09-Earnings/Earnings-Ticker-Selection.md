@@ -11,13 +11,13 @@ related:
 
 # Earnings Ticker Selection
 
-Not every earnings event is worth trading. The edge in earnings options comes from identifying stocks where [[Implied Volatility]] is systematically overpriced relative to subsequent realized moves. Before placing a trade, run each candidate through the four filters below.
+Not every earnings event is worth trading. The edge in earnings options comes from identifying stocks where [[IV-vs-HV]] is systematically overpriced relative to subsequent realized moves. Before placing a trade, run each candidate through the four filters below.
 
 ---
 
 ## Filter 1 — Historical IV Crush Rate
 
-The primary edge in short-volatility earnings plays (straddle sells, [[Iron Condor]], etc.) is that the market tends to price in a larger move than actually occurs.
+The primary edge in short-volatility earnings plays (straddle sells, [[Iron-Condor]], etc.) is that the market tends to price in a larger move than actually occurs.
 
 - Use **Market Chameleon** or **Earnings Whispers** to pull each ticker's historical earnings move data.
 - Calculate the percentage of past earnings where `actual move < implied move` at close of the earnings day.
@@ -61,7 +61,7 @@ The size of the expected move determines which structures are practical:
 | > 15% | Avoid — move size indicates event or sector risk |
 
 > [!tip]
-> For [[Iron Condor]] trades, an implied move of 5–8% tends to offer the best balance between wing premium and the probability that both short strikes expire worthless. Source: rule of thumb from earnings vol traders; not formally backtested in this system.
+> For [[Iron-Condor]] trades, an implied move of 5–8% tends to offer the best balance between wing premium and the probability that both short strikes expire worthless. Source: rule of thumb from earnings vol traders; not formally backtested in this system.
 
 ---
 

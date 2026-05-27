@@ -19,7 +19,7 @@ related:
 
 # 0DTE Iron Condor
 
-A same-day iron condor on SPX sells a [[Put Spread]] and a [[Call Spread]] that expire at the close, targeting the range the market is expected to stay within for the session. Because time value collapses to zero by 4:00 PM, premium erodes rapidly — but so does the margin for error.
+A same-day iron condor on SPX sells a [[Bull-Put-Spread]] and a [[Bear-Call-Spread]] that expire at the close, targeting the range the market is expected to stay within for the session. Because time value collapses to zero by 4:00 PM, premium erodes rapidly — but so does the margin for error.
 
 > [!warning]
 > SPX 0DTE options can move against you faster than you can react. A single catalyst (Fed speak, geopolitical headline, flash crash) can take a position from full profit to maximum loss within minutes. Size this strategy as if every trade could go to max loss, because some will.
@@ -46,7 +46,7 @@ This setup is suited to a specific market environment — using it on the wrong 
 
 **Favorable conditions (all three should be present):**
 
-1. VIX below 20, ideally below 17. Elevated VIX widens the [[Expected Move]] and prices the short strikes closer to the money, shrinking the probability of profit.
+1. VIX below 20, ideally below 17. Elevated VIX widens the [[Entry-Confirmation-Signals]] and prices the short strikes closer to the money, shrinking the probability of profit.
 2. A clear intraday range established by 10:00 AM — price has consolidated, not trending. Check whether SPX is inside the prior day's range.
 3. No major scheduled afternoon catalysts: FOMC statements, economic releases after noon, or earnings from index-heavy names.
 

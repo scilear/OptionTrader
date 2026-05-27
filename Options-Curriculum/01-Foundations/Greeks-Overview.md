@@ -45,7 +45,7 @@ Greeks are partial derivatives of an option's price with respect to different in
 
 **Decision use:**
 - Use delta to understand your net directional bet across a multi-leg position.
-- Delta-neutral trades ([[Iron Condor]], [[Short Straddle]]) need periodic re-hedging as the underlying drifts.
+- Delta-neutral trades ([[Iron-Condor]], [[Short-Straddle]]) need periodic re-hedging as the underlying drifts.
 - High absolute delta (> 0.70) means you are mostly trading the stock, not vol — reconsider the structure.
 
 > [!tip] For defined-risk spreads, target the short strike at 0.20–0.30 delta. This keeps premium meaningful while giving the underlying room to move.
@@ -74,7 +74,7 @@ Greeks are partial derivatives of an option's price with respect to different in
 **Practical read:** A theta of -0.05 means the option loses $5 per day per contract (100 shares) purely from time passing.
 
 **Decision use:**
-- Option sellers collect theta. [[Short Premium]] strategies (short straddle, iron condor, short strangle) are positive-theta trades.
+- Option sellers collect theta. [[IV-Rank]] strategies (short straddle, iron condor, short strangle) are positive-theta trades.
 - Theta accelerates in the final 30–45 DTE — this is why many traders target entry at 30–45 DTE and close at 50% profit.
 - Buying options for direction? You are fighting theta every day you are right but not right enough.
 

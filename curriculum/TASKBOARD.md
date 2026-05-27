@@ -1251,10 +1251,10 @@ Options-Curriculum/                   ← Obsidian vault root
 | Task | Title | Complexity | Status |
 |------|-------|-----------|--------|
 | TASK-001 | Vault Templates | 1 | ☑ |
-| TASK-002 | Home MOC | 1 | ☐ |
-| TASK-003 | Module MOCs | 1 | ☐ |
+| TASK-002 | Home MOC | 1 | ☑ |
+| TASK-003 | Module MOCs | 1 | ☑ |
 | TASK-004 | Charts README | 2 | ☑ |
-| TASK-005 | Glossary | 1 | ☐ |
+| TASK-005 | Glossary | 1 | ☑ |
 | TASK-006 | Options Basics | 1 | ☑ |
 | TASK-007 | Greeks Overview | 2 | ☑ |
 | TASK-008 | Delta | 1 | ☑ |
@@ -1343,11 +1343,11 @@ Options-Curriculum/                   ← Obsidian vault root
 | TASK-091 | Obsidian Settings + Plugin List | 1 | ☑ |
 | TASK-092 | Progress Dashboard | 2 | ☑ |
 | TASK-093 | Broker Comparison | 2 | ☑ |
-| TASK-094 | Options Tax Treatment | 2 | ☐ |
+| TASK-094 | Options Tax Treatment | 2 | ☑ |
 | TASK-095 | Paper Trading Journal Template | 1 | ☑ |
-| TASK-096 | Common Beginner Mistakes | 2 | ☐ |
+| TASK-096 | Common Beginner Mistakes | 2 | ☑ |
 | TASK-097 | Prompt Extraction Script | 1 | ☑ |
-| TASK-099 | Chart Reference Registry + Final QA | 1 | ☐ |
+| TASK-099 | Chart Reference Registry + Final QA | 1 | ☑ |
 
 **Total: 98 tasks** | Complexity 1: 25 | Complexity 2: 45 | Complexity 3: 28
 

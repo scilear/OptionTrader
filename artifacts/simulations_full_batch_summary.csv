@@ -1,6 +1,6 @@
-symbol,run_id,trade_count,daily_rows,eligibility_rows,event_rows,realized_pnl,daily_total_pnl,strategy_counts,exit_reason_counts,event_type_counts,top_fail_reasons,posthoc_rows
-SPY,sim_2019-02-09_2026-05-21_29c06ed80e5a,91,1793,2050,193,13575.392977,13300.735231999999,"{'put_credit_spread': 86, 'short_straddle': 5}","{'EARLY_PROFIT_TARGET': 68, 'ITM_NEAR_EXPIRY_ROLL': 18, 'PRE_EXPIRY_CLOSE': 5}","{'ENTRY': 92, 'EXIT': 73, 'ROLL': 18, 'HEDGE': 5, 'REBALANCE': 5}","{'vix_gate_failed': 1027, 'missing_candidate_legs': 929, 'liquidity_gate_failed': 2}",1698
-IWM,sim_2019-02-09_2026-05-21_0b0b38ab3d03,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660},0
-QQQ,sim_2019-02-09_2026-05-21_915c17371dc7,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660},0
-DIA,sim_2019-02-09_2026-05-21_138e7b4fbb82,97,1793,2062,207,13964.362838000001,13751.374586999998,"{'put_credit_spread': 92, 'short_straddle': 5}","{'EARLY_PROFIT_TARGET': 67, 'ITM_NEAR_EXPIRY_ROLL': 25, 'PRE_EXPIRY_CLOSE': 5}","{'ENTRY': 98, 'EXIT': 72, 'ROLL': 25, 'REBALANCE': 8, 'HEDGE': 4}","{'vix_gate_failed': 992, 'missing_candidate_legs': 923, 'liquidity_gate_failed': 49}",1703
-GLD,sim_2019-02-09_2026-05-21_7bc84efae62c,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660},0
+symbol,run_id,trade_count,daily_rows,eligibility_rows,event_rows,realized_pnl,daily_total_pnl,strategy_counts,exit_reason_counts,event_type_counts,top_fail_reasons
+SPY,sim_2019-02-09_2026-05-21_29c06ed80e5a,170,3378,624,464,17965.977308999998,17407.584589000002,"{'put_credit_spread': 86, 'short_straddle': 84}","{'PRE_EXPIRY_CLOSE': 84, 'EARLY_PROFIT_TARGET': 68, 'ITM_NEAR_EXPIRY_ROLL': 18}","{'ENTRY': 172, 'EXIT': 152, 'HEDGE': 83, 'REBALANCE': 39, 'ROLL': 18}","{'missing_candidate_legs': 445, 'vix_gate_failed': 7}"
+IWM,sim_2019-02-09_2026-05-21_0b0b38ab3d03,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660}
+QQQ,sim_2019-02-09_2026-05-21_915c17371dc7,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660}
+DIA,sim_2019-02-09_2026-05-21_138e7b4fbb82,176,3370,644,566,10231.535896999998,9885.79051,"{'put_credit_spread': 92, 'short_straddle': 84}","{'PRE_EXPIRY_CLOSE': 84, 'EARLY_PROFIT_TARGET': 67, 'ITM_NEAR_EXPIRY_ROLL': 25}","{'ENTRY': 178, 'EXIT': 151, 'REBALANCE': 127, 'HEDGE': 85, 'ROLL': 25}","{'missing_candidate_legs': 442, 'liquidity_gate_failed': 15, 'vix_gate_failed': 9}"
+GLD,sim_2019-02-09_2026-05-21_7bc84efae62c,0,0,3660,0,0.0,0.0,{},{},{},{'missing_candidate_legs': 3660}

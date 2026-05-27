@@ -1,28 +1,21 @@
 {
   "combined": {
     "event_type_counts_all": {
-      "ENTRY": 190,
-      "EXIT": 145,
-      "HEDGE": 9,
-      "REBALANCE": 13,
+      "ENTRY": 350,
+      "EXIT": 303,
+      "HEDGE": 168,
+      "REBALANCE": 166,
       "ROLL": 43
     },
     "exit_reason_counts_all": {
       "EARLY_PROFIT_TARGET": 135,
       "ITM_NEAR_EXPIRY_ROLL": 43,
-      "PRE_EXPIRY_CLOSE": 10
+      "PRE_EXPIRY_CLOSE": 168
     },
     "strategy_counts_all": {
       "put_credit_spread": 178,
-      "short_straddle": 10
+      "short_straddle": 168
     },
-    "symbols": [
-      "SPY",
-      "IWM",
-      "QQQ",
-      "DIA",
-      "GLD"
-    ],
     "symbols_with_trades": [
       "SPY",
       "DIA"
@@ -32,45 +25,43 @@
       "QQQ",
       "GLD"
     ],
-    "total_daily_pnl": 27052.109818999998,
-    "total_daily_rows": 3586,
-    "total_eligibility_rows": 15092,
-    "total_event_rows": 400,
-    "total_realized_pnl": 27539.755815,
-    "total_trades": 188
+    "total_daily_pnl": 27293.375099000004,
+    "total_daily_rows": 6748,
+    "total_eligibility_rows": 12248,
+    "total_event_rows": 1030,
+    "total_realized_pnl": 28197.513205999996,
+    "total_trades": 346
   },
   "per_symbol": [
     {
-      "daily_rows": 1793,
-      "daily_total_pnl": 13300.735231999999,
-      "eligibility_rows": 2050,
-      "event_rows": 193,
+      "daily_rows": 3378,
+      "daily_total_pnl": 17407.584589000002,
+      "eligibility_rows": 624,
+      "event_rows": 464,
       "event_type_counts": {
-        "ENTRY": 92,
-        "EXIT": 73,
-        "HEDGE": 5,
-        "REBALANCE": 5,
+        "ENTRY": 172,
+        "EXIT": 152,
+        "HEDGE": 83,
+        "REBALANCE": 39,
         "ROLL": 18
       },
       "exit_reason_counts": {
         "EARLY_PROFIT_TARGET": 68,
         "ITM_NEAR_EXPIRY_ROLL": 18,
-        "PRE_EXPIRY_CLOSE": 5
+        "PRE_EXPIRY_CLOSE": 84
       },
-      "posthoc_rows": 1698,
-      "realized_pnl": 13575.392977,
+      "realized_pnl": 17965.977308999998,
       "run_id": "sim_2019-02-09_2026-05-21_29c06ed80e5a",
       "strategy_counts": {
         "put_credit_spread": 86,
-        "short_straddle": 5
+        "short_straddle": 84
       },
       "symbol": "SPY",
       "top_fail_reasons": {
-        "liquidity_gate_failed": 2,
-        "missing_candidate_legs": 929,
-        "vix_gate_failed": 1027
+        "missing_candidate_legs": 445,
+        "vix_gate_failed": 7
       },
-      "trade_count": 91
+      "trade_count": 170
     },
     {
       "daily_rows": 0,
@@ -79,7 +70,6 @@
       "event_rows": 0,
       "event_type_counts": {},
       "exit_reason_counts": {},
-      "posthoc_rows": 0,
       "realized_pnl": 0.0,
       "run_id": "sim_2019-02-09_2026-05-21_0b0b38ab3d03",
       "strategy_counts": {},
@@ -96,7 +86,6 @@
       "event_rows": 0,
       "event_type_counts": {},
       "exit_reason_counts": {},
-      "posthoc_rows": 0,
       "realized_pnl": 0.0,
       "run_id": "sim_2019-02-09_2026-05-21_915c17371dc7",
       "strategy_counts": {},
@@ -107,36 +96,35 @@
       "trade_count": 0
     },
     {
-      "daily_rows": 1793,
-      "daily_total_pnl": 13751.374586999998,
-      "eligibility_rows": 2062,
-      "event_rows": 207,
+      "daily_rows": 3370,
+      "daily_total_pnl": 9885.79051,
+      "eligibility_rows": 644,
+      "event_rows": 566,
       "event_type_counts": {
-        "ENTRY": 98,
-        "EXIT": 72,
-        "HEDGE": 4,
-        "REBALANCE": 8,
+        "ENTRY": 178,
+        "EXIT": 151,
+        "HEDGE": 85,
+        "REBALANCE": 127,
         "ROLL": 25
       },
       "exit_reason_counts": {
         "EARLY_PROFIT_TARGET": 67,
         "ITM_NEAR_EXPIRY_ROLL": 25,
-        "PRE_EXPIRY_CLOSE": 5
+        "PRE_EXPIRY_CLOSE": 84
       },
-      "posthoc_rows": 1703,
-      "realized_pnl": 13964.362838000001,
+      "realized_pnl": 10231.535896999998,
       "run_id": "sim_2019-02-09_2026-05-21_138e7b4fbb82",
       "strategy_counts": {
         "put_credit_spread": 92,
-        "short_straddle": 5
+        "short_straddle": 84
       },
       "symbol": "DIA",
       "top_fail_reasons": {
-        "liquidity_gate_failed": 49,
-        "missing_candidate_legs": 923,
-        "vix_gate_failed": 992
+        "liquidity_gate_failed": 15,
+        "missing_candidate_legs": 442,
+        "vix_gate_failed": 9
       },
-      "trade_count": 97
+      "trade_count": 176
     },
     {
       "daily_rows": 0,
@@ -145,7 +133,6 @@
       "event_rows": 0,
       "event_type_counts": {},
       "exit_reason_counts": {},
-      "posthoc_rows": 0,
       "realized_pnl": 0.0,
       "run_id": "sim_2019-02-09_2026-05-21_7bc84efae62c",
       "strategy_counts": {},
