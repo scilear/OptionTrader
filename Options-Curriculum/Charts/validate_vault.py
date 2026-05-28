@@ -88,9 +88,12 @@ def _stub_folder(link_name: str) -> str:
 def build_file_index(vault_root: Path) -> dict[str, Path]:
     """Return {lowercase_stem: path} for every .md file in the vault.
 
-    Hidden directories and Charts/outputs/ are excluded.
+    Hidden directories, Charts/outputs/, and Templates/ are excluded.
+    Template files contain placeholder [[{{...}}]] syntax that is intentional
+    and would produce false-positive validation errors.
     """
     charts_outputs = (vault_root / "Charts" / "outputs").resolve()
+    templates_dir = (vault_root / "Templates").resolve()
     index: dict[str, Path] = {}
     for path in vault_root.rglob("*.md"):
         # Skip hidden directories anywhere in the path.
@@ -100,6 +103,12 @@ def build_file_index(vault_root: Path) -> dict[str, Path]:
         try:
             path.resolve().relative_to(charts_outputs)
             continue  # inside Charts/outputs/
+        except ValueError:
+            pass
+        # Skip Templates/ — placeholder [[{{...}}]] links are intentional.
+        try:
+            path.resolve().relative_to(templates_dir)
+            continue
         except ValueError:
             pass
         stem_lower = path.stem.lower()

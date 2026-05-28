@@ -19,3 +19,4 @@ Finding high-probability options trade candidates using IV rank, technical scree
 - [[High-Probability-Setup-Checklist]]
 - [[Setup-Recognition-Patterns]]
 - [[Earnings-Calendar-System]]
+- [[Gamma-Walls-Call-Put]]

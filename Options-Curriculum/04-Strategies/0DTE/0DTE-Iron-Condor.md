@@ -36,7 +36,7 @@ Sell an [[Iron-Condor]] with all four legs expiring the same day:
 
 The structure profits if SPX stays between the two short strikes through expiry. Total risk is defined: maximum loss equals wing width minus credit received.
 
-![[pnl-0dte-ic.png]]
+![[pnl-iron-condor.png]]
 
 ---
 

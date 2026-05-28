@@ -12,6 +12,8 @@ related:
   - "[[Greeks-Overview]]"
   - "[[0DTE-Overview]]"
   - "[[50pct-vs-Expiry]]"
+  - "[[Gamma-Regime-and-GEX]]"
+  - "[[Gamma-Walls-Call-Put]]"
 ---
 
 # Gamma
@@ -70,3 +72,11 @@ Practical guidelines (rule of thumb, not backtested here):
 4. **Delta-hedge actively** only if you have infrastructure for it; most retail sellers manage gamma through position sizing and early exits rather than continuous hedging.
 
 Gamma is not an enemy to be avoided — it is a cost to be priced. Sellers who understand and respect it outperform those who simply maximize theta collection.
+
+## Aggregate Gamma: Market Structure Effects
+
+The concepts above apply to individual positions. At the market level, the *aggregate* gamma exposure of all dealers across all options positions — called **GEX (Gamma Exposure)** — shapes intraday volatility in a measurable way. When dealers collectively hold positive GEX, their hedging dampens volatility. When they hold negative GEX, their hedging amplifies moves.
+
+This aggregate effect is the basis for gamma walls, call walls, put walls, and the High Volatility Level (HVL) — practical tools for understanding whether the market is in a volatility-dampening or volatility-amplifying regime before selecting a strategy.
+
+See [[Gamma-Regime-and-GEX]] for the market-structure application of GEX, and [[Gamma-Walls-Call-Put]] for how specific strike concentrations create reaction zones.

@@ -10,6 +10,13 @@ related: [MOC-Finding-Opportunities, MOC-Entry-Exit, MOC-Risk-Management, MOC-Ad
 
 Every income and growth options strategy, organized by complexity and market condition suitability. This module maps from the simplest set-and-forget structures through multi-leg income trades, long-term investing applications, and the specialized world of same-day expiry (0DTE) trades.
 
+## Market Structure
+
+Environment classification that determines which strategy family applies. Check these before selecting any structure.
+
+- [[Market-Condition-Classification]]
+- [[Gamma-Regime-and-GEX]]
+
 ## Set & Forget
 
 Defined-risk or cash-backed structures suitable for traders who want low-maintenance income with limited complexity.

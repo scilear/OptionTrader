@@ -3,7 +3,12 @@ title: Power Hour — 3:00–4:00 PM ET Volatility & Volume Spike
 tags: [intraday, timing, 0DTE, volatility, risk-management]
 aliases: [power-hour, 3pm-4pm-et, close-hour-dynamics]
 status: draft
-related: [[0DTE-Entry-Timing]], [[Intraday-Timing-Open]], [[0DTE-Credit-Spread]], [[Greeks-Gamma]], [[Pin-Risk]]
+related:
+  - "[[0DTE-Entry-Timing]]"
+  - "[[Intraday-Timing-Open]]"
+  - "[[0DTE-Credit-Spread]]"
+  - "[[Greeks-Gamma]]"
+  - "[[Pin-Risk]]"
 ---
 
 # Power Hour — 3:00–4:00 PM ET Volatility & Volume Spike

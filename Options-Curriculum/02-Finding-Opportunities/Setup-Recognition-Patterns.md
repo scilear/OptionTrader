@@ -18,6 +18,8 @@ related:
   - "[[Implied-Volatility]]"
   - "[[Iron-Condor]]"
   - "[[Straddle]]"
+  - "[[Gamma-Walls-Call-Put]]"
+  - "[[Gamma-Regime-and-GEX]]"
 ---
 
 # Setup Recognition Patterns
@@ -100,3 +102,11 @@ Recognizing a setup before it fully develops separates reactive trading from ant
 
 > [!tip]
 > Screen systematically: use the [[IV-Rank]] scanner and [[Market-Condition-Classification]] regime filter to narrow the universe to 5–10 candidates before evaluating chart patterns. Experienced traders filter first, study second.
+
+## Layer 0 — Gamma Regime Check
+
+Before applying any of the five patterns above, check the GEX regime. Pattern 2 (Mean-Reversion Spike) and Pattern 3 (Support/Resistance Hold) rely on price containing within a range. In a **negative gamma** environment (SPX below the HVL), dealer hedging amplifies moves rather than reverting them — both patterns have lower reliability.
+
+In **positive gamma**, patterns 2 and 3 are reinforced: dealer flows actively push price back toward the center. The [[Gamma-Walls-Call-Put|Call Wall and Put Wall]] provide strike-level anchors for spread placement.
+
+Check the GEX regime daily at market open. See [[Gamma-Regime-and-GEX]] for the full framework.

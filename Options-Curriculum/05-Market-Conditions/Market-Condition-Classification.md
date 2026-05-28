@@ -16,6 +16,7 @@ related:
   - "[[Range-Bound-Strategies]]"
   - "[[Iron-Condor]]"
   - "[[Bull-Put-Spread]]"
+  - "[[Gamma-Regime-and-GEX]]"
 ---
 
 # Market Condition Classification
@@ -125,3 +126,12 @@ Each cell is expanded below.
 4. Cross-check with [[High-IV-Playbook]] or [[Low-IV-Playbook]] for refined structure selection.
 
 Classification should be reassessed at least weekly during earnings seasons and after macro events. A single classification does not lock strategy choice — regime transitions are the most important signal to track.
+
+## Complementary Layer: GEX Regime
+
+The IV + trend matrix above operates at the daily/weekly timescale. A complementary intraday layer is provided by dealer Gamma Exposure (GEX). Where the matrix tells you *what* environment you are in, GEX tells you *how* the market will move within that environment:
+
+- **Positive GEX (above HVL):** Dealer hedging dampens intraday swings — ranges hold, condor strikes are mechanically reinforced
+- **Negative GEX (below HVL):** Dealer hedging amplifies moves — the same IV level becomes far more dangerous for short premium
+
+Check the GEX regime daily alongside VIX. A High-IV + Range-Bound classification in negative GEX is structurally different from the same classification in positive GEX. See [[Gamma-Regime-and-GEX]] for the full framework.

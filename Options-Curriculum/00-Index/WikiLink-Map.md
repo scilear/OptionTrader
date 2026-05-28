@@ -168,12 +168,12 @@ Authoritative spelling source for all wikilinks in the Options-Curriculum vault.
 
 ## Templates
 
-| File Path | WikiLink |
-|-----------|----------|
-| Strategy-Note-Template.md | [[Strategy-Note-Template]] |
-| Concept-Note-Template.md | [[Concept-Note-Template]] |
-| Playbook-Note-Template.md | [[Playbook-Note-Template]] |
-| Paper-Trade-Journal-Template.md | [[Paper-Trade-Journal-Template]] |
+| File Path | Note |
+|-----------|------|
+| Strategy-Note-Template.md | `Strategy-Note-Template` |
+| Concept-Note-Template.md | `Concept-Note-Template` |
+| Playbook-Note-Template.md | `Playbook-Note-Template` |
+| Paper-Trade-Journal-Template.md | `Paper-Trade-Journal-Template` |
 
 ## Common Aliases
 
@@ -189,7 +189,7 @@ Short-form aliases are encouraged for frequently-used terms. Always link via the
 | [[Fly]] | [[Iron-Fly]] | Standard abbreviation for iron fly |
 | [[Calendar]] | [[Calendar-Spread]] | Standard abbreviation for calendar spread |
 | [[Diagonal]] | [[Diagonal-Spread]] | Standard abbreviation for diagonal spread |
-| [[0DTE IC]] | [[0DTE-Iron-Condor]] | Compound alias for 0DTE iron condor |
+| 0DTE IC | [[0DTE-Iron-Condor]] | Compound alias for 0DTE iron condor |
 
 ## Notes on Aliases
 
@@ -204,4 +204,4 @@ Short-form aliases are encouraged for frequently-used terms. Always link via the
 
 **0DTE:**
 - Notes about 0DTE strategy specifics use [[0DTE-Overview]] as the umbrella, then drill into [[0DTE-Credit-Spread]], [[0DTE-Iron-Condor]], etc.
-- [[0DTE IC]] is a convenience alias for [[0DTE-Iron-Condor]]
+- 0DTE IC is a convenience alias for [[0DTE-Iron-Condor]]

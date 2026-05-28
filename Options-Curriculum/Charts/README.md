@@ -1,3 +1,8 @@
+---
+title: Charts — README
+status: reference
+---
+
 # Charts
 
 This folder contains Python scripts that generate charts embedded in Obsidian notes.

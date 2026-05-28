@@ -111,7 +111,7 @@ Configure how Obsidian handles note locations and links.
   - For quizzes: `05-Quizzes`
   - For templates: `Templates`
 
-- **"Use [[Wikilinks]]":** Enable (should be on by default). This ensures all cross-vault links use the `[[Note Title]]` format.
+- **"Use Wikilinks":** Enable (should be on by default). This ensures all cross-vault links use double-bracket WikiLink syntax.
 
 - **"Automatically update internal links":** **Disable this.** Bulk note generation can cause automatic link rewrites, which may corrupt custom links. Manage renames manually.
 
@@ -127,10 +127,10 @@ The vault includes a `Templates/` folder with four standard templates. Builders 
 - Set **"Template folder location"** to `Templates`
 
 **Standard templates included:**
-- `[[Strategy-Note-Template]]` — For trading strategies (edge, regime filter, entry/exit rules, position sizing)
-- `[[Concept-Note-Template]]` — For theoretical concepts (Greeks, volatility, implied vs realized)
-- `[[Playbook-Note-Template]]` — For structured trade ideas (watch list, setup checklist, trade journal)
-- `[[Paper-Trade-Journal-Template]]` — For mock trading entries (entry, exit, P&L, reflection)
+- `Strategy-Note-Template` — For trading strategies (edge, regime filter, entry/exit rules, position sizing)
+- `Concept-Note-Template` — For theoretical concepts (Greeks, volatility, implied vs realized)
+- `Playbook-Note-Template` — For structured trade ideas (watch list, setup checklist, trade journal)
+- `Paper-Trade-Journal-Template` — For mock trading entries (entry, exit, P&L, reflection)
 
 **To insert a template:**
 1. Create a new note (Cmd+N or Ctrl+N)
@@ -217,7 +217,7 @@ The curriculum uses four standardized callout types. Use them consistently for s
 - [ ] (Optional) Install Better Word Count
 - [ ] Configure graph view groups (meta, draft, complete, stub)
 - [ ] Disable "Automatically update internal links" in Settings → Files & Links
-- [ ] Verify [[Templates/Strategy-Note-Template]] and other templates are present
+- [ ] Verify `Strategy-Note-Template` and other templates are present
 - [ ] Test note creation: create a new note, insert a template, verify frontmatter is populated
 - [ ] Open [[Progress-Dashboard]] and verify Dataview queries render
 
