@@ -3,7 +3,7 @@ title: "MOC — Advanced"
 tags: [moc, advanced, earnings, long-term, portfolio]
 aliases: [Advanced MOC, Earnings MOC]
 status: draft
-related: [MOC-Strategies, MOC-Risk-Management, MOC-Finding-Opportunities]
+related: [Home, MOC-Risk-Management, MOC-Strategies]
 ---
 
 # Advanced

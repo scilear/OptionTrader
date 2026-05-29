@@ -3,7 +3,7 @@ title: "MOC — Finding Opportunities"
 tags: [moc, finding-opportunities, screening, setup]
 aliases: [Finding Opportunities MOC, Screening MOC]
 status: draft
-related: [MOC-Entry-Exit, MOC-Strategies, MOC-Risk-Management]
+related: [Home, MOC-Foundations, MOC-Entry-Exit]
 ---
 
 # Finding Opportunities

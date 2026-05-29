@@ -3,7 +3,7 @@ title: "MOC — Strategies"
 tags: [moc, strategies, income, 0dte, spreads, long-term]
 aliases: [Strategies MOC, Options Strategies MOC]
 status: draft
-related: [MOC-Finding-Opportunities, MOC-Entry-Exit, MOC-Risk-Management, MOC-Advanced]
+related: [MOC-Entry-Exit, MOC-Risk-Management, MOC-Advanced]
 ---
 
 # Strategies
