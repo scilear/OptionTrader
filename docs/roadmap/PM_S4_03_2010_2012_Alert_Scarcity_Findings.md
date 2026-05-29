@@ -9,7 +9,7 @@ Followed `docs/roadmap/OptionTrader_S4_03_Alert_Scarcity_Assessment_and_Window_E
 - Start: `2010-01-01T00:00:00Z`
 - End: `2012-12-31T23:59:59Z`
 - Underlying: `SPX`
-- Data source: `data/optiontrader_eod_truth.duckdb`
+- Data source: `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`
 - Lineages: baseline `3b024c9`, candidate `5128e8e`
 
 ## What Was Run

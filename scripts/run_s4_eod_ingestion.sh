@@ -72,7 +72,7 @@ fi
 echo ""
 echo "== Step 2: Validate dataset =="
 python scripts/validate_spx_eod_dataset.py \
-  --db-path data/optiontrader_eod_truth.duckdb \
+  --db-path /mnt/Data/EVA/optiontrader_eod_truth.duckdb \
   --report docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md
 
 echo ""

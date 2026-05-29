@@ -22,7 +22,7 @@ samples for S4-03 gate evaluation without weakening production thresholds.
 Maintain a separate EOD truth database from intraday runtime DB.
 
 - Runtime DB: existing `data/optiontrader.duckdb`.
-- EOD truth DB (new): recommended `data/optiontrader_eod_truth.duckdb`.
+- EOD truth DB (new): recommended `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`.
 
 This prevents intraday process side effects from contaminating S4-03 production evidence runs.
 

@@ -21,7 +21,7 @@ spec/implementation before drawing business conclusions.
    - Local DB overlap check (2026-05-05) showed identical metric values for overlapping rows.
 
 2. QC failure dominates metric rows and suppresses downstream signal opportunities.
-   - Local DB check on `data/optiontrader_eod_truth.duckdb` (2026-05-05):
+   - Local DB check on `/mnt/Data/EVA/optiontrader_eod_truth.duckdb` (2026-05-05):
      - baseline metrics rows: 794,
      - QC pass rows: 57,
      - QC fail rows: 737.

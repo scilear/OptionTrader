@@ -26,7 +26,7 @@ ib:
 
 storage:
   engine: duckdb
-  path: data/optiontrader_eod_truth.duckdb
+  path: /mnt/Data/EVA/optiontrader_eod_truth.duckdb
 
 pricing:
   rate: 0.0

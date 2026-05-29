@@ -1,6 +1,6 @@
 # OptionTrader S4-03 EOD Validation Report
 
-DB path: `data/optiontrader_eod_truth.duckdb`
+DB path: `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`
 Snapshot count: `20547`
 Quote count: `8223923`
 

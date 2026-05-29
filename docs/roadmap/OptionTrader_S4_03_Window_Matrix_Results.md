@@ -5,7 +5,7 @@ Scope: Execute W1 window expansion from `docs/roadmap/OptionTrader_S4_03_Alert_S
 
 ## Data Availability Check
 
-Source truth DB (`data/optiontrader_eod_truth.duckdb`) has SPX EOD snapshots for:
+Source truth DB (`/mnt/Data/EVA/optiontrader_eod_truth.duckdb`) has SPX EOD snapshots for:
 
 - 2010: 250
 - 2011: 245

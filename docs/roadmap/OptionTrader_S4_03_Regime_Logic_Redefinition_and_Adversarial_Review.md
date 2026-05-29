@@ -32,7 +32,7 @@ Confirmed in local EOD truth DB and current code paths:
 3. Result: validation artifacts can report only `Neutral` even when true regime table would have
    `Calm`/`Transition`/`Stress` rows.
 4. Regime table itself can be populated and does produce all three labels.
-   - After recompute in `data/optiontrader_eod_truth.duckdb`: `Calm=2463`, `Stress=689`,
+   - After recompute in `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`: `Calm=2463`, `Stress=689`,
      `Transition=285`.
 5. Additional design weakness: percentile features are computed over the full sample, which can
    leak future distribution information into past labels.

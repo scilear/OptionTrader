@@ -12,12 +12,12 @@ export OPTIONTRADER_CONFIG=config/config-eod-truth.yaml
 
 # Step 2
 python scripts/validate_spx_eod_dataset.py \
-  --db-path data/optiontrader_eod_truth.duckdb \
+  --db-path /mnt/Data/EVA/optiontrader_eod_truth.duckdb \
   --report docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md
 
 # Step 3
 python scripts/materialize_s4_tracks_from_eod.py \
-  --db-path data/optiontrader_eod_truth.duckdb \
+  --db-path /mnt/Data/EVA/optiontrader_eod_truth.duckdb \
   --baseline-lineage 3b024c9 \
   --candidate-lineage 5128e8e \
   --start-ts 2023-01-01T00:00:00Z \

@@ -119,7 +119,7 @@ S4-03 evidence-mode update (2026-05-04):
 - Production evidence path:
   - EOD source-of-truth ingestion from `/mnt/Data/OPTION_DATA` per
     `docs/roadmap/OptionTrader_S4_03_EOD_Source_Truth_Spec.md`.
-  - maintain separate EOD truth DB (recommended `data/optiontrader_eod_truth.duckdb`) from intraday
+  - maintain separate EOD truth DB (recommended `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`) from intraday
     runtime DB.
   - no production threshold relaxation in production evidence mode.
 

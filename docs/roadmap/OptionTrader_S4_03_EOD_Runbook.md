@@ -20,7 +20,7 @@ with explicit validation and evidence checkpoints.
 
 ## Output Targets
 
-- EOD truth DB: `data/optiontrader_eod_truth.duckdb`
+- EOD truth DB: `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`
 - Validation report: `docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md`
 - S4-03 artifact: `docs/roadmap/OptionTrader_Sprint_4_Ablation_Artifact.md`
 
@@ -42,7 +42,7 @@ export OPTIONTRADER_CONFIG=config/config-test.yaml
 
 Create a dedicated config variant for EOD runs (example: `config/config-eod-truth.yaml`) with:
 
-- `storage.path: data/optiontrader_eod_truth.duckdb`
+- `storage.path: /mnt/Data/EVA/optiontrader_eod_truth.duckdb`
 - `data.underlying: SPX`
 - fail-closed quality defaults unchanged
 
@@ -69,7 +69,7 @@ python scripts/ingest_spx_eod_option_data.py \
 
 Checkpoint:
 
-- snapshots and option_quotes inserted into `data/optiontrader_eod_truth.duckdb`
+- snapshots and option_quotes inserted into `/mnt/Data/EVA/optiontrader_eod_truth.duckdb`
 - rerun is idempotent (no duplicate natural keys)
 
 ## Step 2 - Validate Ingested EOD Data (`#14`)
@@ -82,7 +82,7 @@ Reference command:
 
 ```bash
 python scripts/validate_spx_eod_dataset.py \
-  --db-path data/optiontrader_eod_truth.duckdb \
+  --db-path /mnt/Data/EVA/optiontrader_eod_truth.duckdb \
   --report docs/roadmap/OptionTrader_S4_03_EOD_Validation_Report.md
 ```
 
@@ -101,7 +101,7 @@ Reference command:
 
 ```bash
 python scripts/materialize_s4_tracks_from_eod.py \
-  --db-path data/optiontrader_eod_truth.duckdb \
+  --db-path /mnt/Data/EVA/optiontrader_eod_truth.duckdb \
   --baseline-lineage 3b024c9 \
   --candidate-lineage 5128e8e \
   --start-ts 2023-01-01T00:00:00Z \
