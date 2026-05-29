@@ -18,6 +18,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -59,6 +60,16 @@ def _safe_int(val) -> int:
         return 0
 
 
+def _client_id_candidates(base_id: int, attempts: int) -> list[int]:
+    if attempts <= 1:
+        return [base_id]
+    seed = ((os.getpid() << 8) ^ int(time.time() * 1000)) & 0x7FFFFFFF
+    alt_start = 100 + (seed % 20000)
+    ids = [base_id]
+    ids.extend(alt_start + i for i in range(attempts - 1))
+    return ids
+
+
 # Suppress expected "No security definition found" errors from ib_insync wrapper
 import logging
 
@@ -70,16 +81,48 @@ logging.getLogger("ib_insync.ib").setLevel(logging.CRITICAL)
 RATE = 0.05  # approximate risk-free rate
 WIDE_SPREAD_PCT = 0.15
 BATCH_SIZE = 50
+MAX_CLIENT_ID_RETRIES = 8
 
 # Known index underlyings: IB uses secType=IND; yfinance needs ^ prefix
 _IB_INDEX_INFO: dict[str, tuple[str, str]] = {
+    "ESTX50": ("EUREX", "EUR"),
+    "DAX": ("EUREX", "EUR"),
+    "CAC40": ("MONEP", "EUR"),
+    "Z": ("ICEEU", "GBP"),
+    "SMI": ("EUREX", "CHF"),
+    "EOE": ("FTA", "EUR"),
+    "IBEX": ("MEFFRV", "EUR"),
     "SPX": ("CBOE", "USD"),
     "NDX": ("NASDAQ", "USD"),
-    "RUT": ("CBOE", "USD"),
+    "RUT": ("RUSSELL", "USD"),
     "VIX": ("CBOE", "USD"),
     "XSP": ("CBOE", "USD"),
 }
+_IB_INDEX_ALIASES: dict[str, str] = {
+    "SX5E": "ESTX50",
+    "EUROSTOXX": "ESTX50",
+    "EUROSTOXX50": "ESTX50",
+    "FTSE": "Z",
+    "FTSE100": "Z",
+    "UKX": "Z",
+    "AEX": "EOE",
+    "IBEX35": "IBEX",
+}
 _YF_SYMBOL_MAP: dict[str, str] = {
+    "SX5E": "^STOXX50E",
+    "ESTX50": "^STOXX50E",
+    "GDAXI": "^GDAXI",
+    "DAX": "^GDAXI",
+    "FCHI": "^FCHI",
+    "CAC40": "^FCHI",
+    "UKX": "^FTSE",
+    "Z": "^FTSE",
+    "SSMI": "^SSMI",
+    "SMI": "^SSMI",
+    "AEX": "^AEX",
+    "EOE": "^AEX",
+    "IBEX35": "^IBEX",
+    "IBEX": "^IBEX",
     "SPX": "^SPX",
     "NDX": "^NDX",
     "RUT": "^RUT",
@@ -239,19 +282,46 @@ def _fetch_ib(
     if host_used is None:
         return None
 
-    ib = IB()
+    ib: IB | None = None
     try:
-        ib.connect(
-            host_used, port, clientId=client_id, timeout=timeout_secs, readonly=True
-        )
+        connect_errors: list[str] = []
+        for trial_client_id in _client_id_candidates(client_id, MAX_CLIENT_ID_RETRIES):
+            ib = IB()
+            try:
+                ib.connect(
+                    host_used,
+                    port,
+                    clientId=trial_client_id,
+                    timeout=timeout_secs,
+                    readonly=True,
+                )
+                break
+            except Exception as exc:
+                connect_errors.append(f"clientId {trial_client_id}: {exc}")
+                try:
+                    ib.disconnect()
+                except Exception:
+                    pass
+                ib = None
+
+        if ib is None or not ib.isConnected():
+            if connect_errors:
+                print(
+                    "IB connect retries exhausted: " + " | ".join(connect_errors),
+                    file=sys.stderr,
+                )
+            return None
 
         upper = ticker.upper()
-        if upper in _IB_INDEX_INFO:
-            exchange, currency = _IB_INDEX_INFO[upper]
-            underlying = Index(upper, exchange, currency)
+        index_symbol = _IB_INDEX_ALIASES.get(upper, upper)
+        if index_symbol in _IB_INDEX_INFO:
+            exchange, currency = _IB_INDEX_INFO[index_symbol]
+            underlying = Index(index_symbol, exchange, currency)
             sec_type = "IND"
         else:
             underlying = Stock(upper, "SMART", "USD")
+            index_symbol = upper
+            currency = "USD"
             sec_type = "STK"
 
         ib.qualifyContracts(underlying)
@@ -268,7 +338,7 @@ def _fetch_ib(
             return None
 
         # Option chain definition
-        chains = ib.reqSecDefOptParams(upper, "", sec_type, underlying.conId)
+        chains = ib.reqSecDefOptParams(index_symbol, "", sec_type, underlying.conId)
         if not chains:
             return None
 
@@ -308,7 +378,7 @@ def _fetch_ib(
         exchange = chain.exchange
 
         contracts = [
-            Option(upper, ib_expiry, strike, right, exchange, currency="USD")
+            Option(index_symbol, ib_expiry, strike, right, exchange, currency=currency)
             for strike in valid_strikes
             for right in ("C", "P")
         ]
@@ -358,7 +428,8 @@ def _fetch_ib(
         return None
     finally:
         try:
-            ib.disconnect()
+            if ib is not None:
+                ib.disconnect()
         except Exception:
             pass
 
