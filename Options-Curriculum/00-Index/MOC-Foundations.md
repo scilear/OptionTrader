@@ -27,28 +27,27 @@ Core options theory: Greeks, implied volatility, volatility regimes, and market 
 - [[IV-Rank]]
 - [[IV-Percentile]]
 - [[IV-Crush-Mechanics]]
-- [[Volatility-Surfaces]]
-- [[Skew]]
 
 ## Options Mechanics
 
 - [[Options-Basics]]
 - [[Put-Call-Parity]]
-- [[Black-Scholes-Model]]
-- [[Strike-Selection]]
-- [[Moneyness]]
-- [[Intrinsic-vs-Time-Value]]
 
-## Market Structure
+## Market Structure & Dealer Flows
 
-- [[Bid-Ask-Spread]]
-- [[Liquidity]]
-- [[Open-Interest]]
-- [[Gamma-Regime-and-GEX]]
-- [[Gamma-Walls-Call-Put]]
+- [[Gamma-Regime-and-GEX]] — How dealer hedging amplifies or dampens volatility
+- [[Gamma-Walls-Call-Put]] — Strike-level concentration zones where price often reacts
 
-## Key Relationships
+---
 
-- [[Gamma-vs-Theta-Tradeoff]]
-- [[Vega-and-Gamma-Correlation]]
-- [[DTE-Effects]]
+## Foundation Mastery Checklist
+
+Before moving to [[MOC-Finding-Opportunities]], you should be able to:
+
+- [ ] Explain delta, gamma, theta, vega in one sentence each
+- [ ] Calculate implied volatility (Black-Scholes inverse) conceptually
+- [ ] Read an IV skew and understand what it signals
+- [ ] Identify when IV rank is cheap vs. expensive historically
+- [ ] Explain bid/ask spread impact on position profitability
+- [ ] Understand how GEX regimes affect intraday market behavior
+- [ ] Know the gamma/theta tradeoff and why it matters for option sellers
