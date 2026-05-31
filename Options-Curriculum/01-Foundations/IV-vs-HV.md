@@ -55,12 +55,12 @@ The practical question is: **is IV elevated enough above current HV to justify s
 
 A simple screen:
 
-| Condition | Interpretation |
-|---|---|
-| IV ≫ HV20 (≥10 vol pts) | Strong VRP signal, edge favorable for sellers |
+| Condition               | Interpretation                                         |
+| ----------------------- | ------------------------------------------------------ |
+| IV ≫ HV20 (≥10 vol pts) | Strong VRP signal, edge favorable for sellers          |
 | IV > HV20 (5–9 vol pts) | Moderate edge, proceed with position sizing discipline |
-| IV ≈ HV20 (0–4 vol pts) | VRP compressed, avoid or reduce size |
-| IV < HV20 | Realized vol exceeding implied — do not sell premium |
+| IV ≈ HV20 (0–4 vol pts) | VRP compressed, avoid or reduce size                   |
+| IV < HV20               | Realized vol exceeding implied — do not sell premium   |
 
 > [!tip]
 > Rule of thumb (data-backed for SPX, rule-of-thumb for single stocks): **IV should be at least 5–10 vol points above 20-day HV before selling premium.** Below that threshold, the edge is too thin to survive transaction costs and adverse moves. This is a necessary condition, not sufficient — always layer in [[IV-Rank]] and [[IV-Percentile]] for regime context.

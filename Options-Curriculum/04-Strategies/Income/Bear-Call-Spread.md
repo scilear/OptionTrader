@@ -40,7 +40,7 @@ Parameters are informed by TastyTrade mechanical backtest data on SPX and liquid
 
 - **Delta of short call:** 0.25–0.35 (approximately 1–2 standard deviations OTM)
 - **Spread width:** 5–10 points for SPX; scaled to underlying price for other assets
-- **Days to expiration (DTE):** 21–45 DTE — sits in the zone where [[theta]] decay accelerates without excessive gamma risk
+- **Days to expiration (DTE):** 21–45 DTE — sits in the zone where [[Theta-Decay]] decay accelerates without excessive gamma risk
 - **[[IV-Rank]]:** above 40 — ensures you are selling inflated premium relative to the past year's range
 
 > [!tip]

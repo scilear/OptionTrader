@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01-Foundations/Theta-Decay.md",
+                "file": "01-Foundations/IV-vs-HV.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Theta-Decay"
+              "title": "IV-vs-HV"
             }
           }
         ]
@@ -186,6 +186,10 @@
   "active": "b069c1c367ff0e2d",
   "lastOpenFiles": [
     "00-Index/MOC-Foundations.md",
+    "01-Foundations/Implied-Volatility.md",
+    "01-Foundations/Greeks-Overview.md",
+    "01-Foundations/Vega.md",
+    "01-Foundations/Theta-Decay.md",
     "01-Foundations/Theta.md",
     "01-Foundations/Greeks-Gamma.md",
     "01-Foundations/Gamma.md",
