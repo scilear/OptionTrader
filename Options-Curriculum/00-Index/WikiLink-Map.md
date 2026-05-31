@@ -184,10 +184,10 @@ Short-form aliases are encouraged for frequently-used terms. Always link via the
 | [[IC]] | [[Iron-Condor]] | Standard abbreviation for iron condor |
 | [[CC]] | [[Covered-Call]] | Standard abbreviation for covered call |
 | [[CSP]] | [[CSP-Cash-Secured-Put]] | Standard abbreviation |
-| [[IV]] | [[IV-Rank]] or [[IV-Percentile]] | **Context-dependent**: Use [[IV-Rank]] for percentile ranking; [[IV-Percentile]] for historical percentile context |
+| [[Implied-Volatility]] | [[IV-Rank]] or [[IV-Percentile]] | **Context-dependent**: Use [[IV-Rank]] for percentile ranking; [[IV-Percentile]] for historical percentile context |
 | [[Greeks]] | [[Greeks-Overview]] | Umbrella term; link to overview for context, then drill into [[Delta]], [[Gamma]], [[Theta-Decay]], [[Vega]] as needed |
 | [[Fly]] | [[Iron-Fly]] | Standard abbreviation for iron fly |
-| [[Calendar]] | [[Calendar-Spread]] | Standard abbreviation for calendar spread |
+| [[Calendar-Spread]] | [[Calendar-Spread]] | Standard abbreviation for calendar spread |
 | [[Diagonal]] | [[Diagonal-Spread]] | Standard abbreviation for diagonal spread |
 | 0DTE IC | [[0DTE-Iron-Condor]] | Compound alias for 0DTE iron condor |
 

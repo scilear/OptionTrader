@@ -17,7 +17,7 @@ related:
   - "[[Market-Condition-Classification]]"
   - "[[Implied-Volatility]]"
   - "[[Iron-Condor]]"
-  - "[[Straddle]]"
+  - "[[Short-Straddle]]"
   - "[[Gamma-Walls-Call-Put]]"
   - "[[Gamma-Regime-and-GEX]]"
 ---
@@ -35,7 +35,7 @@ Recognizing a setup before it fully develops separates reactive trading from ant
 
 **Trigger:** [[IV-Rank]] falls below 20, then turns upward on 2+ consecutive sessions. Price action is coiling (narrowing ATR or Bollinger Bands).
 
-**Strategy:** Buy a [[Straddle]] or ATM debit spread, 30–45 DTE. Long vega is the primary edge — the trade profits from volatility expansion regardless of direction.
+**Strategy:** Buy a [[Short-Straddle]] or ATM debit spread, 30–45 DTE. Long vega is the primary edge — the trade profits from volatility expansion regardless of direction.
 
 **Outcome (rule of thumb):** When IV rank breaks above 25 after spending time below 15, expansion tends to continue in liquid index underlyings. Less reliable for single-name equities.
 

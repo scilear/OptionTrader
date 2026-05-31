@@ -17,7 +17,7 @@ related:
   - "[[Iron-Condor]]"
   - "[[Fly-vs-IC]]"
   - "[[Broken-Wing-Butterfly]]"
-  - "[[Greeks-Theta]]"
+  - "[[Theta-Decay]]"
   - "[[Delta-Neutral]]"
 ---
 
@@ -122,4 +122,4 @@ The butterfly is the better tool when you have a specific price target and are o
 - [[Iron-Condor]] — Wider profit zone, credit structure, neutral bias.
 - [[Fly-vs-IC]] — Side-by-side comparison with regime guidance.
 - [[Broken-Wing-Butterfly]] — Asymmetric version, often entered for a credit.
-- [[Greeks-Theta]] — How theta decay accelerates into expiry for the body short legs.
+- [[Theta-Decay]] — How theta decay accelerates into expiry for the body short legs.

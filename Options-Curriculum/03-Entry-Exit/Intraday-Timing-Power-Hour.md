@@ -7,7 +7,7 @@ related:
   - "[[0DTE-Entry-Timing]]"
   - "[[Intraday-Timing-Open]]"
   - "[[0DTE-Credit-Spread]]"
-  - "[[Greeks-Gamma]]"
+  - "[[Gamma]]"
   - "[[Pin-Risk]]"
 ---
 
@@ -80,5 +80,5 @@ This works only when you're positioned to benefit from the mean-reversion oscill
 - [[0DTE-Entry-Timing]] — morning decay and optimal 0DTE entry windows
 - [[Intraday-Timing-Open]] — opening-hour volume and overnight gaps
 - [[0DTE-Credit-Spread]] — iron condor and short strangle mechanics on same-day expiry
-- [[Greeks-Gamma]] — gamma bleed and gamma scalping during volatility spikes
+- [[Gamma]] — gamma bleed and gamma scalping during volatility spikes
 - [[Pin-Risk]] — settlement and exercise mechanics near expiration

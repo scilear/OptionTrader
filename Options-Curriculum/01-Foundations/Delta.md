@@ -13,7 +13,7 @@ related:
   - "[[Greeks-Overview]]"
   - "[[CSP-Cash-Secured-Put]]"
   - "[[Bull-Put-Spread]]"
-  - "[[Greeks-Gamma]]"
+  - "[[Gamma]]"
   - "[[Probability-of-Profit]]"
 ---
 
@@ -103,4 +103,4 @@ This relationship underlies [[Options-Basics]] and is why market makers delta-he
 - Delta ≈ probability of expiring ITM (under [[IV-vs-HV|Black-Scholes]] assumptions).
 - Short delta = bearish; long delta = bullish; zero delta = neutral.
 - Use delta ranges strategically: CSP 0.20–0.30, credit spreads 0.25–0.35, 0DTE 0.10–0.20.
-- Delta is dynamic; as underlying moves, delta changes (that change is [[Greeks-Gamma|gamma]]).
+- Delta is dynamic; as underlying moves, delta changes (that change is [[Gamma|gamma]]).

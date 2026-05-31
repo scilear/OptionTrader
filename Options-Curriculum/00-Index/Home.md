@@ -89,15 +89,16 @@ Topics: Earnings edge, long-term structures, portfolio margin, multi-leg hedges,
 
 ## Quick Reference
 
-| If you need... | Go to... |
-|---|---|
-| Definitions & formulas | [[Glossary]] |
-| All notes mapped | [[WikiLink-Map]] |
-| Tax implications | [[Tax-Treatment]] |
-| Common beginner mistakes | [[Common-Mistakes]] |
-| Vault setup & keyboard shortcuts | [[Obsidian-Setup]] |
-| Broker data sources | [[Broker-Comparison]] |
-| Track your progress | [[Progress-Dashboard]] |
+| If you need...                   | Go to...               |
+| -------------------------------- | ---------------------- |
+| Definitions & formulas           | [[Glossary]]           |
+| All notes mapped                 | [[WikiLink-Map]]       |
+| Tax implications                 | [[Tax-Treatment]]      |
+| Common beginner mistakes         | [[Common-Mistakes]]    |
+| Vault setup & keyboard shortcuts | [[Obsidian-Setup]]     |
+| Broker data sources              | [[Broker-Comparison]]  |
+| Track your progress              | [[Progress-Dashboard]] |
+|                                  |                        |
 
 ---
 

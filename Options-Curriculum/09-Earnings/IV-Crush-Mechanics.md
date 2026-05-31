@@ -7,14 +7,14 @@ related:
   - "[[Earnings-Overview]]"
   - "[[Earnings-IC-Playbook]]"
   - "[[Earnings-Straddle-Strangle]]"
-  - "[[Implied-Volatility-Basics]]"
+  - "[[Implied-Volatility]]"
   - "[[Calendar-Spreads]]"
   - "[[Expected-Move]]"
 ---
 
 # IV Crush Mechanics
 
-[[Implied-Volatility-Basics|Implied volatility]] behaves predictably around earnings announcements: it inflates into the event and collapses immediately after. Understanding this cycle is the foundation of every earnings-based options strategy.
+[[Implied-Volatility|Implied volatility]] behaves predictably around earnings announcements: it inflates into the event and collapses immediately after. Understanding this cycle is the foundation of every earnings-based options strategy.
 
 ## 1. Why IV Spikes Before Earnings
 

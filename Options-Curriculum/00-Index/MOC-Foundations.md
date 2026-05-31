@@ -14,8 +14,6 @@ Core options theory: Greeks, implied volatility, volatility regimes, and market 
 
 - [[Delta]]
 - [[Gamma]]
-- [[Greeks-Gamma]]
-- [[Theta]]
 - [[Theta-Decay]]
 - [[Vega]]
 - [[Greeks-Overview]]

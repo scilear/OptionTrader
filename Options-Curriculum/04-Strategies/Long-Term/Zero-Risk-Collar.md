@@ -16,7 +16,7 @@ related:
   - "[[Covered-Call]]"
   - "[[CSP-Cash-Secured-Put]]"
   - "[[LEAPS-Investing]]"
-  - "[[Greeks-Delta]]"
+  - "[[Delta]]"
   - "[[Rolling-Options]]"
 ---
 
@@ -76,7 +76,7 @@ Because the goal is zero net cost, strike selection is iterative:
 2. Find the call strike whose premium exactly offsets the put cost. Use your broker's options chain sorted by premium, or an options calculator.
 3. If the call strike that achieves zero cost feels too close (limiting upside excessively), consider buying a cheaper put (lower delta, further OTM) to widen the call strike.
 
-[[Greeks-Delta]] are your navigation tool here, but the actual match is premium-dollar-based, not delta-based.
+[[Delta]] are your navigation tool here, but the actual match is premium-dollar-based, not delta-based.
 
 ## Tax Considerations
 

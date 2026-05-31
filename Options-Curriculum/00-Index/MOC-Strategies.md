@@ -36,19 +36,19 @@ Multi-leg spread strategies designed to collect premium with defined or undefine
 - [[Bear-Call-Spread]]
 - [[Iron-Condor]]
 - [[Iron-Fly]]
-- [[Butterfly]]
 - [[Fly-vs-IC]]
 - [[Calendar-Spread]]
 - [[Diagonal-Spread]]
 
 ## Long-Term
 
-Strategies that combine options with longer time horizons for capital appreciation, income layering, or portfolio-level protection.
+Advanced strategies for multi-month or multi-year time horizons and portfolio-level protection.
 
-- [[LEAPS-Investing]]
-- [[PMCC-Income]]
 - [[Advanced-Collar]]
 - [[Portfolio-Margin]]
+
+> [!note]
+> LEAPS and PMCC strategies are listed under "Set & Forget" because they function as standalone income vehicles. Extend them through additional layers in the "Advanced" module.
 
 ## 0DTE
 

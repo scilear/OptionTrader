@@ -9,8 +9,8 @@ related:
   - "[[High-IV-Playbook]]"
   - "[[Low-IV-Playbook]]"
   - "[[Greeks-Overview]]"
-  - "[[Greeks-Delta]]"
-  - "[[Greeks-Gamma]]"
+  - "[[Delta]]"
+  - "[[Gamma]]"
 ---
 
 # Vega
@@ -89,8 +89,8 @@ See [[IV-vs-HV]] for the mechanics of when IV reverts to realized volatility.
 4. **Use [[High-IV-Playbook]] and [[Low-IV-Playbook]]** for regime-based structure selection.
 
 > [!note]
-> Vega interacts with **gamma**: long gamma (long options) often comes bundled with long vega. See [[Greeks-Gamma]] for portfolio convexity.
+> Vega interacts with **gamma**: long gamma (long options) often comes bundled with long vega. See [[Gamma]] for portfolio convexity.
 
 ---
 
-**Related Greeks:** [[Greeks-Delta]], [[Greeks-Gamma]], [[Greeks-Theta]], [[Greeks-Rho]]
+**Related Greeks:** [[Delta]], [[Gamma]], [[Theta-Decay]], [[Greeks-Rho]]

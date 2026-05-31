@@ -19,7 +19,7 @@ related:
   - "[[Portfolio-Margin]]"
   - "[[LEAPS-Investing]]"
   - "[[Rolling-Options]]"
-  - "[[Greeks-Delta]]"
+  - "[[Delta]]"
 ---
 
 # Advanced Collar
