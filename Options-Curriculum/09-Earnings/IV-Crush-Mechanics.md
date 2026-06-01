@@ -8,6 +8,7 @@ related:
   - "[[Earnings-IC-Playbook]]"
   - "[[Earnings-Straddle-Strangle]]"
   - "[[Implied-Volatility]]"
+  - "[[IV-Crush]]"
   - "[[Calendar-Spreads]]"
   - "[[Expected-Move]]"
 ---

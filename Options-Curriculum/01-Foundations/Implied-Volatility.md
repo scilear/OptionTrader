@@ -82,7 +82,7 @@ Skew steepens (increases) before events. A trader can sell expensive puts and bu
 
 - **Pre-event:** IV rises as the market prices uncertainty. A 3-day earnings announcement typically pushes IV up 5–10 vol points.
 - **At announcement:** IV can double intraday if the move is large or unexpected.
-- **Post-event:** IV crush — IV collapses 30–60% as uncertainty is resolved. This is where short vega positions make or lose large amounts.
+- **Post-event:** [[IV-Crush|IV crush]] — IV collapses 30–60% as uncertainty is resolved. This is where short vega positions make or lose large amounts.
 
 ## When IV is "Cheap" vs "Expensive"
 

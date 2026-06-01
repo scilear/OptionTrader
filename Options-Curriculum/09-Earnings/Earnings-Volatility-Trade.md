@@ -10,6 +10,7 @@ status: draft
 related:
   - "[[Earnings-Overview]]"
   - "[[IV-Crush-Mechanics]]"
+  - "[[IV-Crush]]"
 ---
 
 # Earnings Volatility Trade
