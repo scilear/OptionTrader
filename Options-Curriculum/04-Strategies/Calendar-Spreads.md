@@ -1,8 +1,16 @@
 ---
-title: Calendar-Spreads
-status: stub
+title: Calendar Spreads
+tags:
+  - strategies
+  - spreads
+  - time-decay
+aliases:
+  - Calendar spread
+status: draft
+related:
+  - "[[Calendar-Spread]]"
 ---
 
-# Calendar-Spreads
+# Calendar Spreads
 
-> Stub note — fill in content.
+See [[Calendar-Spread]] for the full strategy guide.

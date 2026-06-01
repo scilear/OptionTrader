@@ -1,8 +1,15 @@
 ---
-title: Regime-Classification
-status: stub
+title: Regime Classification
+tags:
+  - market-conditions
+  - regime
+aliases:
+  - Regime classification
+status: draft
+related:
+  - "[[Market-Condition-Classification]]"
 ---
 
-# Regime-Classification
+# Regime Classification
 
-> Stub note — fill in content.
+See [[Market-Condition-Classification]] for how to classify the current market environment (High IV/Low IV + Trending/Range-Bound).
