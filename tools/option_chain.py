@@ -82,6 +82,7 @@ RATE = 0.05  # approximate risk-free rate
 WIDE_SPREAD_PCT = 0.15
 BATCH_SIZE = 50
 MAX_CLIENT_ID_RETRIES = 8
+MAX_IB_CONTRACTS = 220
 
 # Known index underlyings: IB uses secType=IND; yfinance needs ^ prefix
 _IB_INDEX_INFO: dict[str, tuple[str, str]] = {
@@ -342,26 +343,38 @@ def _fetch_ib(
         if not chains:
             return None
 
-        # Try SMART first, but if it doesn't have the target expiry,
-        # find the chain whose expirations contain (or are closest to) the target.
+        # Choose the best chain for target expiry.
+        # For stocks like SPY there can be multiple SMART chains (e.g. SPY, 2SPY).
+        # Prefer the trading class that matches the requested symbol.
         target_date = date.fromisoformat(target_expiry)
-        chain = next((c for c in chains if c.exchange == "SMART"), None)
-        if chain is None:
-            chain = min(
-                chains,
-                key=lambda c: (
-                    min(
-                        abs(
-                            (
-                                date(int(e[:4]), int(e[4:6]), int(e[6:8])) - target_date
-                            ).days
-                        )
-                        for e in c.expirations
-                    )
-                    if c.expirations
-                    else 99999
-                ),
+
+        def _nearest_expiry_distance(chain_def) -> int:
+            expirations = list(getattr(chain_def, "expirations", []) or [])
+            if not expirations:
+                return 99999
+            return min(
+                abs((date(int(e[:4]), int(e[4:6]), int(e[6:8])) - target_date).days)
+                for e in expirations
             )
+
+        def _chain_rank(chain_def) -> tuple[int, int, int]:
+            nearest = _nearest_expiry_distance(chain_def)
+            strike_count = len(list(getattr(chain_def, "strikes", []) or []))
+            expiry_count = len(list(getattr(chain_def, "expirations", []) or []))
+            return (nearest, -strike_count, -expiry_count)
+
+        smart_chains = [c for c in chains if getattr(c, "exchange", "") == "SMART"]
+        candidate_pool = smart_chains or chains
+        if sec_type == "STK":
+            exact_class = [
+                c
+                for c in candidate_pool
+                if str(getattr(c, "tradingClass", "") or "").upper() == index_symbol
+            ]
+            if exact_class:
+                candidate_pool = exact_class
+
+        chain = min(candidate_pool, key=_chain_rank)
 
         ib_expiry = min(
             chain.expirations,
@@ -373,6 +386,14 @@ def _fetch_ib(
         lo = spot * (1 - strike_pct_range)
         hi = spot * (1 + strike_pct_range)
         valid_strikes = sorted(s for s in chain.strikes if lo <= s <= hi)
+        if len(valid_strikes) * 2 > MAX_IB_CONTRACTS:
+            center = min(valid_strikes, key=lambda strike: abs(strike - spot))
+            max_strikes = max(4, MAX_IB_CONTRACTS // 2)
+            valid_strikes = sorted(
+                valid_strikes,
+                key=lambda strike: (abs(strike - center), strike),
+            )[:max_strikes]
+            valid_strikes.sort()
 
         # Use the exchange from the chain itself (not hardcoded SMART — e.g. XOP trades on ARCA)
         exchange = chain.exchange
