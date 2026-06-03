@@ -14,6 +14,8 @@ aliases:
 status: draft
 related:
   - "[[Gamma-Regime-and-GEX]]"
+  - "[[Open-Interest]]"
+  - "[[Index-vs-Single-Stock-GEX]]"
   - "[[Setup-Recognition-Patterns]]"
   - "[[Iron-Condor]]"
   - "[[Bull-Put-Spread]]"

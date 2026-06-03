@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01-Foundations/Implied-Volatility.md",
+                "file": "05-Market-Conditions/Gamma-Regime-and-GEX.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Implied-Volatility"
+              "title": "Gamma-Regime-and-GEX"
             }
           }
         ]
@@ -186,7 +186,13 @@
   "active": "b069c1c367ff0e2d",
   "lastOpenFiles": [
     "00-Index/MOC-Foundations.md",
+    "01-Foundations/Put-Call-Parity.md",
+    "01-Foundations/Options-Basics.md",
+    "09-Earnings/IV-Crush-Mechanics.md",
+    "01-Foundations/IV-Percentile.md",
+    "01-Foundations/IV-Rank.md",
     "01-Foundations/Implied-Volatility.md",
+    "00-Index/Home.md",
     "01-Foundations/IV-vs-HV.md",
     "01-Foundations/Greeks-Overview.md",
     "01-Foundations/Vega.md",
@@ -194,7 +200,6 @@
     "01-Foundations/Theta.md",
     "01-Foundations/Greeks-Gamma.md",
     "01-Foundations/Gamma.md",
-    "00-Index/Home.md",
     "00-Index/WikiLink-Map.md",
     "00-Index/Advanced-Collar.md",
     "00-Index/50pct-vs-Expiry.md",

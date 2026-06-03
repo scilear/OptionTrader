@@ -1,3 +1,9 @@
+---
+title: Options Curriculum Review
+tags: [review, meta]
+status: draft
+---
+
 # Options Curriculum Review
 
 > **Scope:** Complete review of the `Options-Curriculum` Obsidian vault.

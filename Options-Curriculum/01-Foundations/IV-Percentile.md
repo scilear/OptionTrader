@@ -35,10 +35,10 @@ IVP is *not* a simple formula like standard deviation. It's a **rank statistic**
 
 Both measure "how high is IV relative to history," but they differ in robustness:
 
-| Metric | Calculation | Distortion Risk | Best Use |
-|--------|-------------|-----------------|----------|
-| **IV Percentile** | Rank-based, position in 252-day sorted list | Resistant to single spikes | Stocks with post-earnings IV spikes, binary events |
-| **IV Rank** | (Current IV − 52-week low) / (52-week high − low) × 100 | Highly sensitive to max/min outliers | Steady-state regimes, index options (SPX) |
+| Metric            | Calculation                                             | Distortion Risk                      | Best Use                                           |
+| ----------------- | ------------------------------------------------------- | ------------------------------------ | -------------------------------------------------- |
+| **IV Percentile** | Rank-based, position in 252-day sorted list             | Resistant to single spikes           | Stocks with post-earnings IV spikes, binary events |
+| **IV Rank**       | (Current IV − 52-week low) / (52-week high − low) × 100 | Highly sensitive to max/min outliers | Steady-state regimes, index options (SPX)          |
 
 **Practical difference**: A stock gaps up 15% on earnings, IV spikes to 200% realized move, then normalizes. That spike becomes the "high" in IV Rank for 252 days, depressing future IV Rank scores. IVP treats it as just one observation in a list—less distortion.
 
