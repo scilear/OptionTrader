@@ -33,3 +33,9 @@ Position sizing, portfolio management, profit-taking, and adjustment rules for s
 - [[PMCC-Adjustments]]
 - [[0DTE-Adjustments]]
 - [[Losing-Trade-Mindset]]
+
+## Extreme Events & GEX-Related Risks
+
+- [[Gamma-Tsunami]] — Catastrophic GEX cascade; mechanical wipe-out scenario
+- [[Term-Structure-of-Gamma]] — Multi-maturity GEX dynamics and intervention from long-dated gamma
+- [[Stop-Loss-Strategies]] — Non-negotiable in extreme events

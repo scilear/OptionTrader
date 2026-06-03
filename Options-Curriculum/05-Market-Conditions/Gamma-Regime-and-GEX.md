@@ -18,6 +18,8 @@ related:
   - "[[Open-Interest]]"
   - "[[Gamma-Walls-Call-Put]]"
   - "[[Index-vs-Single-Stock-GEX]]"
+  - "[[Term-Structure-of-Gamma]]"
+  - "[[Gamma-Tsunami]]"
   - "[[Market-Condition-Classification]]"
   - "[[Iron-Condor]]"
   - "[[High-IV-Playbook]]"

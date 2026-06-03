@@ -37,6 +37,7 @@ Core options theory: Greeks, implied volatility, volatility regimes, and market 
 - [[Gamma-Regime-and-GEX]] — Dealer hedging mechanics, dollar impact, positive vs negative gamma regimes
 - [[Gamma-Walls-Call-Put]] — Strike-level concentration zones where price reacts
 - [[Index-vs-Single-Stock-GEX]] — Index-to-stock flows, mega-cap feedback loops, correlation dynamics
+- [[Term-Structure-of-Gamma]] — Multi-maturity GEX dynamics, 0DTE dominance, far-dated anchors, gamma convergence/divergence
 
 ---
 
@@ -49,5 +50,5 @@ Before moving to [[MOC-Finding-Opportunities]], you should be able to:
 - [x] Read an IV skew and understand what it signals
 - [x] Identify when IV rank is cheap vs. expensive historically
 - [x] Explain bid/ask spread impact on position profitability
-- [ ] Understand how GEX regimes affect intraday market behavior
-- [ ] Know the gamma/theta tradeoff and why it matters for option sellers
+- [x] Understand how GEX regimes affect intraday market behavior
+- [x] Know the gamma/theta tradeoff and why it matters for option sellers
