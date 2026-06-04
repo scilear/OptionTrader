@@ -1,8 +1,5 @@
 # EOD truth configuration for S4-03 runbook workflow
 
-app:
-  mode: streamlit
-
 logging:
   level: INFO
   file: logs/optiontrader.log
@@ -12,7 +9,6 @@ data:
   symbol: "^SPX"
   dte_min: 14
   dte_max: 60
-  snapshot_tags: [eod, open, mid, event]
   source: yfinance
   capture_all_expiries: true
 
@@ -25,7 +21,6 @@ ib:
   max_strikes_per_right: 40
 
 storage:
-  engine: duckdb
   path: /mnt/Data/EVA/optiontrader_eod_truth.duckdb
 
 pricing:

@@ -97,13 +97,7 @@ ACTIVE_CONFIG_KEYS = frozenset(
     }
 )
 
-DEPRECATED_CONFIG_KEYS = frozenset(
-    {
-        "app.mode",
-        "data.snapshot_tags",
-        "storage.engine",
-    }
-)
+DEPRECATED_CONFIG_KEYS: frozenset[str] = frozenset()
 
 HIGH_IMPACT_TOP_LEVEL_KEYS = frozenset(
     {

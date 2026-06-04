@@ -1,8 +1,5 @@
 # v1 configuration for Streamlit single-user mode
 
-app:
-  mode: streamlit
-
 logging:
   level: INFO
   file: logs/optiontrader.log
@@ -12,7 +9,6 @@ data:
   symbol: "^SPX"
   dte_min: 14
   dte_max: 60
-  snapshot_tags: [eod, open, mid, event]
   source: ib  # ib tries IB hosts then falls back to yfinance; set to yfinance to skip IB entirely
   capture_all_expiries: true
 
@@ -27,7 +23,6 @@ ib:
   max_strikes_per_right: 40  # nearest-to-spot calls/puts per expiry
 
 storage:
-  engine: duckdb  # sqlite or duckdb
   path: data/optiontrader.duckdb
 
 pricing:

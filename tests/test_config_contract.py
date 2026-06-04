@@ -53,12 +53,10 @@ def test_unknown_high_impact_key_fails_in_strict_mode() -> None:
         assert "regime.unexpected_threshold" in str(exc)
 
 
-def test_deprecated_keys_are_detected() -> None:
+def test_no_deprecated_keys_in_configs() -> None:
     config = _load_test_config()
     result = validate_config_contract(config, strict_unknown_high_impact=False)
-    assert "app.mode" in result["deprecated_present"]
-    assert "data.snapshot_tags" in result["deprecated_present"]
-    assert "storage.engine" in result["deprecated_present"]
+    assert result["deprecated_present"] == []
 
 
 def test_s7_release_validator_exists() -> None:

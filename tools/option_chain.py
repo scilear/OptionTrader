@@ -305,6 +305,9 @@ def _fetch_ib(
                     pass
                 ib = None
 
+        if ib is not None and ib.isConnected():
+            ib.reqMarketDataType(3)  # use delayed data when live sub unavailable
+
         if ib is None or not ib.isConnected():
             if connect_errors:
                 print(

@@ -1,38 +1,38 @@
 # OptionTrader Sprint 7 Release Validation Report
 
-Generated at: 2026-05-19T15:24:53.330955Z
+Generated at: 2026-06-04T10:00:15.630091Z
 Source script: `scripts/validate_release.py`
 
 ## Contract
 
 - Contract ID: `S7-CONTRACT-v1`
-- Config path: `config/config-eod-truth.yaml`
+- Config path: `config/config-test.yaml`
 - Underlying: `SPX`
 - Start: `2010-01-01T00:00:00Z`
-- Effective start (post warm-up): `2010-04-05T00:00:00Z`
-- End: `2023-12-31T23:59:59Z`
+- Effective start (post warm-up): `2010-01-01T00:00:00Z`
+- End: `2010-02-28T23:59:59Z`
 - Baseline lineage: `3b024c9`
 - Candidate lineage: `5128e8e`
 
 ## Gate Evaluation
 
-- Walk-forward deterministic gate: PASS
+- Walk-forward deterministic gate: FAIL
 - Adversarial resilience gate: PASS
 - Regime falsification gate: FAIL
-- Ablation ledger gate: PASS
+- Ablation ledger gate: FAIL
 - Overall release gate: FAIL
 
 ## Warm-up Exclusion
 
-- Warm-up exclusion applied: `True`
-- Warm-up excluded days: `94`
+- Warm-up exclusion applied: `False`
+- Warm-up excluded days: `0`
 - Requested start: `2010-01-01T00:00:00Z`
-- Effective start: `2010-04-05T00:00:00Z`
+- Effective start: `2010-01-01T00:00:00Z`
 
 ## Recommendation
 
 - Final recommendation: `not_promotable`
-- Taxonomy verdict: `no_incremental_edge_observed`
+- Taxonomy verdict: `invalid_evidence`
 
 ## Summary Payload
 
@@ -66,10 +66,10 @@ Source script: `scripts/validate_release.py`
         "weight": 0.0
       }
     ],
-    "ideas_with_ranking": 343,
-    "mean_edge_after_cost": 2748.037328471075,
-    "mean_total_friction_cost": 3.218746721000351,
-    "pass": true
+    "ideas_with_ranking": 0,
+    "mean_edge_after_cost": null,
+    "mean_total_friction_cost": null,
+    "pass": false
   },
   "adversarial": {
     "details": {
@@ -78,7 +78,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_discontinuous_chain_snapshots_emit_no_false_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.69s"
+          "1 passed in 0.75s"
         ]
       },
       "missing_tenors": {
@@ -86,7 +86,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_missing_tenors_term_slope_remains_null",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.72s"
+          "1 passed in 0.73s"
         ]
       },
       "sparse_wings": {
@@ -94,7 +94,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_sparse_wings_emit_degraded_status",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.63s"
+          "1 passed in 0.76s"
         ]
       },
       "stale_books": {
@@ -102,7 +102,7 @@ Source script: `scripts/validate_release.py`
         "selector": "tests/test_surface_adversarial.py::test_stale_books_emit_no_alert",
         "stderr": [],
         "stdout": [
-          "1 passed in 0.68s"
+          "1 passed in 0.69s"
         ]
       }
     },
@@ -117,17 +117,17 @@ Source script: `scripts/validate_release.py`
   "contract": {
     "baseline_lineage": "3b024c9",
     "candidate_lineage": "5128e8e",
-    "config_path": "config/config-eod-truth.yaml",
-    "effective_start_ts": "2010-04-05T00:00:00Z",
-    "end_ts": "2023-12-31T23:59:59Z",
+    "config_path": "config/config-test.yaml",
+    "effective_start_ts": "2010-01-01T00:00:00Z",
+    "end_ts": "2010-02-28T23:59:59Z",
     "horizon_days": 5,
     "id": "S7-CONTRACT-v1",
     "start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
     "walk_forward": {
-      "step_size": 63,
-      "test_size": 63,
-      "train_size": 252
+      "step_size": 5,
+      "test_size": 5,
+      "train_size": 10
     }
   },
   "event_governance": {
@@ -137,236 +137,155 @@ Source script: `scripts/validate_release.py`
     "event_path": "config/regime_events_v1.yaml"
   },
   "gates": {
-    "ablation_ledger_pass": true,
+    "ablation_ledger_pass": false,
     "adversarial_resilience_pass": true,
     "event_governance_pass": true,
     "overall_pass": false,
     "regime_falsification_pass": false,
-    "threshold_freeze_pass": true,
-    "walk_forward_pass": true
+    "threshold_freeze_pass": false,
+    "walk_forward_pass": false
   },
-  "generated_at": "2026-05-19T15:24:53.330955Z",
+  "generated_at": "2026-06-04T10:00:15.630091Z",
   "independence_diagnostics": {
     "baseline": {
       "contribution_shares": {
-        "drawdown": 0.13665254237288219,
+        "drawdown": 0.0,
         "event": 0.0,
-        "rv20": 0.3520921610169513,
-        "stress_proxy": 0.18697033898304588,
-        "vix": 0.3242849576271206
+        "rv20": 0.0,
+        "stress_proxy": 0.0,
+        "vix": 0.0
       },
-      "correlation_stress_vs_rv20": 0.7847293985911984,
-      "correlation_stress_vs_vix": 1.0,
-      "near_redundant_feature_warning": true,
-      "samples": 3437
+      "correlation_stress_vs_rv20": null,
+      "correlation_stress_vs_vix": null,
+      "near_redundant_feature_warning": false,
+      "samples": 0
     },
     "candidate": {
       "contribution_shares": {
-        "drawdown": 0.13665254237288219,
+        "drawdown": 0.0,
         "event": 0.0,
-        "rv20": 0.3520921610169513,
-        "stress_proxy": 0.18697033898304588,
-        "vix": 0.3242849576271206
+        "rv20": 0.0,
+        "stress_proxy": 0.0,
+        "vix": 0.0
       },
-      "correlation_stress_vs_rv20": 0.7847293985911984,
-      "correlation_stress_vs_vix": 1.0,
-      "near_redundant_feature_warning": true,
-      "samples": 3437
+      "correlation_stress_vs_rv20": null,
+      "correlation_stress_vs_vix": null,
+      "near_redundant_feature_warning": false,
+      "samples": 0
     }
   },
   "lineage_metadata": {
     "baseline": {
-      "code_version": "3b024c98c829a6406bbfcc08ea5c18a0c5bab41f+profile:baseline_rv_only",
-      "config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
-      "profile_id": "baseline_rv_only",
-      "run_id": 33
+      "code_version": null,
+      "config_hash": null,
+      "profile_id": null,
+      "run_id": null
     },
     "candidate": {
-      "code_version": "5128e8e6f314f117e8f8eb29735d24f2bd4dd3d6+profile:candidate_multi_signal",
-      "config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
-      "profile_id": "candidate_multi_signal",
-      "run_id": 34
+      "code_version": null,
+      "config_hash": null,
+      "profile_id": null,
+      "run_id": null
     }
   },
   "recommendation": "not_promotable",
   "regime_falsification": {
     "baseline": {
-      "fp": 271,
-      "outcomes_observed": 318,
-      "precision": 0.14779874213836477,
-      "tp": 47,
-      "transition_alerts": 104,
-      "transition_fp": 62,
-      "transition_fp_density": 0.5961538461538461
+      "fp": 0,
+      "outcomes_observed": 0,
+      "precision": null,
+      "tp": 0,
+      "transition_alerts": 0,
+      "transition_fp": 0,
+      "transition_fp_density": null
     },
-    "baseline_by_regime": {
-      "Calm": {
-        "alerts": 126,
-        "fp": 86,
-        "precision": 0.13131313131313133,
-        "tp": 13
-      },
-      "Stress": {
-        "alerts": 196,
-        "fp": 123,
-        "precision": 0.1276595744680851,
-        "tp": 18
-      },
-      "Transition": {
-        "alerts": 104,
-        "fp": 62,
-        "precision": 0.20512820512820512,
-        "tp": 16
-      }
-    },
+    "baseline_by_regime": {},
     "blocked_reasons": [
-      "transition_fp_density_worsened"
+      "missing_required_regimes",
+      "precision_regression_or_missing",
+      "missing_transition_alerts",
+      "insufficient_per_regime_outcomes",
+      "missing_transition_fp_density",
+      "no_candidate_alerts"
     ],
     "candidate": {
-      "fp": 518,
-      "outcomes_observed": 621,
-      "precision": 0.16586151368760063,
-      "tp": 103,
-      "transition_alerts": 188,
-      "transition_fp": 124,
-      "transition_fp_density": 0.6595744680851063
+      "fp": 0,
+      "outcomes_observed": 0,
+      "precision": null,
+      "tp": 0,
+      "transition_alerts": 0,
+      "transition_fp": 0,
+      "transition_fp_density": null
     },
-    "candidate_alert_count": 1014,
-    "candidate_by_regime": {
-      "Calm": {
-        "alerts": 581,
-        "fp": 226,
-        "precision": 0.16911764705882354,
-        "tp": 46
-      },
-      "Stress": {
-        "alerts": 245,
-        "fp": 168,
-        "precision": 0.12953367875647667,
-        "tp": 25
-      },
-      "Transition": {
-        "alerts": 188,
-        "fp": 124,
-        "precision": 0.20512820512820512,
-        "tp": 32
-      }
-    },
-    "evidence_valid": true,
+    "candidate_alert_count": 0,
+    "candidate_by_regime": {},
+    "evidence_valid": false,
     "horizon_days": 5,
     "min_required_outcomes_per_regime": 5,
-    "missing_regimes": [],
-    "observed_regimes": [
+    "missing_regimes": [
       "Calm",
-      "Stress",
-      "Transition"
+      "Transition",
+      "Stress"
     ],
-    "outcome_validity_pass": true,
+    "observed_regimes": [],
+    "outcome_validity_pass": false,
     "pass": false,
     "per_regime_outcome_counts": {
-      "Calm": 272,
-      "Stress": 193,
-      "Transition": 156
+      "Calm": 0,
+      "Stress": 0,
+      "Transition": 0
     },
     "per_regime_outcome_validity": {
-      "Calm": true,
-      "Stress": true,
-      "Transition": true
+      "Calm": false,
+      "Stress": false,
+      "Transition": false
     },
-    "precision_non_regression": true,
-    "regime_coverage_pass": true,
+    "precision_non_regression": false,
+    "regime_coverage_pass": false,
     "required_regimes": [
       "Calm",
       "Transition",
       "Stress"
     ],
-    "taxonomy_verdict": "no_incremental_edge_observed",
-    "transition_fp_density_blocked_reason": null,
+    "taxonomy_verdict": "invalid_evidence",
+    "transition_fp_density_blocked_reason": "missing_transition_alerts",
     "transition_fp_density_non_worsening": false,
-    "transition_metric_available": true,
+    "transition_metric_available": false,
     "unknown_regime_count": 0,
     "unknown_regime_pass": true,
-    "unknown_regime_share": 0.0
+    "unknown_regime_share": null
   },
-  "taxonomy_verdict": "no_incremental_edge_observed",
+  "taxonomy_verdict": "invalid_evidence",
   "threshold_freeze": {
-    "baseline_config_hash": "ba56410eb197f5895a80d324d76769291595e0f645b97f52ba2e5ad60907de68",
-    "blocked_reasons": [],
-    "candidate_config_hash": "b0a92b8978a2afae3b4d0a7aaaded8d5a2c95d2da19d946fe6fc456c0bea5b36",
+    "baseline_config_hash": null,
+    "blocked_reasons": [
+      "baseline_config_hash_missing",
+      "candidate_config_hash_missing"
+    ],
+    "candidate_config_hash": null,
     "current_config_hash": "ec039d97d121f629cd73d47701c3461b281498f2ab93fac5af85cafdb5609e2e",
-    "threshold_freeze_pass": true
+    "threshold_freeze_pass": false
   },
   "walk_forward": {
-    "deterministic_schedule": true,
-    "pass": true,
-    "split_count": 50,
-    "step_size": 63,
-    "test_size": 63,
-    "test_window_lengths": [
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63,
-      63
-    ],
-    "train_size": 252
+    "deterministic_schedule": false,
+    "pass": false,
+    "split_count": 0,
+    "step_size": 5,
+    "test_size": 5,
+    "test_window_lengths": [],
+    "train_size": 10
   },
   "window": {
-    "effective_start_ts": "2010-04-05T00:00:00Z",
-    "end_ts": "2023-12-31T23:59:59Z",
+    "effective_start_ts": "2010-01-01T00:00:00Z",
+    "end_ts": "2010-02-28T23:59:59Z",
     "regime_ready_dates": {
-      "baseline": "2010-04-05",
-      "candidate": "2010-04-05"
+      "baseline": null,
+      "candidate": null
     },
     "requested_start_ts": "2010-01-01T00:00:00Z",
     "underlying": "SPX",
-    "warmup_excluded_days": 94,
-    "warmup_exclusion_applied": true
+    "warmup_excluded_days": 0,
+    "warmup_exclusion_applied": false
   }
 }
 ```
@@ -375,6 +294,6 @@ Source script: `scripts/validate_release.py`
 
 ```bash
 source .venv/bin/activate
-python scripts/validate_release.py --config-path config/config-eod-truth.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2023-12-31T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 252 --test-size 63 --step-size 63 --horizon-days 5
+python scripts/validate_release.py --config-path config/config-test.yaml --start-ts 2010-01-01T00:00:00Z --end-ts 2010-02-28T23:59:59Z --underlying SPX --baseline-lineage 3b024c9 --candidate-lineage 5128e8e --train-size 10 --test-size 5 --step-size 5 --horizon-days 5
 ```
 
