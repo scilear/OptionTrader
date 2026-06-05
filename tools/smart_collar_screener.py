@@ -233,17 +233,34 @@ def analyze_collar_for_chain(chain: dict[str, Any]) -> list[dict[str, Any]]:
     put_rows = put_rows.sort_values("strike")
     call_rows = call_rows.sort_values("strike")
 
+    MIN_OI = 100
+
+    def _option_price(
+        row: pd.Series, side: str,
+    ) -> float:
+        """Get a conservative executable price for an option leg.
+
+        side='long': you pay, use ask when available.
+        side='short': you receive, use bid when available.
+
+        Only options with a two-sided market (bid>0 and ask>0) or
+        zero-quote but deep OI (market closed, use lastPrice) are accepted.
+        One-sided quotes (e.g. bid=0, ask>0) are rejected as illiquid.
+        """
+        bid = _safe_float(row.get("bid", 0))
+        ask = _safe_float(row.get("ask", 0))
+        oi = _safe_float(row.get("openInterest", 0))
+
+        if bid > 0 and ask > 0:
+            return ask if side == "long" else bid
+        if bid == 0 and ask == 0 and oi >= MIN_OI:
+            return _safe_float(row.get("lastPrice", 0))
+        return 0.0
+
     for _, put_row in put_rows.iterrows():
         put_strike = _safe_float(put_row["strike"])
-        put_bid = _safe_float(put_row["bid"])
-        put_ask = _safe_float(put_row["ask"])
-        if put_bid > 0 and put_ask > 0:
-            put_mid = (put_bid + put_ask) / 2.0
-        elif put_bid > 0 or put_ask > 0:
-            put_mid = _safe_float(put_row.get("lastPrice", 0))
-        else:
-            continue
-        if put_mid <= 0:
+        put_price = _option_price(put_row, "long")
+        if put_price <= 0:
             continue
 
         for _, call_row in call_rows.iterrows():
@@ -251,23 +268,16 @@ def analyze_collar_for_chain(chain: dict[str, Any]) -> list[dict[str, Any]]:
             if call_strike <= put_strike:
                 continue
 
-            call_bid = _safe_float(call_row["bid"])
-            call_ask = _safe_float(call_row["ask"])
-            if call_bid > 0 and call_ask > 0:
-                call_mid = (call_bid + call_ask) / 2.0
-            elif call_bid > 0 or call_ask > 0:
-                call_mid = _safe_float(call_row.get("lastPrice", 0))
-            else:
-                continue
-            if call_mid <= 0:
+            call_price = _option_price(call_row, "short")
+            if call_price <= 0:
                 continue
 
             result = _collar_metrics(
                 spot=spot,
                 put_strike=put_strike,
-                put_mid=put_mid,
+                put_price=put_price,
                 call_strike=call_strike,
-                call_mid=call_mid,
+                call_price=call_price,
                 dte=dte,
                 expiry=expiry,
             )
@@ -281,18 +291,19 @@ def analyze_collar_for_chain(chain: dict[str, Any]) -> list[dict[str, Any]]:
 def _collar_metrics(
     spot: float,
     put_strike: float,
-    put_mid: float,
+    put_price: float,
     call_strike: float,
-    call_mid: float,
+    call_price: float,
     dte: int,
     expiry: str,
 ) -> dict[str, Any] | None:
     """Compute smart collar P&L metrics.
 
     Position: +100 shares @ spot, +1 ITM put, -1 OTM call (per share basis)
-    Net cost per share = spot + put_mid - call_mid
+    Net cost per share = spot + put_price - call_price
+    put_price is the ask (you pay it), call_price is the bid (you receive it).
     """
-    net_cost_per_share = spot + put_mid - call_mid
+    net_cost_per_share = spot + put_price - call_price
     if net_cost_per_share <= 0:
         return None
 
@@ -331,9 +342,9 @@ def _collar_metrics(
         "dte": dte,
         "spot": spot,
         "put_strike": round(put_strike, 2),
-        "put_mid": round(put_mid, 2),
+        "put_cost": round(put_price, 2),
         "call_strike": round(call_strike, 2),
-        "call_mid": round(call_mid, 2),
+        "call_credit": round(call_price, 2),
         "net_cost_per_share": round(net_cost_per_share, 2),
         "min_return_pct": round(min_return * 100, 2),
         "max_return_pct": round(max_return * 100, 2),
@@ -398,7 +409,7 @@ def print_results(results: list[dict[str, Any]], top_n: int = 0) -> None:
     for r in results:
         print(
             f"{r['ticker']:<7} {r['expiry']:<12} {r['dte']:>4} {r['spot']:>8.2f} "
-            f"{r['put_strike']:>8.2f} {r['put_mid']:>7.2f} {r['call_strike']:>8.2f} {r['call_mid']:>7.2f} "
+            f"{r['put_strike']:>8.2f} {r['put_cost']:>7.2f} {r['call_strike']:>8.2f} {r['call_credit']:>7.2f} "
             f"{r['net_cost_per_share']:>8.2f} {r['min_return_pct']:>7.2f} {r['max_return_pct']:>7.2f} "
             f"{r['annualized_return_pct']:>7.2f} {r['call_otm_pct']:>7.2f} {r['ratio']:>7.4f}"
         )
@@ -553,7 +564,7 @@ def main() -> None:
         print(f"\n═══ TOP {args.top} SMART COLLAR OPPORTUNITIES (bucketed by AnnR%) ═══")
         header = (
             f"{'Ticker':<7} {'Expiry':<12} {'DTE':>4} {'Spot':>8} "
-            f"{'PutStr':>8} {'Put$':>7} {'CallStr':>8} {'Call$':>7} "
+        f"{'PutStr':>8} {'PutCst':>7} {'CallStr':>8} {'CallCr':>7} "
             f"{'NetCost':>8} {'MinR%':>7} {'MaxR%':>7} {'AnnR%':>7} "
             f"{'OTM%':>7} {'Ratio':>7}"
         )
@@ -568,7 +579,7 @@ def main() -> None:
             for r in bucket:
                 print(
                     f"{r['ticker']:<7} {r['expiry']:<12} {r['dte']:>4} {r['spot']:>8.2f} "
-                    f"{r['put_strike']:>8.2f} {r['put_mid']:>7.2f} {r['call_strike']:>8.2f} {r['call_mid']:>7.2f} "
+                    f"{r['put_strike']:>8.2f} {r['put_cost']:>7.2f} {r['call_strike']:>8.2f} {r['call_credit']:>7.2f} "
                     f"{r['net_cost_per_share']:>8.2f} {r['min_return_pct']:>7.2f} {r['max_return_pct']:>7.2f} "
                     f"{r['annualized_return_pct']:>7.2f} {r['call_otm_pct']:>7.2f} {r['ratio']:>7.4f}"
                 )
@@ -587,7 +598,7 @@ def main() -> None:
         fieldnames = [
             "ticker", "best_maxR_pct", "best_annR_pct", "best_ratio",
             "expiry", "dte", "spot",
-            "put_strike", "put_mid", "call_strike", "call_mid",
+            "put_strike", "put_cost", "call_strike", "call_credit",
             "net_cost_per_share", "min_return_pct",
         ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -602,9 +613,9 @@ def main() -> None:
                 "dte": r["dte"],
                 "spot": r["spot"],
                 "put_strike": r["put_strike"],
-                "put_mid": r["put_mid"],
+                "put_cost": r["put_cost"],
                 "call_strike": r["call_strike"],
-                "call_mid": r["call_mid"],
+                "call_credit": r["call_credit"],
                 "net_cost_per_share": r["net_cost_per_share"],
                 "min_return_pct": r["min_return_pct"],
             })
