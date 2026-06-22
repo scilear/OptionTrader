@@ -39,7 +39,7 @@ logging.getLogger("ib_insync.ib").setLevel(logging.CRITICAL)
 
 RATE       = 0.05
 BATCH_SIZE = 40
-MAX_TS_POINTS = 8
+MAX_TS_POINTS = 30  # all available expirations up to TS_MAX_DTE (no subsampling)
 TS_MAX_DTE = 185
 TS_MIN_DTE = 5
 
@@ -257,14 +257,13 @@ def run(candidates: list[dict]) -> dict[str, dict]:
                 if key not in contract_map:
                     contract_map[key] = Option(sym, ib_exp, atm, right, exch, currency=ccy)
 
-            # Term structure (ATM calls, subsample to MAX_TS_POINTS)
+            # Term structure (ATM calls, all expirations up to TS_MAX_DTE)
             ts_raw = [
                 (( date(int(e[:4]), int(e[4:6]), int(e[6:8])) - today ).days, e)
                 for e in expirations
                 if TS_MIN_DTE <= (date(int(e[:4]), int(e[4:6]), int(e[6:8])) - today).days <= TS_MAX_DTE
             ]
-            n = max(1, len(ts_raw) // MAX_TS_POINTS)
-            ts_exps = ts_raw[::n][:MAX_TS_POINTS]
+            ts_exps = ts_raw[:MAX_TS_POINTS]  # cap at MAX_TS_POINTS; no stride subsampling
 
             for dte_v, ib_exp in ts_exps:
                 key = (t, ib_exp, atm, "C")
