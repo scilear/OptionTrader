@@ -21,7 +21,9 @@ ib:
   max_strikes_per_right: 40
 
 storage:
+  engine: postgres
   path: /mnt/Data/EVA/optiontrader_eod_truth.duckdb
+  dsn: "host=/var/run/postgresql dbname=optiontrader user=fabien"
 
 pricing:
   rate: 0.0

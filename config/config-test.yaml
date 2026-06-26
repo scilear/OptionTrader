@@ -20,6 +20,7 @@ ib:
   strike_pct_range: 0.25
 
 storage:
+  engine: duckdb
   path: data/test_optiontrader.duckdb
 
 pricing:

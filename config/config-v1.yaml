@@ -23,7 +23,9 @@ ib:
   max_strikes_per_right: 40  # nearest-to-spot calls/puts per expiry
 
 storage:
+  engine: postgres
   path: data/optiontrader.duckdb
+  dsn: "host=/var/run/postgresql dbname=optiontrader user=fabien"
 
 pricing:
   rate: 0.0

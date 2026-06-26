@@ -26,6 +26,8 @@ ACTIVE_CONFIG_KEYS = frozenset(
         "ib.strike_pct_range",
         "ib.max_strikes_per_right",
         "storage.path",
+        "storage.engine",
+        "storage.dsn",
         "pricing.rate",
         "pricing.dividend_yield",
         "metrics.delta_points",
