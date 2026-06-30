@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Set
 
-from src.db.connection import connect
+from src.db.connection import _is_pg, connect
 
 
 def init_ingest_tracking_table() -> None:
@@ -54,21 +54,44 @@ def mark_file_complete(
 ) -> None:
     conn = connect()
     try:
-        conn.execute(
-            """
-            INSERT OR REPLACE INTO ingest_tracking
-            (file_path, glob_pattern, underlying, processed_at, file_size_bytes, row_count)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                str(file_path),
-                glob_pattern,
-                underlying,
-                datetime.now(),
-                file_size_bytes,
-                row_count,
-            ),
-        )
+        if _is_pg(conn):
+            conn.execute(
+                """
+                INSERT INTO ingest_tracking
+                (file_path, glob_pattern, underlying, processed_at, file_size_bytes, row_count)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (file_path) DO UPDATE SET
+                    glob_pattern = excluded.glob_pattern,
+                    underlying = excluded.underlying,
+                    processed_at = excluded.processed_at,
+                    file_size_bytes = excluded.file_size_bytes,
+                    row_count = excluded.row_count
+                """,
+                (
+                    str(file_path),
+                    glob_pattern,
+                    underlying,
+                    datetime.now(),
+                    file_size_bytes,
+                    row_count,
+                ),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO ingest_tracking
+                (file_path, glob_pattern, underlying, processed_at, file_size_bytes, row_count)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(file_path),
+                    glob_pattern,
+                    underlying,
+                    datetime.now(),
+                    file_size_bytes,
+                    row_count,
+                ),
+            )
         conn.commit()
     finally:
         conn.close()

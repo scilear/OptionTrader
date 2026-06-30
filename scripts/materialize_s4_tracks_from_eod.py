@@ -21,7 +21,7 @@ ensure_repo_root_on_path()
 from src.core.compute_snapshot import compute_for_snapshot
 from src.core.config import config_digest, get_config_path, load_config
 from src.core.regime import compute_regime_state
-from src.db.connection import connect
+from src.db.connection import _is_pg, connect
 from src.db.init_db import init_db
 
 
@@ -179,9 +179,11 @@ def _purge_existing_tracks(
     lineage_prefixes: list[str],
 ) -> None:
     for lineage in lineage_prefixes:
+        if _is_pg(conn):
+            conn.execute("DROP TABLE IF EXISTS _track_snapshot_ids")
         conn.execute(
             """
-            CREATE OR REPLACE TEMP TABLE _track_snapshot_ids AS
+            CREATE TEMP TABLE _track_snapshot_ids AS
             SELECT s.snapshot_id
             FROM snapshots s
             JOIN pipeline_runs pr ON pr.run_id = s.run_id

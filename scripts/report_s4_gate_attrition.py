@@ -16,7 +16,7 @@ from src.core.regime import first_regime_ready_date
 
 ensure_repo_root_on_path()
 
-from src.db.connection import connect
+from src.db.connection import _is_pg, connect
 from src.db.init_db import init_db
 
 
@@ -109,6 +109,15 @@ def _run_meta(underlying: str, start_ts: str, end_ts: str, lineage_prefix: str) 
     }
 
 
+def _gate_path(conn, dollar_path: str) -> str:
+    """Return PG or DuckDB expression to extract a gate status from a.explain."""
+    parts = dollar_path.strip("$.").split(".")
+    if _is_pg(conn):
+        quoted = ", ".join(f"'{p}'" for p in parts)
+        return f"json_extract_path_text(a.explain::json, {quoted})"
+    return f"json_extract_string(a.explain, '$.{'.'.join(parts)}')"
+
+
 def _count(conn, query: str, params: tuple) -> int:
     return int(conn.execute(query, params).fetchone()[0])
 
@@ -161,51 +170,55 @@ def _attrition_for_lineage(underlying: str, start_ts: str, end_ts: str, lineage_
             """,
             params,
         )
+        zscore_expr = _gate_path(conn, '$.gates.zscore.status')
+        persistence_expr = _gate_path(conn, '$.gates.persistence.status')
+        regime_expr = _gate_path(conn, '$.gates.regime.status')
+        tradability_expr = _gate_path(conn, '$.gates.tradability.status')
         zscore_pass = _count(
             conn,
-            """
+            f"""
             SELECT COUNT(*)
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
             WHERE s.underlying = ? AND s.ts >= ? AND s.ts <= ? AND pr.code_version LIKE ?
-              AND json_extract_string(a.explain, '$.gates.zscore.status') = 'PASS'
+              AND {zscore_expr} = 'PASS'
             """,
             params,
         )
         persistence_pass = _count(
             conn,
-            """
+            f"""
             SELECT COUNT(*)
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
             WHERE s.underlying = ? AND s.ts >= ? AND s.ts <= ? AND pr.code_version LIKE ?
-              AND json_extract_string(a.explain, '$.gates.persistence.status') = 'PASS'
+              AND {persistence_expr} = 'PASS'
             """,
             params,
         )
         regime_pass = _count(
             conn,
-            """
+            f"""
             SELECT COUNT(*)
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
             WHERE s.underlying = ? AND s.ts >= ? AND s.ts <= ? AND pr.code_version LIKE ?
-              AND json_extract_string(a.explain, '$.gates.regime.status') = 'PASS'
+              AND {regime_expr} = 'PASS'
             """,
             params,
         )
         tradability_pass = _count(
             conn,
-            """
+            f"""
             SELECT COUNT(*)
             FROM alerts a
             JOIN snapshots s ON s.snapshot_id = a.snapshot_id
             JOIN pipeline_runs pr ON pr.run_id = s.run_id
             WHERE s.underlying = ? AND s.ts >= ? AND s.ts <= ? AND pr.code_version LIKE ?
-              AND json_extract_string(a.explain, '$.gates.tradability.status') = 'PASS'
+              AND {tradability_expr} = 'PASS'
             """,
             params,
         )
