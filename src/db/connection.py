@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+
 from src.core.config import load_config
 
 
@@ -46,6 +48,21 @@ class _PGConnectionWrapper:
         else:
             cur.execute(sql)
         return _CursorWrapper(cur)
+
+    def copy_quote_rows(self, rows):
+        if not rows:
+            return
+        buf = io.StringIO()
+        for r in rows:
+            buf.write('\t'.join(str(v) for v in r) + '\n')
+        buf.seek(0)
+        cur = self._conn.cursor()
+        cur.copy_from(
+            buf, 'option_quotes',
+            columns=('snapshot_id', 'expiry', 'strike', 'option_right',
+                     'bid', 'ask', 'last', 'bid_size', 'ask_size',
+                     'oi', 'volume', 'flags'),
+        )
 
     def cursor(self):
         return self._conn.cursor()

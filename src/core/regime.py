@@ -475,7 +475,7 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
                 """,
                 (
                     int(snapshot_row.snapshot_id),
-                    int(snapshot_row.run_id) if snapshot_row.run_id is not None else None,
+                    int(snapshot_row.run_id) if pd.notna(snapshot_row.run_id) else None,
                     regime_date,
                     mapped_label,
                     mapped_hash,
