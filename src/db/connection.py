@@ -64,6 +64,13 @@ class _PGConnectionWrapper:
                      'oi', 'volume', 'flags'),
         )
 
+    def execute_values(self, sql, argslist, template=None, page_size=1000):
+        if not argslist:
+            return
+        from psycopg2.extras import execute_values as _ev
+        cur = self._conn.cursor()
+        _ev(cur, sql.replace("?", "%s"), argslist, template=template, page_size=page_size)
+
     def cursor(self):
         return self._conn.cursor()
 

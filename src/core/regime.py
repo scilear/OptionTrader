@@ -12,7 +12,7 @@ import pandas as pd
 import yaml
 
 from src.core.config import load_config
-from src.db.connection import connect
+from src.db.connection import connect, _is_pg
 
 
 @dataclass
@@ -265,6 +265,7 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
     thresholds_hash = regime_threshold_hash(params)
 
     conn = connect()
+    is_pg = _is_pg(conn)
     try:
         existing_hash_row = conn.execute(
             """
@@ -334,6 +335,7 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
 
         inserts = 0
         regime_by_date: dict[date, tuple[str, str, str]] = {}
+        _regime_state_rows: list[tuple] = []
         for idx, row in daily.iterrows():
             if pd.isna(row["rv20"]) or pd.isna(row["drawdown"]):
                 continue
@@ -403,44 +405,15 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
                 "label": regime_label,
             }
 
-            conn.execute(
-                """
-                INSERT INTO regime_state (
-                    regime_date, vix_percentile, rv20_percentile, drawdown_percent,
-                    regime_score, regime_label, regime_config_hash,
-                    vix_spot, rv20_value, drawdown_value,
-                    event_score, stress_proxy_score, decomposition
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(regime_date) DO UPDATE SET
-                    vix_percentile=excluded.vix_percentile,
-                    rv20_percentile=excluded.rv20_percentile,
-                    drawdown_percent=excluded.drawdown_percent,
-                    regime_score=excluded.regime_score,
-                    regime_label=excluded.regime_label,
-                    regime_config_hash=excluded.regime_config_hash,
-                    vix_spot=excluded.vix_spot,
-                    rv20_value=excluded.rv20_value,
-                    drawdown_value=excluded.drawdown_value,
-                    event_score=excluded.event_score,
-                    stress_proxy_score=excluded.stress_proxy_score,
-                    decomposition=excluded.decomposition
-                """,
-                (
-                    idx.date(),
-                    vix_pct,
-                    rv20_pct,
-                    drawdown,
-                    int(round(normalized_score * 100)),
-                    regime_label,
-                    thresholds_hash,
-                    vix_spot,
-                    float(row["rv20"]),
-                    drawdown,
-                    event_score,
-                    stress_proxy_score,
-                    json.dumps(decomposition, sort_keys=True, separators=(",", ":")),
-                ),
-            )
+            _regime_state_rows.append((
+                idx.date(),
+                vix_pct, rv20_pct, drawdown,
+                int(round(normalized_score * 100)),
+                regime_label, thresholds_hash,
+                vix_spot, float(row["rv20"]), drawdown,
+                event_score, stress_proxy_score,
+                json.dumps(decomposition, sort_keys=True, separators=(",", ":")),
+            ))
             regime_by_date[idx.date()] = (
                 regime_label,
                 thresholds_hash,
@@ -449,6 +422,7 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
             inserts += 1
 
         snapshot_label_inserts = 0
+        _label_rows = []
         for snapshot_row in snapshots.itertuples(index=False):
             snapshot_ts = pd.to_datetime(snapshot_row.ts)
             regime_date = snapshot_ts.date()
@@ -456,33 +430,41 @@ def compute_regime_state(params: RegimeParams | None = None, run_id: int | None 
             if mapping is None:
                 continue
             mapped_label, mapped_hash, mapped_decomposition = mapping
-            conn.execute(
-                """
-                INSERT INTO regime_snapshot_labels (
-                    snapshot_id,
-                    run_id,
-                    regime_date,
-                    regime_label,
-                    regime_config_hash,
-                    decomposition
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(snapshot_id) DO UPDATE SET
-                    run_id=excluded.run_id,
-                    regime_date=excluded.regime_date,
-                    regime_label=excluded.regime_label,
-                    regime_config_hash=excluded.regime_config_hash,
-                    decomposition=excluded.decomposition
-                """,
-                (
-                    int(snapshot_row.snapshot_id),
-                    int(snapshot_row.run_id) if pd.notna(snapshot_row.run_id) else None,
-                    regime_date,
-                    mapped_label,
-                    mapped_hash,
-                    mapped_decomposition,
-                ),
-            )
+            _label_rows.append((
+                int(snapshot_row.snapshot_id),
+                int(snapshot_row.run_id) if pd.notna(snapshot_row.run_id) else None,
+                regime_date,
+                mapped_label,
+                mapped_hash,
+                mapped_decomposition,
+            ))
             snapshot_label_inserts += 1
+
+        if is_pg and _regime_state_rows:
+            conn.execute_values(
+                "INSERT INTO regime_state (regime_date, vix_percentile, rv20_percentile, drawdown_percent, regime_score, regime_label, regime_config_hash, vix_spot, rv20_value, drawdown_value, event_score, stress_proxy_score, decomposition) VALUES %s ON CONFLICT(regime_date) DO UPDATE SET vix_percentile=excluded.vix_percentile, rv20_percentile=excluded.rv20_percentile, drawdown_percent=excluded.drawdown_percent, regime_score=excluded.regime_score, regime_label=excluded.regime_label, regime_config_hash=excluded.regime_config_hash, vix_spot=excluded.vix_spot, rv20_value=excluded.rv20_value, drawdown_value=excluded.drawdown_value, event_score=excluded.event_score, stress_proxy_score=excluded.stress_proxy_score, decomposition=excluded.decomposition",
+                _regime_state_rows,
+                template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            )
+        elif _regime_state_rows:
+            for r in _regime_state_rows:
+                conn.execute(
+                    "INSERT INTO regime_state (regime_date, vix_percentile, rv20_percentile, drawdown_percent, regime_score, regime_label, regime_config_hash, vix_spot, rv20_value, drawdown_value, event_score, stress_proxy_score, decomposition) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(regime_date) DO UPDATE SET vix_percentile=excluded.vix_percentile, rv20_percentile=excluded.rv20_percentile, drawdown_percent=excluded.drawdown_percent, regime_score=excluded.regime_score, regime_label=excluded.regime_label, regime_config_hash=excluded.regime_config_hash, vix_spot=excluded.vix_spot, rv20_value=excluded.rv20_value, drawdown_value=excluded.drawdown_value, event_score=excluded.event_score, stress_proxy_score=excluded.stress_proxy_score, decomposition=excluded.decomposition",
+                    r,
+                )
+
+        if is_pg and _label_rows:
+            conn.execute_values(
+                "INSERT INTO regime_snapshot_labels (snapshot_id, run_id, regime_date, regime_label, regime_config_hash, decomposition) VALUES %s ON CONFLICT(snapshot_id) DO UPDATE SET run_id=excluded.run_id, regime_date=excluded.regime_date, regime_label=excluded.regime_label, regime_config_hash=excluded.regime_config_hash, decomposition=excluded.decomposition",
+                _label_rows,
+                template="(%s, %s, %s, %s, %s, %s)",
+            )
+        elif _label_rows:
+            for r in _label_rows:
+                conn.execute(
+                    "INSERT INTO regime_snapshot_labels (snapshot_id, run_id, regime_date, regime_label, regime_config_hash, decomposition) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(snapshot_id) DO UPDATE SET run_id=excluded.run_id, regime_date=excluded.regime_date, regime_label=excluded.regime_label, regime_config_hash=excluded.regime_config_hash, decomposition=excluded.decomposition",
+                    r,
+                )
 
         if inserts == 0:
             logger.warning(
