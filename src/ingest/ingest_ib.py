@@ -201,9 +201,9 @@ def _run_ib_ingest(host: str, port: int, config: dict, run_id: int | None = None
             conn.execute(
                 """
                 INSERT INTO snapshots (
-                    snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
+                    run_id, ts, underlying, spot, source, session_tag, notes
                 )
-                VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (run_id, timestamp, symbol, spot, f"ib:{host}", "mid", None),
             )
@@ -234,9 +234,9 @@ def _run_ib_ingest(host: str, port: int, config: dict, run_id: int | None = None
                 conn.execute(
                     """
                     INSERT INTO option_quotes (
-                        quote_id, snapshot_id, expiry, strike, option_right,
+                        snapshot_id, expiry, strike, option_right,
                         bid, ask, last, bid_size, ask_size, oi, volume, flags
-                    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         snapshot_id,

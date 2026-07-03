@@ -534,10 +534,10 @@ def compute_for_snapshot(
             conn.execute(
                 """
                 INSERT INTO iv_points (
-                    iv_id, snapshot_id, expiry, delta_bucket, iv_mid, iv_bid, iv_ask,
+                    snapshot_id, expiry, delta_bucket, iv_mid, iv_bid, iv_ask,
                     solve_status, quality_score,
                     fit_model_id, fit_residual, fit_support, fit_confidence, fit_reason_codes
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
@@ -597,14 +597,14 @@ def compute_for_snapshot(
             conn.execute(
                 """
                 INSERT INTO surface_metrics (
-                    metric_id, snapshot_id, expiry_bucket,
+                    snapshot_id, expiry_bucket,
                     atm_iv_mid, rr25_mid, rr10_mid, fly25_mid, fly10_mid,
                     term_slope_mid,
                     atm_iv_worst, rr25_worst, rr10_worst, fly25_worst, fly10_worst,
                     term_slope_worst,
                     fit_model_id, fit_residual, fit_support, fit_confidence,
                     surface_quality_score, qc_pass, qc_reason_codes
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
@@ -754,11 +754,11 @@ def compute_for_snapshot(
                 conn.execute(
                     """
                     INSERT INTO alerts (
-                        alert_id, snapshot_id, alert_type, expiry_bucket, severity,
+                        snapshot_id, alert_type, expiry_bucket, severity,
                         zscore_mid, zscore_worst, tradability_score,
                         confidence_tier, persistence_count, regime_label,
                         signal_state, transition_reason_code, explain
-                    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         snapshot_id,
@@ -812,11 +812,11 @@ def compute_for_snapshot(
             conn.execute(
                 """
                 INSERT INTO alerts (
-                    alert_id, snapshot_id, alert_type, expiry_bucket, severity,
+                    snapshot_id, alert_type, expiry_bucket, severity,
                     zscore_mid, zscore_worst, tradability_score,
                     confidence_tier, persistence_count, regime_label,
                     signal_state, transition_reason_code, explain
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     snapshot_id,
@@ -888,9 +888,9 @@ def compute_for_snapshot(
                 conn.execute(
                     """
                     INSERT INTO trade_ideas (
-                        trade_id, alert_id, template, legs, price_mid, price_worst,
+                        alert_id, template, legs, price_mid, price_worst,
                         greeks, scenarios, risk_flags
-                    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         alert_id,

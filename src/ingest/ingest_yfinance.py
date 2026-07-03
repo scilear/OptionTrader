@@ -71,9 +71,9 @@ def _build_quote_rows(chain_df, snapshot_id, expiry, right, allow_zero_bid, spre
 
 _INSERT_QUOTE = """
     INSERT INTO option_quotes (
-        quote_id, snapshot_id, expiry, strike, option_right,
+        snapshot_id, expiry, strike, option_right,
         bid, ask, last, bid_size, ask_size, oi, volume, flags
-    ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -100,8 +100,8 @@ def run_ingest(run_id: int | None = None) -> None:
             row = conn.execute(
                 """
                 INSERT INTO snapshots (
-                    snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
-                ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s)
+                    run_id, ts, underlying, spot, source, session_tag, notes
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING snapshot_id
                 """,
                 (
@@ -114,8 +114,8 @@ def run_ingest(run_id: int | None = None) -> None:
             conn.execute(
                 """
                 INSERT INTO snapshots (
-                    snapshot_id, run_id, ts, underlying, spot, source, session_tag, notes
-                ) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)
+                    run_id, ts, underlying, spot, source, session_tag, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     run_id, timestamp, config["data"]["underlying"],
